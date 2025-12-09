@@ -1,0 +1,142 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String            @id @default(uuid())
+  email           String            @unique
+  password        String
+  name            String?
+  role            String            @default("user") // user, admin, team_lead
+  teamId          String?
+  team            Team?             @relation(fields: [teamId], references: [id])
+  industry        String?
+  experienceLevel String?           @default("beginner") // beginner, intermediate, advanced
+  totalXP         Int               @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  pitches         Pitch[]
+  trainingSessions TrainingSession[]
+  userProgress    UserProgress[]
+  skills          UserSkill[]
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  industry    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  members     User[]
+}
+
+model Pitch {
+  id                String           @id @default(uuid())
+  userId            String
+  user              User             @relation(fields: [userId], references: [id])
+  trainingSessionId String?
+  trainingSession   TrainingSession? @relation(fields: [trainingSessionId], references: [id])
+  audioUrl          String
+  transcript        String?
+  analysis          Json?
+  feedback          Json?
+  score             Int?
+  duration          Int?             // in seconds
+  sentimentScore    Float?           // -1 to 1
+  confidenceScore   Int?             // 0-100
+  paceScore         Int?             // 0-100 (words per minute analysis)
+  clarityScore      Int?             // 0-100
+  createdAt         DateTime         @default(now())
+}
+
+model TrainingSession {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  scenario         String   // cold_call, product_demo, objection_handling, negotiation, closing
+  difficulty       String   // easy, medium, hard
+  targetPersona    String?
+  pitchGoal        String?
+  timeLimit        Int?     // in seconds
+  language         String   @default("en")
+  industryId       String?
+  industry         Industry? @relation(fields: [industryId], references: [id])
+  completed        Boolean  @default(false)
+  xpEarned         Int      @default(0)
+  createdAt        DateTime @default(now())
+  pitches          Pitch[]
+}
+
+model Industry {
+  id                String            @id @default(uuid())
+  name              String            @unique
+  description       String?
+  icon              String?
+  scenarioTemplates Json?             // Array of scenario templates
+  createdAt         DateTime          @default(now())
+  trainingSessions  TrainingSession[]
+}
+
+model LearningModule {
+  id              String         @id @default(uuid())
+  title           String         @unique
+  description     String
+  difficulty      String         // beginner, intermediate, advanced
+  estimatedTime   Int            // in minutes
+  xpReward        Int
+  skills          String[]       // Array of skill names
+  prerequisites   String[]       // Array of module IDs
+  scenarioType    String
+  industry        String?
+  order           Int            @default(0)
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  userProgress    UserProgress[]
+}
+
+model UserProgress {
+  id              String         @id @default(uuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  moduleId        String
+  module          LearningModule @relation(fields: [moduleId], references: [id])
+  status          String         @default("not_started") // not_started, in_progress, completed
+  progress        Int            @default(0) // 0-100
+  completedAt     DateTime?
+  score           Int?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([userId, moduleId])
+}
+
+model Skill {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  category    String      // communication, objection_handling, closing, discovery, etc.
+  description String?
+  createdAt   DateTime    @default(now())
+  userSkills  UserSkill[]
+}
+
+model UserSkill {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  skillId   String
+  skill     Skill    @relation(fields: [skillId], references: [id])
+  level     Int      @default(0) // 0-100
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, skillId])
+}
