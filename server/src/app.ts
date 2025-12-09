@@ -7,6 +7,7 @@ import trainingRoutes from './routes/trainingRoutes';
 import learningRoutes from './routes/learningRoutes';
 import teamRoutes from './routes/teamRoutes';
 import industryRoutes from './routes/industryRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/training', trainingRoutes);
 app.use('/learning', learningRoutes);
 app.use('/team', teamRoutes);
 app.use('/industries', industryRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });

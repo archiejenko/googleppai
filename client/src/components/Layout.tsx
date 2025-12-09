@@ -1,9 +1,9 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mic, LogOut, LayoutDashboard, Target, BookOpen, Building2, Users, DollarSign } from 'lucide-react';
+import { Mic, LogOut, LayoutDashboard, Target, BookOpen, Building2, Users, DollarSign, Shield } from 'lucide-react';
 
 export default function Layout() {
-    const { logout } = useAuth();
+    const { logout, isAdmin, isManager } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -54,13 +54,24 @@ export default function Layout() {
                                 <Building2 className="h-5 w-5 mr-1" />
                                 Industries
                             </Link>
-                            <Link
-                                to="/team"
-                                className="text-gray-300 hover:text-white flex items-center font-medium transition-colors"
-                            >
-                                <Users className="h-5 w-5 mr-1" />
-                                Team
-                            </Link>
+                            {isManager && (
+                                <Link
+                                    to="/team"
+                                    className="text-gray-300 hover:text-white flex items-center font-medium transition-colors"
+                                >
+                                    <Users className="h-5 w-5 mr-1" />
+                                    Team
+                                </Link>
+                            )}
+                            {isAdmin && (
+                                <Link
+                                    to="/admin"
+                                    className="text-purple-400 hover:text-purple-300 flex items-center font-medium transition-colors"
+                                >
+                                    <Shield className="h-5 w-5 mr-1" />
+                                    Admin
+                                </Link>
+                            )}
                             <Link
                                 to="/pricing"
                                 className="text-gray-300 hover:text-white flex items-center font-medium transition-colors"
@@ -85,3 +96,4 @@ export default function Layout() {
         </div>
     );
 }
+

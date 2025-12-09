@@ -9,7 +9,9 @@ import LearningPath from './pages/LearningPath';
 import Industries from './pages/Industries';
 import Team from './pages/Team';
 import Pricing from './pages/Pricing';
+import AdminDashboard from './pages/AdminDashboard';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import { AuthProvider } from './context/AuthContext';
 
@@ -29,7 +31,16 @@ function App() {
             <Route path="/training" element={<Training />} />
             <Route path="/learning-path" element={<LearningPath />} />
             <Route path="/industries" element={<Industries />} />
-            <Route path="/team" element={<Team />} />
+            <Route path="/team" element={
+              <ProtectedRoute roles={['admin', 'team_lead']}>
+                <Team />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
           </Route>
         </Routes>
       </Router>
@@ -38,3 +49,4 @@ function App() {
 }
 
 export default App;
+
