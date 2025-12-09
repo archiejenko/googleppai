@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../utils/api';
-import { Users, TrendingUp, Phone, AlertCircle, Award, BarChart3 } from 'lucide-react';
+import { TrendingUp, Phone, AlertCircle, Award } from 'lucide-react';
 
 interface TeamMember {
     id: string;
@@ -96,7 +96,7 @@ export default function Team() {
                                 <p className="text-4xl font-bold text-white">{analytics.averageScore}</p>
                             </div>
                             <div className="bg-blue-500/20 p-4 rounded-xl">
-                                <BarChart3 className="h-8 w-8 text-blue-400" />
+                                <TrendingUp className="h-8 w-8 text-blue-400" />
                             </div>
                         </div>
                     </div>
