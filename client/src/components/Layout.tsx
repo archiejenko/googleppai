@@ -1,6 +1,7 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mic, LogOut, LayoutDashboard, Target, BookOpen, Building2, Users, DollarSign, Shield, User } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 export default function Layout() {
     const { logout, isAdmin, isManager } = useAuth();
@@ -28,28 +29,28 @@ export default function Layout() {
                         <div className="flex items-center space-x-4">
                             <Link
                                 to="/dashboard"
-                                className="text-gray-300 hover:text-white flex items-center font-medium transition-colors"
+                                className="text-theme-muted hover:text-theme-primary flex items-center font-medium transition-colors"
                             >
                                 <LayoutDashboard className="h-5 w-5 mr-1" />
                                 Dashboard
                             </Link>
                             <Link
                                 to="/training"
-                                className="text-gray-300 hover:text-white flex items-center font-medium transition-colors"
+                                className="text-theme-muted hover:text-theme-primary flex items-center font-medium transition-colors"
                             >
                                 <Target className="h-5 w-5 mr-1" />
                                 Training
                             </Link>
                             <Link
                                 to="/learning-path"
-                                className="text-gray-300 hover:text-white flex items-center font-medium transition-colors"
+                                className="text-theme-muted hover:text-theme-primary flex items-center font-medium transition-colors"
                             >
                                 <BookOpen className="h-5 w-5 mr-1" />
                                 Learning
                             </Link>
                             <Link
                                 to="/industries"
-                                className="text-gray-300 hover:text-white flex items-center font-medium transition-colors"
+                                className="text-theme-muted hover:text-theme-primary flex items-center font-medium transition-colors"
                             >
                                 <Building2 className="h-5 w-5 mr-1" />
                                 Industries
@@ -57,7 +58,7 @@ export default function Layout() {
                             {isManager && (
                                 <Link
                                     to="/team"
-                                    className="text-gray-300 hover:text-white flex items-center font-medium transition-colors"
+                                    className="text-theme-muted hover:text-theme-primary flex items-center font-medium transition-colors"
                                 >
                                     <Users className="h-5 w-5 mr-1" />
                                     Team
@@ -66,7 +67,7 @@ export default function Layout() {
                             {isAdmin && (
                                 <Link
                                     to="/admin"
-                                    className="text-purple-400 hover:text-purple-300 flex items-center font-medium transition-colors"
+                                    className="text-theme-accent hover:opacity-80 flex items-center font-medium transition-colors"
                                 >
                                     <Shield className="h-5 w-5 mr-1" />
                                     Admin
@@ -74,21 +75,22 @@ export default function Layout() {
                             )}
                             <Link
                                 to="/pricing"
-                                className="text-gray-300 hover:text-white flex items-center font-medium transition-colors"
+                                className="text-theme-muted hover:text-theme-primary flex items-center font-medium transition-colors"
                             >
                                 <DollarSign className="h-5 w-5 mr-1" />
                                 Pricing
                             </Link>
                             <Link
                                 to="/profile"
-                                className="text-gray-300 hover:text-white flex items-center font-medium transition-colors"
+                                className="text-theme-muted hover:text-theme-primary flex items-center font-medium transition-colors"
                             >
                                 <User className="h-5 w-5 mr-1" />
                                 Profile
                             </Link>
+                            <ThemeToggle />
                             <button
                                 onClick={handleLogout}
-                                className="text-gray-300 hover:text-red-400 flex items-center font-medium transition-colors"
+                                className="text-theme-muted hover:text-red-400 flex items-center font-medium transition-colors"
                             >
                                 <LogOut className="h-5 w-5 mr-1" />
                                 Logout
