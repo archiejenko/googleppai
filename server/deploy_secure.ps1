@@ -1,31 +1,37 @@
 # deploy_secure.ps1
-# This script reads secrets from secrets.env and deploys to Cloud Run with those environment variables.
+# This script reads secrets from .env and deploys to Cloud Run.
 
 $ErrorActionPreference = "Stop"
 
-$SecretsFile = "$PSScriptRoot/secrets.env"
+$SecretsFile = "$PSScriptRoot/.env"
 $ServiceName = "pitchperfectai-backend"
 $Region = "europe-west2"
-$ImageName = "europe-west2-docker.pkg.dev/gen-lang-client-0916212640/cloud-run-source-deploy/pitchperfectai-backend"
+# Note: we use source deploy so image name is auto-handled, but we can specify if needed.
 
 if (-not (Test-Path $SecretsFile)) {
-    Write-Host "❌ secrets.env not found!" -ForegroundColor Red
+    Write-Host "Error: .env not found!" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "🔒 Reading secrets from secrets.env..." -ForegroundColor Cyan
+Write-Host "Reading configuration from .env..." -ForegroundColor Cyan
 
 # Read and parse secrets
 $EnvVars = @()
-Get-Content $SecretsFile | Where-Object { $_ -match '=' -and -not ($_ -match '^#') } | ForEach-Object {
+Get-Content $SecretsFile | Where-Object { $_ -match '=' -and -not ($_ -match '^\s*#') -and -not ([string]::IsNullOrWhiteSpace($_)) } | ForEach-Object {
     $parts = $_ -split '=', 2
     $key = $parts[0].Trim()
     $value = $parts[1].Trim()
     
-    # Check for placeholders
-    if ($value -match "\[YOUR_.*\]") {
-        Write-Host "⚠️  Warning: Placeholder found for $key. Please update secrets.env with real values." -ForegroundColor Yellow
-        exit 1
+    # Remove surrounding quotes if present
+    if ($value.StartsWith('"') -and $value.EndsWith('"')) {
+        $value = $value.Substring(1, $value.Length - 2)
+    }
+    elseif ($value.StartsWith("'") -and $value.EndsWith("'")) {
+        $value = $value.Substring(1, $value.Length - 2)
+    }
+    
+    if ($key -eq "PORT") {
+        return # Skip PORT as it is reserved in Cloud Run
     }
     
     $EnvVars += "$key=$value"
@@ -33,14 +39,9 @@ Get-Content $SecretsFile | Where-Object { $_ -match '=' -and -not ($_ -match '^#
 
 $EnvString = $EnvVars -join ","
 
-Write-Host "🚀 Deploying $ServiceName to Cloud Run with updated secrets..." -ForegroundColor Green
+Write-Host "Deploying $ServiceName to Cloud Run ($Region)..." -ForegroundColor Green
 
-# Deploy command
-# Note: We are updating the service with the new environment variables
-# We assume the image is already built/deployed or we can trigger a new build if needed.
-# For now, let's just update the configuration of the existing service to be safe, 
-# or do a full deploy if you prefer. A full deploy ensures the image is fresh.
-
+# Use source deploy
 gcloud run deploy $ServiceName `
     --source . `
     --region $Region `
@@ -48,14 +49,10 @@ gcloud run deploy $ServiceName `
     --allow-unauthenticated `
     --quiet
 
-Write-Host "Gcloud Exit Code: $LASTEXITCODE"
-
 if ($LASTEXITCODE -eq 0) {
-    Write-Host ""
-    Write-Host "✅ Deployment and Secret Update Successful!" -ForegroundColor Green
-    Write-Host "The application now has access to the secrets defined in your local secrets.env file."
+    Write-Host "Deployment Successful!" -ForegroundColor Green
 }
 else {
-    Write-Host ""
-    Write-Host "❌ Deployment failed." -ForegroundColor Red
+    Write-Host "Deployment Failed!" -ForegroundColor Red
+    exit 1
 }
