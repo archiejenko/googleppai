@@ -9,6 +9,7 @@ import learningRoutes from './routes/learningRoutes';
 import teamRoutes from './routes/teamRoutes';
 import industryRoutes from './routes/industryRoutes';
 import adminRoutes from './routes/adminRoutes';
+import userRoutes from './routes/userRoutes';
 import prisma from './utils/prisma';
 
 const app = express();
@@ -29,6 +30,7 @@ app.use('/learning', learningRoutes);
 app.use('/team', teamRoutes);
 app.use('/industries', industryRoutes);
 app.use('/admin', adminRoutes);
+app.use('/user', userRoutes);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });

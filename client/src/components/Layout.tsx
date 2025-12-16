@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mic, LogOut, LayoutDashboard, Target, BookOpen, Building2, Users, DollarSign, Shield } from 'lucide-react';
+import { Mic, LogOut, LayoutDashboard, Target, BookOpen, Building2, Users, DollarSign, Shield, User } from 'lucide-react';
 
 export default function Layout() {
     const { logout, isAdmin, isManager } = useAuth();
@@ -78,6 +78,13 @@ export default function Layout() {
                             >
                                 <DollarSign className="h-5 w-5 mr-1" />
                                 Pricing
+                            </Link>
+                            <Link
+                                to="/profile"
+                                className="text-gray-300 hover:text-white flex items-center font-medium transition-colors"
+                            >
+                                <User className="h-5 w-5 mr-1" />
+                                Profile
                             </Link>
                             <button
                                 onClick={handleLogout}

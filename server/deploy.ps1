@@ -8,7 +8,7 @@ Write-Host ""
 $PROJECT_ID = "gen-lang-client-0916212640"
 $REGION = "europe-west2"
 $SERVICE_NAME = "pitchperfectai-backend"
-$CLOUDSQL_INSTANCE = "gen-lang-client-0916212640:europe-west2:pitch-perfect-ai"
+$CLOUDSQL_INSTANCE = "${PROJECT_ID}:${REGION}:pitch-perfect-ai"
 
 # Check if we're in the server directory
 if (-not (Test-Path "package.json")) {
@@ -18,21 +18,22 @@ if (-not (Test-Path "package.json")) {
 }
 
 Write-Host "📦 Building and deploying to Cloud Run..." -ForegroundColor Green
+Write-Host "   Project: $PROJECT_ID"
 Write-Host "   Region: $REGION"
 Write-Host "   Service: $SERVICE_NAME"
 Write-Host ""
 
 # Deploy to Cloud Run
 gcloud run deploy $SERVICE_NAME `
-  --source . `
-  --region $REGION `
-  --allow-unauthenticated `
-  --add-cloudsql-instances $CLOUDSQL_INSTANCE `
-  --set-env-vars NODE_ENV=production `
-  --memory 512Mi `
-  --cpu 1 `
-  --timeout 300 `
-  --max-instances 10
+    --source . `
+    --region $REGION `
+    --allow-unauthenticated `
+    --add-cloudsql-instances $CLOUDSQL_INSTANCE `
+    --set-env-vars NODE_ENV=production `
+    --memory 512Mi `
+    --cpu 1 `
+    --timeout 300 `
+    --max-instances 10
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
@@ -56,7 +57,8 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "🌐 To get your backend URL, run:" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "gcloud run services describe $SERVICE_NAME --region $REGION --format='value(status.url)'"
-} else {
+}
+else {
     Write-Host ""
     Write-Host "❌ Deployment failed. Please check the error messages above." -ForegroundColor Red
     exit 1

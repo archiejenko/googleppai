@@ -10,6 +10,7 @@ import Industries from './pages/Industries';
 import Team from './pages/Team';
 import Pricing from './pages/Pricing';
 import AdminDashboard from './pages/AdminDashboard';
+import Profile from './pages/Profile';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -41,6 +42,7 @@ function App() {
                 <AdminDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>
       </Router>
