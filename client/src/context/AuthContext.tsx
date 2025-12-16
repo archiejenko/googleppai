@@ -7,6 +7,7 @@ interface User {
     email: string;
     name?: string;
     role: UserRole;
+    simulatedRole?: UserRole | null;
 }
 
 interface AuthContextType {
@@ -14,6 +15,8 @@ interface AuthContextType {
     token: string | null;
     login: (token: string, user: User) => void;
     logout: () => void;
+    updateUser: (user: Partial<User>) => void;
+    simulateRole: (role: UserRole | null) => void;
     isAuthenticated: boolean;
     isAdmin: boolean;
     isManager: boolean;
@@ -54,8 +57,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
     };
 
-    const isAdmin = user?.role === 'admin';
-    const isManager = user?.role === 'admin' || user?.role === 'team_lead';
+    const updateUser = (updatedUser: Partial<User>) => {
+        if (user) {
+            setUser({ ...user, ...updatedUser });
+        }
+    };
+
+    const simulateRole = (role: UserRole | null) => {
+        if (user && user.role === 'admin') {
+            // Apply simulation only for UI logic
+            // The actual backend token still has admin permissions
+            const simulatedUser = { ...user, simulatedRole: role };
+            setUser(simulatedUser);
+        } else if (user && role === null) {
+            // Reset simulation
+            const { simulatedRole, ...realUser } = user as any;
+            setUser(realUser);
+        }
+    };
+
+    // Determine effective role (simulated or real)
+    const effectiveRole = (user as any)?.simulatedRole || user?.role;
+    const isAdmin = effectiveRole === 'admin';
+    const isManager = effectiveRole === 'admin' || effectiveRole === 'team_lead';
 
     return (
         <AuthContext.Provider value={{
@@ -63,11 +87,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             token,
             login,
             logout,
+            updateUser,
+            simulateRole,
             isAuthenticated: !!token,
             isAdmin,
             isManager,
         }}>
             {children}
+            {/* Visual indicator for role simulation */}
+            {(user as any)?.simulatedRole && (
+                <div className="fixed bottom-4 right-4 z-50 bg-yellow-500 text-black px-4 py-2 rounded-full font-bold shadow-lg animate-pulse">
+                    Viewing as: {(user as any).simulatedRole}
+                </div>
+            )}
         </AuthContext.Provider>
     );
 };
