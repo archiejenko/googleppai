@@ -57,12 +57,12 @@ export default function LearningPath() {
     const getStatusIcon = (module: LearningModule) => {
         const progress = module.userProgress[0];
         if (!progress || progress.status === 'not_started') {
-            return <Lock className="h-5 w-5 text-gray-400" />;
+            return <Lock className="h-5 w-5 text-theme-muted" />;
         }
         if (progress.status === 'completed') {
-            return <CheckCircle className="h-5 w-5 text-green-400" />;
+            return <CheckCircle className="h-5 w-5 text-[rgb(var(--success))]" />;
         }
-        return <TrendingUp className="h-5 w-5 text-yellow-400" />;
+        return <TrendingUp className="h-5 w-5 text-[rgb(var(--warning))]" />;
     };
 
     const handleStartModule = async (moduleId: string) => {
@@ -79,8 +79,8 @@ export default function LearningPath() {
         return (
             <div className="min-h-screen gradient-dark-bg flex justify-center items-center">
                 <div className="relative">
-                    <div className="absolute inset-0 bg-purple-600 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                    <div className="relative animate-spin rounded-full h-16 w-16 border-4 border-white/20 border-t-purple-500"></div>
+                    <div className="absolute inset-0 bg-[rgb(var(--accent-primary))] rounded-full blur-xl opacity-50 animate-pulse"></div>
+                    <div className="relative animate-spin rounded-full h-16 w-16 border-4 border-[rgba(var(--border-color))] border-t-[rgb(var(--accent-primary))]"></div>
                 </div>
             </div>
         );
@@ -91,10 +91,10 @@ export default function LearningPath() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Header */}
                 <div className="mb-12 animate-fade-in-up">
-                    <h1 className="text-4xl font-extrabold text-white mb-2">
+                    <h1 className="text-4xl font-extrabold text-theme-primary mb-2">
                         Learning Path
                     </h1>
-                    <p className="text-gray-300 text-lg">
+                    <p className="text-theme-muted text-lg">
                         Follow curated modules to master sales techniques
                     </p>
                 </div>
@@ -122,23 +122,23 @@ export default function LearningPath() {
                                 </div>
 
                                 {/* Title */}
-                                <h3 className="text-xl font-bold text-white mb-2">
+                                <h3 className="text-xl font-bold text-theme-primary mb-2">
                                     {module.title}
                                 </h3>
 
                                 {/* Description */}
-                                <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                                <p className="text-theme-muted text-sm mb-4 line-clamp-2">
                                     {module.description}
                                 </p>
 
                                 {/* Meta Info */}
-                                <div className="flex items-center gap-4 mb-4 text-sm text-gray-300">
+                                <div className="flex items-center gap-4 mb-4 text-sm text-theme-muted">
                                     <div className="flex items-center gap-1">
                                         <Clock className="h-4 w-4" />
                                         <span>{module.estimatedTime} min</span>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <Award className="h-4 w-4 text-yellow-400" />
+                                        <Award className="h-4 w-4 text-[rgb(var(--warning))]" />
                                         <span>{module.xpReward} XP</span>
                                     </div>
                                 </div>
@@ -149,13 +149,13 @@ export default function LearningPath() {
                                         {module.skills.slice(0, 3).map((skill, idx) => (
                                             <span
                                                 key={idx}
-                                                className="px-2 py-1 bg-purple-500/20 border border-purple-500/30 rounded text-xs text-purple-300"
+                                                className="px-2 py-1 bg-[rgba(var(--accent-primary),0.2)] border border-[rgba(var(--accent-primary),0.3)] rounded text-xs text-theme-accent"
                                             >
                                                 {skill}
                                             </span>
                                         ))}
                                         {module.skills.length > 3 && (
-                                            <span className="px-2 py-1 bg-white/5 border border-white/20 rounded text-xs text-gray-300">
+                                            <span className="px-2 py-1 bg-[rgba(var(--glass-bg))] border border-[rgba(var(--border-color))] rounded text-xs text-theme-muted">
                                                 +{module.skills.length - 3} more
                                             </span>
                                         )}
@@ -165,11 +165,11 @@ export default function LearningPath() {
                                 {/* Progress Bar */}
                                 {isInProgress && progress && (
                                     <div className="mb-4">
-                                        <div className="flex items-center justify-between text-xs text-gray-300 mb-1">
+                                        <div className="flex items-center justify-between text-xs text-theme-muted mb-1">
                                             <span>Progress</span>
                                             <span>{progress.progress}%</span>
                                         </div>
-                                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                        <div className="h-2 bg-theme-tertiary rounded-full overflow-hidden">
                                             <div
                                                 className="h-full bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-500"
                                                 style={{ width: `${progress.progress}%` }}
@@ -183,12 +183,12 @@ export default function LearningPath() {
                                     onClick={() => handleStartModule(module.id)}
                                     disabled={isLocked}
                                     className={`w-full py-2 px-4 rounded-lg font-medium transition-all ${isLocked
-                                            ? 'bg-white/5 text-gray-400 cursor-not-allowed'
-                                            : isCompleted
-                                                ? 'bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30'
-                                                : isInProgress
-                                                    ? 'bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/30'
-                                                    : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:scale-105'
+                                        ? 'bg-[rgba(var(--glass-bg))] text-theme-muted cursor-not-allowed'
+                                        : isCompleted
+                                            ? 'bg-[rgba(var(--success),0.2)] border border-[rgba(var(--success),0.3)] text-[rgb(var(--success))] hover:bg-[rgba(var(--success),0.3)]'
+                                            : isInProgress
+                                                ? 'bg-[rgba(var(--warning),0.2)] border border-[rgba(var(--warning),0.3)] text-[rgb(var(--warning))] hover:bg-[rgba(var(--warning),0.3)]'
+                                                : 'btn-gradient'
                                         }`}
                                 >
                                     <div className="flex items-center justify-center gap-2">
@@ -210,9 +210,9 @@ export default function LearningPath() {
                 {/* Empty State */}
                 {modules.length === 0 && (
                     <div className="glass-card text-center py-16">
-                        <BookOpen className="h-16 w-16 text-purple-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-white mb-2">No modules available</h3>
-                        <p className="text-gray-300">Check back later for new learning content!</p>
+                        <BookOpen className="h-16 w-16 text-theme-accent mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-theme-primary mb-2">No modules available</h3>
+                        <p className="text-theme-muted">Check back later for new learning content!</p>
                     </div>
                 )}
             </div>

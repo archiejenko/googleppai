@@ -97,7 +97,7 @@ export default function Profile() {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl font-bold text-white mb-8">Account Settings</h1>
+            <h1 className="text-3xl font-bold text-theme-primary mb-8">Account Settings</h1>
 
             {message && (
                 <div className={`mb-6 p-4 rounded-lg flex items-center ${message.type === 'success' ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'}`}>
@@ -115,8 +115,8 @@ export default function Profile() {
                                 {user?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-white">{user?.name}</h2>
-                                <p className="text-gray-400">{user?.email}</p>
+                                <h2 className="text-xl font-bold text-theme-primary">{user?.name}</h2>
+                                <p className="text-theme-muted">{user?.email}</p>
                                 <div className="flex items-center mt-2 space-x-2">
                                     <span className="px-2 py-1 rounded-md bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30 uppercase">
                                         {user?.role === 'admin' ? 'Administrator' : user?.role === 'team_lead' ? 'Team Lead' : 'User'}
@@ -159,7 +159,7 @@ export default function Profile() {
                         <form onSubmit={handleProfileUpdate} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
+                                    <label className="block text-sm font-medium text-theme-muted mb-1">Full Name</label>
                                     <input
                                         type="text"
                                         value={formData.name}
@@ -169,7 +169,7 @@ export default function Profile() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">Industry</label>
+                                    <label className="block text-sm font-medium text-theme-muted mb-1">Industry</label>
                                     <input
                                         type="text"
                                         value={formData.industry}
@@ -180,7 +180,7 @@ export default function Profile() {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">Experience Level</label>
+                                <label className="block text-sm font-medium text-theme-muted mb-1">Experience Level</label>
                                 <select
                                     value={formData.experienceLevel}
                                     onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value })}
@@ -215,7 +215,7 @@ export default function Profile() {
                         </div>
                         <form onSubmit={handlePasswordChange} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">Current Password</label>
+                                <label className="block text-sm font-medium text-theme-muted mb-1">Current Password</label>
                                 <div className="relative">
                                     <input
                                         type={showPassword ? "text" : "password"}
@@ -234,7 +234,7 @@ export default function Profile() {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">New Password</label>
+                                <label className="block text-sm font-medium text-theme-muted mb-1">New Password</label>
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={passwordData.newPassword}
@@ -244,7 +244,7 @@ export default function Profile() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">Confirm New Password</label>
+                                <label className="block text-sm font-medium text-theme-muted mb-1">Confirm New Password</label>
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={passwordData.confirmPassword}
@@ -295,7 +295,7 @@ export default function Profile() {
                                 </button>
                                 <button
                                     onClick={() => simulateRole('user')}
-                                    className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${(user as any).simulatedRole === 'user' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                                    className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${(user as any).simulatedRole === 'user' ? 'bg-purple-600 text-white' : 'bg-theme-tertiary text-theme-muted hover:bg-theme-secondary'}`}
                                 >
                                     View as User
                                 </button>

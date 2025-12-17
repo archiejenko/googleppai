@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../utils/api';
 import { Mic, Square, Upload, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -12,6 +12,8 @@ export default function PitchRecorder() {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const sessionId = searchParams.get('sessionId');
 
     const startRecording = async () => {
         try {
@@ -55,13 +57,24 @@ export default function PitchRecorder() {
 
         const formData = new FormData();
         formData.append('audio', audioBlob, 'pitch.webm');
+        if (sessionId) {
+            formData.append('trainingSessionId', sessionId);
+        }
 
         try {
-            await api.post('/pitches/upload', formData, {
+            const response = await api.post('/pitches/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setSuccess(true);
-            setTimeout(() => navigate('/dashboard'), 2000);
+            setTimeout(() => {
+                if (sessionId) {
+                    // Navigate to training completion or specific pitch view
+                    navigate(`/training`);
+                } else {
+                    // Navigate directly to the analysis result for immediate feedback
+                    navigate(`/pitch/${response.data.id}`);
+                }
+            }, 2000);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Upload failed');
         } finally {
@@ -74,10 +87,10 @@ export default function PitchRecorder() {
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Header */}
                 <div className="text-center mb-12 animate-fade-in-up">
-                    <h1 className="text-4xl font-extrabold text-white mb-3">
+                    <h1 className="text-4xl font-extrabold text-theme-primary mb-3">
                         Record Your Pitch
                     </h1>
-                    <p className="text-gray-300 text-lg">
+                    <p className="text-theme-muted text-lg">
                         Practice your pitch and get instant AI-powered feedback
                     </p>
                 </div>
@@ -97,8 +110,8 @@ export default function PitchRecorder() {
                                 onClick={isRecording ? stopRecording : startRecording}
                                 disabled={isUploading}
                                 className={`relative w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 ${isRecording
-                                        ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/50'
-                                        : 'bg-gradient-to-br from-purple-600 to-blue-600 hover:scale-110 shadow-xl shadow-purple-500/50'
+                                    ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/50'
+                                    : 'bg-gradient-to-br from-purple-600 to-blue-600 hover:scale-110 shadow-xl shadow-purple-500/50'
                                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                             >
                                 {isRecording ? (
@@ -114,21 +127,21 @@ export default function PitchRecorder() {
                     <div className="mb-8">
                         {isRecording ? (
                             <div className="animate-pulse">
-                                <p className="text-2xl font-bold text-white mb-2">Recording...</p>
-                                <p className="text-gray-300">Click the button to stop</p>
+                                <p className="text-2xl font-bold text-theme-primary mb-2">Recording...</p>
+                                <p className="text-theme-muted">Click the button to stop</p>
                             </div>
                         ) : audioBlob ? (
                             <div>
                                 <div className="flex items-center justify-center gap-2 mb-2">
                                     <CheckCircle className="h-6 w-6 text-green-400" />
-                                    <p className="text-2xl font-bold text-white">Recording Complete!</p>
+                                    <p className="text-2xl font-bold text-theme-primary">Recording Complete!</p>
                                 </div>
-                                <p className="text-gray-300">Ready to upload for analysis</p>
+                                <p className="text-theme-muted">Ready to upload for analysis</p>
                             </div>
                         ) : (
                             <div>
-                                <p className="text-2xl font-bold text-white mb-2">Ready to Record</p>
-                                <p className="text-gray-300">Click the microphone to start</p>
+                                <p className="text-2xl font-bold text-theme-primary mb-2">Ready to Record</p>
+                                <p className="text-theme-muted">Click the microphone to start</p>
                             </div>
                         )}
                     </div>

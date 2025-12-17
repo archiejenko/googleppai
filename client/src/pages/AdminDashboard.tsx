@@ -132,8 +132,8 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-4xl font-extrabold text-white mb-2">Admin Dashboard</h1>
-                    <p className="text-gray-300">Manage users, teams, and monitor platform performance</p>
+                    <h1 className="text-4xl font-extrabold text-theme-primary mb-2">Admin Dashboard</h1>
+                    <p className="text-theme-muted">Manage users, teams, and monitor platform performance</p>
                 </div>
 
                 {/* Tabs */}
@@ -160,8 +160,8 @@ export default function AdminDashboard() {
                             <div className="glass-card p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-gray-300 text-sm">Total Users</p>
-                                        <p className="text-3xl font-bold text-white">{analytics.totalUsers}</p>
+                                        <p className="text-theme-muted text-sm">Total Users</p>
+                                        <p className="text-3xl font-bold text-theme-primary">{analytics.totalUsers}</p>
                                     </div>
                                     <Users className="h-10 w-10 text-blue-400" />
                                 </div>
@@ -169,8 +169,8 @@ export default function AdminDashboard() {
                             <div className="glass-card p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-gray-300 text-sm">Total Teams</p>
-                                        <p className="text-3xl font-bold text-white">{analytics.totalTeams}</p>
+                                        <p className="text-theme-muted text-sm">Total Teams</p>
+                                        <p className="text-3xl font-bold text-theme-primary">{analytics.totalTeams}</p>
                                     </div>
                                     <Building2 className="h-10 w-10 text-green-400" />
                                 </div>
@@ -178,8 +178,8 @@ export default function AdminDashboard() {
                             <div className="glass-card p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-gray-300 text-sm">Total Pitches</p>
-                                        <p className="text-3xl font-bold text-white">{analytics.totalPitches}</p>
+                                        <p className="text-theme-muted text-sm">Total Pitches</p>
+                                        <p className="text-3xl font-bold text-theme-primary">{analytics.totalPitches}</p>
                                     </div>
                                     <TrendingUp className="h-10 w-10 text-purple-400" />
                                 </div>
@@ -187,8 +187,8 @@ export default function AdminDashboard() {
                             <div className="glass-card p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-gray-300 text-sm">Avg Pitch Score</p>
-                                        <p className="text-3xl font-bold text-white">{analytics.averagePitchScore}</p>
+                                        <p className="text-theme-muted text-sm">Avg Pitch Score</p>
+                                        <p className="text-3xl font-bold text-theme-primary">{analytics.averagePitchScore}</p>
                                     </div>
                                     <Award className="h-10 w-10 text-yellow-400" />
                                 </div>
@@ -197,34 +197,34 @@ export default function AdminDashboard() {
 
                         {/* Recent Activity */}
                         <div className="glass-card p-6">
-                            <h3 className="text-xl font-bold text-white mb-4">Last 30 Days</h3>
+                            <h3 className="text-xl font-bold text-theme-primary mb-4">Last 30 Days</h3>
                             <div className="grid grid-cols-2 gap-6">
                                 <div>
-                                    <p className="text-gray-300 text-sm">New Users</p>
-                                    <p className="text-2xl font-bold text-white">{analytics.recentActivity.newUsersLast30Days}</p>
+                                    <p className="text-theme-muted text-sm">New Users</p>
+                                    <p className="text-2xl font-bold text-theme-primary">{analytics.recentActivity.newUsersLast30Days}</p>
                                 </div>
                                 <div>
-                                    <p className="text-gray-300 text-sm">Pitches Recorded</p>
-                                    <p className="text-2xl font-bold text-white">{analytics.recentActivity.pitchesLast30Days}</p>
+                                    <p className="text-theme-muted text-sm">Pitches Recorded</p>
+                                    <p className="text-2xl font-bold text-theme-primary">{analytics.recentActivity.pitchesLast30Days}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* User Role Breakdown */}
                         <div className="glass-card p-6">
-                            <h3 className="text-xl font-bold text-white mb-4">Users by Role</h3>
+                            <h3 className="text-xl font-bold text-theme-primary mb-4">Users by Role</h3>
                             <div className="grid grid-cols-3 gap-6">
                                 <div className="text-center">
-                                    <p className="text-3xl font-bold text-white">{analytics.usersByRole.user || 0}</p>
-                                    <p className="text-gray-300 text-sm">Employees</p>
+                                    <p className="text-3xl font-bold text-theme-primary">{analytics.usersByRole.user || 0}</p>
+                                    <p className="text-theme-muted text-sm">Employees</p>
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-3xl font-bold text-white">{analytics.usersByRole.team_lead || 0}</p>
-                                    <p className="text-gray-300 text-sm">Managers</p>
+                                    <p className="text-3xl font-bold text-theme-primary">{analytics.usersByRole.team_lead || 0}</p>
+                                    <p className="text-theme-muted text-sm">Managers</p>
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-3xl font-bold text-white">{analytics.usersByRole.admin || 0}</p>
-                                    <p className="text-gray-300 text-sm">Admins</p>
+                                    <p className="text-3xl font-bold text-theme-primary">{analytics.usersByRole.admin || 0}</p>
+                                    <p className="text-theme-muted text-sm">Admins</p>
                                 </div>
                             </div>
                         </div>
@@ -238,11 +238,11 @@ export default function AdminDashboard() {
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-white/10">
-                                        <th className="text-left p-4 text-gray-300 font-medium">User</th>
-                                        <th className="text-left p-4 text-gray-300 font-medium">Role</th>
-                                        <th className="text-left p-4 text-gray-300 font-medium">Team</th>
-                                        <th className="text-left p-4 text-gray-300 font-medium">XP</th>
-                                        <th className="text-left p-4 text-gray-300 font-medium">Actions</th>
+                                        <th className="text-left p-4 text-theme-muted font-medium">User</th>
+                                        <th className="text-left p-4 text-theme-muted font-medium">Role</th>
+                                        <th className="text-left p-4 text-theme-muted font-medium">Team</th>
+                                        <th className="text-left p-4 text-theme-muted font-medium">XP</th>
+                                        <th className="text-left p-4 text-theme-muted font-medium">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -250,8 +250,8 @@ export default function AdminDashboard() {
                                         <tr key={user.id} className="border-b border-white/5 hover:bg-white/5">
                                             <td className="p-4">
                                                 <div>
-                                                    <p className="text-white font-medium">{user.name || 'Unnamed'}</p>
-                                                    <p className="text-gray-400 text-sm">{user.email}</p>
+                                                    <p className="text-theme-primary font-medium">{user.name || 'Unnamed'}</p>
+                                                    <p className="text-theme-muted text-sm">{user.email}</p>
                                                 </div>
                                             </td>
                                             <td className="p-4">
@@ -333,17 +333,17 @@ export default function AdminDashboard() {
                                         <div className="space-y-2">
                                             {team.members.slice(0, 5).map(member => (
                                                 <div key={member.id} className="flex items-center justify-between text-sm">
-                                                    <span className="text-gray-300">{member.name || member.email}</span>
+                                                    <span className="text-theme-muted">{member.name || member.email}</span>
                                                     <span className={`px-2 py-1 rounded text-xs ${member.role === 'team_lead'
                                                         ? 'bg-yellow-500/20 text-yellow-400'
-                                                        : 'bg-white/10 text-gray-400'
+                                                        : 'bg-theme-secondary/20 text-theme-muted'
                                                         }`}>
                                                         {member.role === 'team_lead' ? 'Manager' : 'Employee'}
                                                     </span>
                                                 </div>
                                             ))}
                                             {team.members.length > 5 && (
-                                                <p className="text-gray-400 text-sm">+{team.members.length - 5} more</p>
+                                                <p className="text-theme-muted text-sm">+{team.members.length - 5} more</p>
                                             )}
                                         </div>
                                     )}

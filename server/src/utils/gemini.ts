@@ -36,10 +36,13 @@ export interface PitchAnalysis {
     questionCount: number;
 }
 
-export const analyzePitch = async (text: string): Promise<PitchAnalysis> => {
+export const analyzePitch = async (input: { text?: string, audio?: { buffer: Buffer, mimeType: string } }): Promise<PitchAnalysis> => {
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const prompt = `You are an expert sales coach specializing in the MEDDIC sales methodology. Analyze the following sales pitch transcript and provide comprehensive scoring.
+
+        let promptParts: any[] = [];
+
+        const systemPrompt = `You are an expert sales coach specializing in the MEDDIC sales methodology. Analyze the provided sales pitch (audio or text) and provide comprehensive scoring.
 
 MEDDIC Framework:
 - **Metrics (M)**: Does the pitch include quantifiable business impact, ROI, or measurable outcomes?
@@ -70,14 +73,14 @@ Return ONLY a valid JSON object with this exact structure:
         "champion": <0-100>
     },
     "meddicBreakdown": {
-        "metrics": "<specific feedback on metrics>",
-        "economicBuyer": "<specific feedback on economic buyer>",
-        "decisionCriteria": "<specific feedback on decision criteria>",
-        "decisionProcess": "<specific feedback on decision process>",
-        "identifyPain": "<specific feedback on pain identification>",
-        "champion": "<specific feedback on champion building>"
+        "metrics": "<specific feedback>",
+        "economicBuyer": "<specific feedback>",
+        "decisionCriteria": "<specific feedback>",
+        "decisionProcess": "<specific feedback>",
+        "identifyPain": "<specific feedback>",
+        "champion": "<specific feedback>"
     },
-    "feedback": "<overall general feedback on the pitch>",
+    "feedback": "<overall general feedback>",
     "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
     "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"],
     "sentimentScore": <-1 to 1>,
@@ -90,17 +93,30 @@ Return ONLY a valid JSON object with this exact structure:
     "questionCount": <number>
 }
 
-Do not include markdown formatting like \`\`\`json. Just the raw JSON.
+Do not include markdown formatting like \`\`\`json. Just the raw JSON.`;
 
-Transcript: ${text}`;
+        promptParts.push(systemPrompt);
 
-        const result = await model.generateContent(prompt);
+        if (input.audio) {
+            promptParts.push({
+                inlineData: {
+                    mimeType: input.audio.mimeType,
+                    data: input.audio.buffer.toString('base64')
+                }
+            });
+            promptParts.push("Analyze this audio pitch.");
+        } else if (input.text) {
+            promptParts.push(`Transcript: ${input.text}`);
+        } else {
+            throw new Error("No input provided");
+        }
+
+        const result = await model.generateContent(promptParts);
         const response = await result.response;
         const textResponse = response.text();
 
         // Clean up if markdown is present
         const cleanText = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-
         const parsed = JSON.parse(cleanText);
 
         // Ensure all required fields are present with defaults
@@ -137,34 +153,69 @@ Transcript: ${text}`;
     } catch (error) {
         console.error("Gemini Analysis Error:", error);
         return {
-            feedback: "Analysis failed",
+            feedback: "Analysis failed. Please try again.",
             score: 0,
-            meddicScores: {
-                metrics: 0,
-                economicBuyer: 0,
-                decisionCriteria: 0,
-                decisionProcess: 0,
-                identifyPain: 0,
-                champion: 0,
-            },
-            meddicBreakdown: {
-                metrics: "Analysis failed",
-                economicBuyer: "Analysis failed",
-                decisionCriteria: "Analysis failed",
-                decisionProcess: "Analysis failed",
-                identifyPain: "Analysis failed",
-                champion: "Analysis failed",
-            },
+            meddicScores: { metrics: 0, economicBuyer: 0, decisionCriteria: 0, decisionProcess: 0, identifyPain: 0, champion: 0 },
+            meddicBreakdown: { metrics: "N/A", economicBuyer: "N/A", decisionCriteria: "N/A", decisionProcess: "N/A", identifyPain: "N/A", champion: "N/A" },
             strengths: [],
             improvements: [],
             sentimentScore: 0,
             confidenceScore: 0,
-            paceScore: 50,
+            paceScore: 0,
             clarityScore: 0,
             duration: 0,
             keyPhrases: [],
             fillerWordCount: 0,
             questionCount: 0,
         };
+    }
+};
+
+export const continueConversation = async (
+    history: { role: 'user' | 'ai', text: string }[],
+    newMessage: string,
+    context: { scenario: string, persona: string, goal: string }
+): Promise<string> => {
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const historyForGemini = history.map(h => ({
+            role: h.role === 'ai' ? 'model' : 'user',
+            parts: [{ text: h.text }]
+        }));
+
+        const systemPrompt = `You are roleplaying as a sales prospect. 
+        Context:
+        - Scenario: ${context.scenario}
+        - Your Role: ${context.persona}
+        - Salesperson's Goal: ${context.goal}
+        
+        Instructions:
+        - Act naturally, like a busy professional.
+        - Do not be overly helpful or overly difficult unless the difficulty setting implies it (assume medium difficulty).
+        - Keep responses concise (1-3 sentences) to allow for back-and-forth conversation.
+        - React to what the user says. If they make a good point, acknowledge it. If they are vague, ask for clarification.
+        - Do not break character.`;
+
+        // Start waiting for the first user message, or if history exists, append to it.
+        // Actually, startChat allows providing history.
+        // But we need to inject system prompt. 
+        // Gemini doesn't have a strict 'system' role in `startChat` history in all versions, 
+        // but passing it as the first 'user' part or separately is common.
+        // Let's prepend the system prompt to the first history item or current prompt?
+        // Better: use `systemInstruction` if available (Gemini 1.5 Pro/Flash supports it).
+
+        const chat = model.startChat({
+            history: historyForGemini,
+            systemInstruction: systemPrompt
+        });
+
+        const result = await chat.sendMessage(newMessage);
+        const response = await result.response;
+        return response.text();
+
+    } catch (error) {
+        console.error("Gemini Chat Error:", error);
+        return "I apologize, I didn't verify that. Could you repeat it?";
     }
 };

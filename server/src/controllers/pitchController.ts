@@ -22,18 +22,23 @@ export const createPitch = async (req: Request, res: Response) => {
         // Ideally, we send audio to Gemini for transcription + analysis.
         const transcript = req.body.transcript || "Audio transcription placeholder";
 
-        // Analyze with Gemini
-        const analysisResult = await analyzePitch(transcript);
+        // Analyze with Gemini (Multimodal)
+        const analysisResult = await analyzePitch({
+            audio: {
+                buffer: file.buffer,
+                mimeType: file.mimetype
+            }
+        });
 
         const pitch = await prisma.pitch.create({
             data: {
                 userId,
                 audioUrl,
-                transcript,
+                transcript: transcript || "Audio Analysis", // Gemini 1.5 might not return full transcript unless asked, we focus on analysis
                 analysis: analysisResult as any,
                 feedback: analysisResult.feedback,
                 score: analysisResult.score,
-                trainingSessionId,
+                trainingSessionId: trainingSessionId || null,
                 duration: analysisResult.duration,
                 sentimentScore: analysisResult.sentimentScore,
                 confidenceScore: analysisResult.confidenceScore,

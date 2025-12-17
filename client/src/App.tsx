@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -13,7 +13,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import ActiveTraining from './pages/ActiveTraining';
 
+import Landing from './pages/Landing';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
@@ -21,11 +23,12 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route element={<Layout />}>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/record" element={<PitchRecorder />} />
             <Route path="/pitch/:id" element={<PitchAnalysis />} />
@@ -42,6 +45,7 @@ function App() {
                 <AdminDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/active-training" element={<ActiveTraining />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>
