@@ -53,10 +53,10 @@ export default function Dashboard() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Header */}
                 <div className="mb-12 animate-fade-in-up">
-                    <h1 className="text-4xl font-extrabold text-white mb-2">
+                    <h1 className="text-4xl font-extrabold text-theme-primary mb-2">
                         Your Dashboard
                     </h1>
-                    <p className="text-gray-300 text-lg">
+                    <p className="text-theme-muted text-lg">
                         Track your progress and improve your pitch skills
                     </p>
                 </div>
@@ -66,8 +66,8 @@ export default function Dashboard() {
                     <div className="glass-card p-6 animate-fade-in-up stagger-1">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-gray-300 text-sm font-medium mb-1">Total Pitches</p>
-                                <p className="text-4xl font-bold text-white">{pitches.length}</p>
+                                <p className="text-theme-muted text-sm font-medium mb-1">Total Pitches</p>
+                                <p className="text-4xl font-bold text-theme-primary">{pitches.length}</p>
                             </div>
                             <div className="bg-purple-500/20 p-4 rounded-xl">
                                 <Mic className="h-8 w-8 text-purple-400" />
@@ -78,8 +78,8 @@ export default function Dashboard() {
                     <div className="glass-card p-6 animate-fade-in-up stagger-2">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-gray-300 text-sm font-medium mb-1">Average Score</p>
-                                <p className="text-4xl font-bold text-white">{averageScore}</p>
+                                <p className="text-theme-muted text-sm font-medium mb-1">Average Score</p>
+                                <p className="text-4xl font-bold text-theme-primary">{averageScore}</p>
                             </div>
                             <div className="bg-blue-500/20 p-4 rounded-xl">
                                 <BarChart3 className="h-8 w-8 text-blue-400" />
@@ -90,8 +90,8 @@ export default function Dashboard() {
                     <div className="glass-card p-6 animate-fade-in-up stagger-3">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-gray-300 text-sm font-medium mb-1">Best Score</p>
-                                <p className="text-4xl font-bold text-white">{highScore}</p>
+                                <p className="text-theme-muted text-sm font-medium mb-1">Best Score</p>
+                                <p className="text-4xl font-bold text-theme-primary">{highScore}</p>
                             </div>
                             <div className="bg-green-500/20 p-4 rounded-xl">
                                 <Award className="h-8 w-8 text-green-400" />
@@ -107,8 +107,8 @@ export default function Dashboard() {
                             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl mb-4">
                                 <Zap className="h-8 w-8 text-white" />
                             </div>
-                            <h3 className="text-2xl font-bold text-white mb-2">Record New Pitch</h3>
-                            <p className="text-gray-300">Practice and get instant AI-powered feedback</p>
+                            <h3 className="text-2xl font-bold text-theme-primary mb-2">Record New Pitch</h3>
+                            <p className="text-theme-muted">Practice and get instant AI-powered feedback</p>
                         </div>
                     </Link>
                 </div>
@@ -116,16 +116,16 @@ export default function Dashboard() {
                 {/* Pitches Section */}
                 <div className="animate-fade-in-up stagger-5">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-white">Recent Pitches</h2>
+                        <h2 className="text-2xl font-bold text-theme-primary">Recent Pitches</h2>
                     </div>
 
                     {pitches.length === 0 ? (
                         <div className="glass-card text-center py-16">
-                            <div className="mx-auto h-16 w-16 text-gray-400 mb-6 bg-purple-500/10 rounded-2xl flex items-center justify-center">
+                            <div className="mx-auto h-16 w-16 text-theme-muted mb-6 bg-purple-500/10 rounded-2xl flex items-center justify-center">
                                 <TrendingUp className="h-8 w-8 text-purple-400" />
                             </div>
-                            <h3 className="text-xl font-semibold text-white mb-2">No pitches yet</h3>
-                            <p className="text-gray-300 mb-6">Record your first pitch to get started!</p>
+                            <h3 className="text-xl font-semibold text-theme-primary mb-2">No pitches yet</h3>
+                            <p className="text-theme-muted mb-6">Record your first pitch to get started!</p>
                             <Link to="/record">
                                 <button className="btn-gradient">
                                     Start Recording
@@ -141,7 +141,7 @@ export default function Dashboard() {
                                     style={{ animationDelay: `${index * 0.1}s` }}
                                 >
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center text-sm text-gray-300">
+                                        <div className="flex items-center text-sm text-theme-muted">
                                             <Calendar className="h-4 w-4 mr-2" />
                                             {new Date(pitch.createdAt).toLocaleDateString()}
                                         </div>
@@ -155,12 +155,12 @@ export default function Dashboard() {
                                         </div>
                                     </div>
 
-                                    <p className="text-gray-300 line-clamp-3 mb-6 text-sm min-h-[4rem]">
+                                    <p className="text-theme-secondary line-clamp-3 mb-6 text-sm min-h-[4rem]">
                                         {pitch.transcript || "No transcript available"}
                                     </p>
 
 
-                                    <Link to={`/pitch/${pitch.id}`} className="w-full py-2 px-4 bg-white/5 hover:bg-white/10 border border-white/20 hover:border-white/30 rounded-lg text-white text-sm font-medium flex items-center justify-center transition-all duration-300">
+                                    <Link to={`/pitch/${pitch.id}`} className="w-full py-2 px-4 bg-theme-tertiary hover:bg-theme-secondary border border-border-color hover:border-border-hover rounded-lg text-theme-primary text-sm font-medium flex items-center justify-center transition-all duration-300">
                                         <FileText className="h-4 w-4 mr-2" />
                                         View MEDDIC Analysis
                                     </Link>

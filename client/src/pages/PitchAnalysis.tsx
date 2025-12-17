@@ -53,20 +53,20 @@ const MEDDICComponent = ({ label, score, feedback }: { label: string; score: num
     return (
         <div className="glass-card p-6">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">{label}</h3>
+                <h3 className="text-lg font-semibold text-theme-primary">{label}</h3>
                 <div className={`px-3 py-1 rounded-full text-sm font-bold bg-gradient-to-r ${getColor(score)} text-white`}>
                     {score}
                 </div>
             </div>
             <div className="mb-4">
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-2 bg-theme-tertiary rounded-full overflow-hidden">
                     <div
                         className={`h-full bg-gradient-to-r ${getColor(score)} transition-all duration-1000`}
                         style={{ width: `${score}%` }}
                     ></div>
                 </div>
             </div>
-            <p className="text-gray-300 text-sm">{feedback}</p>
+            <p className="text-theme-muted text-sm">{feedback}</p>
         </div>
     );
 };
@@ -138,10 +138,10 @@ export default function PitchAnalysis() {
                         <ArrowLeft className="h-5 w-5 mr-2" />
                         Back to Dashboard
                     </button>
-                    <h1 className="text-4xl font-extrabold text-white mb-2">
+                    <h1 className="text-4xl font-extrabold text-theme-primary mb-2">
                         Pitch Analysis
                     </h1>
-                    <p className="text-gray-300 text-lg">
+                    <p className="text-theme-muted text-lg">
                         {new Date(pitch.createdAt).toLocaleDateString('en-US', {
                             weekday: 'long',
                             year: 'numeric',
@@ -156,13 +156,13 @@ export default function PitchAnalysis() {
                     <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 mb-4">
                         <div className="text-5xl font-bold text-white">{pitch.score}</div>
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">Overall MEDDIC Score</h2>
-                    <p className="text-gray-300">{pitch.analysis.feedback}</p>
+                    <h2 className="text-2xl font-bold text-theme-primary mb-2">Overall MEDDIC Score</h2>
+                    <p className="text-theme-muted">{pitch.analysis.feedback}</p>
                 </div>
 
                 {/* MEDDIC Breakdown */}
                 <div className="mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-6 animate-fade-in-up stagger-2">
+                    <h2 className="text-2xl font-bold text-theme-primary mb-6 animate-fade-in-up stagger-2">
                         MEDDIC Framework Analysis
                     </h2>
                     <div className="grid md:grid-cols-2 gap-6">
@@ -184,22 +184,22 @@ export default function PitchAnalysis() {
 
                 {/* Enhanced Metrics */}
                 <div className="mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-6 animate-fade-in-up stagger-9">
+                    <h2 className="text-2xl font-bold text-theme-primary mb-6 animate-fade-in-up stagger-9">
                         Performance Metrics
                     </h2>
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div className="glass-card p-6 animate-fade-in-up stagger-10">
-                            <h3 className="text-sm font-medium text-gray-300 mb-2">Sentiment</h3>
+                            <h3 className="text-sm font-medium text-theme-muted mb-2">Sentiment</h3>
                             <div className="flex items-baseline gap-2 mb-2">
-                                <span className="text-3xl font-bold text-white">
+                                <span className="text-3xl font-bold text-theme-primary">
                                     {pitch.analysis.sentimentScore > 0 ? '+' : ''}{(pitch.analysis.sentimentScore * 100).toFixed(0)}%
                                 </span>
                             </div>
                             <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                                 <div
                                     className={`h-full transition-all duration-1000 ${pitch.analysis.sentimentScore > 0
-                                            ? 'bg-gradient-to-r from-green-500 to-emerald-500'
-                                            : 'bg-gradient-to-r from-red-500 to-rose-500'
+                                        ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                                        : 'bg-gradient-to-r from-red-500 to-rose-500'
                                         }`}
                                     style={{ width: `${Math.abs(pitch.analysis.sentimentScore) * 100}%` }}
                                 ></div>
@@ -207,12 +207,12 @@ export default function PitchAnalysis() {
                         </div>
 
                         <div className="glass-card p-6 animate-fade-in-up stagger-11">
-                            <h3 className="text-sm font-medium text-gray-300 mb-2">Confidence</h3>
+                            <h3 className="text-sm font-medium text-theme-muted mb-2">Confidence</h3>
                             <div className="flex items-baseline gap-2 mb-2">
-                                <span className="text-3xl font-bold text-white">{pitch.analysis.confidenceScore}</span>
-                                <span className="text-gray-400 text-sm">/100</span>
+                                <span className="text-3xl font-bold text-theme-primary">{pitch.analysis.confidenceScore}</span>
+                                <span className="text-theme-muted text-sm">/100</span>
                             </div>
-                            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-2 bg-theme-tertiary rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-1000"
                                     style={{ width: `${pitch.analysis.confidenceScore}%` }}
@@ -221,12 +221,12 @@ export default function PitchAnalysis() {
                         </div>
 
                         <div className="glass-card p-6 animate-fade-in-up stagger-12">
-                            <h3 className="text-sm font-medium text-gray-300 mb-2">Pace</h3>
+                            <h3 className="text-sm font-medium text-theme-muted mb-2">Pace</h3>
                             <div className="flex items-baseline gap-2 mb-2">
-                                <span className="text-3xl font-bold text-white">{pitch.analysis.paceScore}</span>
-                                <span className="text-gray-400 text-sm">/100</span>
+                                <span className="text-3xl font-bold text-theme-primary">{pitch.analysis.paceScore}</span>
+                                <span className="text-theme-muted text-sm">/100</span>
                             </div>
-                            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-2 bg-theme-tertiary rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-gradient-to-r from-yellow-500 to-amber-500 transition-all duration-1000"
                                     style={{ width: `${pitch.analysis.paceScore}%` }}
@@ -235,12 +235,12 @@ export default function PitchAnalysis() {
                         </div>
 
                         <div className="glass-card p-6 animate-fade-in-up stagger-13">
-                            <h3 className="text-sm font-medium text-gray-300 mb-2">Clarity</h3>
+                            <h3 className="text-sm font-medium text-theme-muted mb-2">Clarity</h3>
                             <div className="flex items-baseline gap-2 mb-2">
-                                <span className="text-3xl font-bold text-white">{pitch.analysis.clarityScore}</span>
-                                <span className="text-gray-400 text-sm">/100</span>
+                                <span className="text-3xl font-bold text-theme-primary">{pitch.analysis.clarityScore}</span>
+                                <span className="text-theme-muted text-sm">/100</span>
                             </div>
-                            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-2 bg-theme-tertiary rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-1000"
                                     style={{ width: `${pitch.analysis.clarityScore}%` }}
@@ -253,10 +253,10 @@ export default function PitchAnalysis() {
                     <div className="grid md:grid-cols-3 gap-6 mt-6">
                         {pitch.analysis.keyPhrases && pitch.analysis.keyPhrases.length > 0 && (
                             <div className="glass-card p-6 animate-fade-in-up stagger-14">
-                                <h3 className="text-white font-semibold mb-3">Key Phrases</h3>
+                                <h3 className="text-theme-primary font-semibold mb-3">Key Phrases</h3>
                                 <ul className="space-y-2">
                                     {pitch.analysis.keyPhrases.map((phrase, idx) => (
-                                        <li key={idx} className="text-gray-300 text-sm flex items-start gap-2">
+                                        <li key={idx} className="text-theme-muted text-sm flex items-start gap-2">
                                             <span className="text-purple-400">•</span>
                                             <span>"{phrase}"</span>
                                         </li>
@@ -266,20 +266,20 @@ export default function PitchAnalysis() {
                         )}
 
                         <div className="glass-card p-6 animate-fade-in-up stagger-15">
-                            <h3 className="text-white font-semibold mb-3">Filler Words</h3>
+                            <h3 className="text-theme-primary font-semibold mb-3">Filler Words</h3>
                             <div className="text-center">
-                                <span className="text-4xl font-bold text-white">{pitch.analysis.fillerWordCount || 0}</span>
-                                <p className="text-gray-300 text-sm mt-2">
+                                <span className="text-4xl font-bold text-theme-primary">{pitch.analysis.fillerWordCount || 0}</span>
+                                <p className="text-theme-muted text-sm mt-2">
                                     {pitch.analysis.fillerWordCount > 10 ? 'Try to reduce' : 'Great job!'}
                                 </p>
                             </div>
                         </div>
 
                         <div className="glass-card p-6 animate-fade-in-up stagger-16">
-                            <h3 className="text-white font-semibold mb-3">Questions Asked</h3>
+                            <h3 className="text-theme-primary font-semibold mb-3">Questions Asked</h3>
                             <div className="text-center">
-                                <span className="text-4xl font-bold text-white">{pitch.analysis.questionCount || 0}</span>
-                                <p className="text-gray-300 text-sm mt-2">
+                                <span className="text-4xl font-bold text-theme-primary">{pitch.analysis.questionCount || 0}</span>
+                                <p className="text-theme-muted text-sm mt-2">
                                     {pitch.analysis.questionCount > 0 ? 'Good engagement' : 'Consider asking more'}
                                 </p>
                             </div>
@@ -292,11 +292,11 @@ export default function PitchAnalysis() {
                     <div className="glass-card p-6 animate-fade-in-up stagger-17">
                         <div className="flex items-center gap-2 mb-4">
                             <CheckCircle2 className="h-6 w-6 text-green-400" />
-                            <h3 className="text-xl font-bold text-white">Strengths</h3>
+                            <h3 className="text-xl font-bold text-theme-primary">Strengths</h3>
                         </div>
                         <ul className="space-y-3">
                             {pitch.analysis.strengths.map((strength, index) => (
-                                <li key={index} className="flex items-start gap-2 text-gray-300">
+                                <li key={index} className="flex items-start gap-2 text-theme-muted">
                                     <span className="text-green-400 mt-1">✓</span>
                                     <span>{strength}</span>
                                 </li>
@@ -307,11 +307,11 @@ export default function PitchAnalysis() {
                     <div className="glass-card p-6 animate-fade-in-up stagger-18">
                         <div className="flex items-center gap-2 mb-4">
                             <TrendingUp className="h-6 w-6 text-yellow-400" />
-                            <h3 className="text-xl font-bold text-white">Areas for Improvement</h3>
+                            <h3 className="text-xl font-bold text-theme-primary">Areas for Improvement</h3>
                         </div>
                         <ul className="space-y-3">
                             {pitch.analysis.improvements.map((improvement, index) => (
-                                <li key={index} className="flex items-start gap-2 text-gray-300">
+                                <li key={index} className="flex items-start gap-2 text-theme-muted">
                                     <span className="text-yellow-400 mt-1">→</span>
                                     <span>{improvement}</span>
                                 </li>
@@ -322,8 +322,8 @@ export default function PitchAnalysis() {
 
                 {/* Transcript */}
                 <div className="glass-card p-6 animate-fade-in-up stagger-11">
-                    <h3 className="text-xl font-bold text-white mb-4">Transcript</h3>
-                    <p className="text-gray-300 leading-relaxed">{pitch.transcript}</p>
+                    <h3 className="text-xl font-bold text-theme-primary mb-4">Transcript</h3>
+                    <p className="text-theme-muted leading-relaxed">{pitch.transcript}</p>
                 </div>
             </div>
         </div>

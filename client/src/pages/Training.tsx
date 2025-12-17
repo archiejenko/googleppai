@@ -8,6 +8,13 @@ interface Industry {
     name: string;
     description: string;
     icon: string;
+    scenarioTemplates?: {
+        id: string;
+        title: string;
+        description: string;
+        difficulty: string;
+        targetPersona: string;
+    }[];
 }
 
 export default function Training() {
@@ -36,13 +43,37 @@ export default function Training() {
         fetchIndustries();
     }, []);
 
-    const scenarios = [
+    const defaultScenarios = [
         { value: 'cold_call', label: 'Cold Call', description: 'Initial outreach to prospects' },
         { value: 'product_demo', label: 'Product Demo', description: 'Showcase your solution' },
         { value: 'objection_handling', label: 'Objection Handling', description: 'Address concerns effectively' },
         { value: 'negotiation', label: 'Negotiation', description: 'Navigate pricing discussions' },
         { value: 'closing', label: 'Closing', description: 'Seal the deal' },
     ];
+
+    const [availableScenarios, setAvailableScenarios] = useState(defaultScenarios);
+
+    // Update scenarios when industry changes
+    useEffect(() => {
+        if (!formData.industryId) {
+            setAvailableScenarios(defaultScenarios);
+            return;
+        }
+
+        const selectedIndustry = industries.find(ind => ind.id === formData.industryId);
+        if (selectedIndustry?.scenarioTemplates && selectedIndustry.scenarioTemplates.length > 0) {
+            const industryScenarios = selectedIndustry.scenarioTemplates.map(t => ({
+                value: t.id,
+                label: t.title,
+                description: t.description
+            }));
+            setAvailableScenarios(industryScenarios);
+            // Default select first one
+            setFormData(prev => ({ ...prev, scenario: industryScenarios[0].value }));
+        } else {
+            setAvailableScenarios(defaultScenarios);
+        }
+    }, [formData.industryId, industries]);
 
     const difficulties = [
         { value: 'easy', label: 'Easy', color: 'from-green-500 to-emerald-500', xp: 50 },
@@ -56,8 +87,8 @@ export default function Training() {
 
         try {
             const response = await api.post('/training', formData);
-            // Navigate to recorder with session ID
-            navigate(`/record?sessionId=${response.data.id}`);
+            // Navigate to active training (conversation mode) with session ID
+            navigate(`/active-training?sessionId=${response.data.id}`);
         } catch (error) {
             console.error('Failed to create training session', error);
         } finally {
@@ -70,10 +101,10 @@ export default function Training() {
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Header */}
                 <div className="mb-12 animate-fade-in-up">
-                    <h1 className="text-4xl font-extrabold text-white mb-2">
+                    <h1 className="text-4xl font-extrabold text-theme-primary mb-2">
                         Configure Training Session
                     </h1>
-                    <p className="text-gray-300 text-lg">
+                    <p className="text-theme-muted text-lg">
                         Customize your practice session for targeted improvement
                     </p>
                 </div>
@@ -82,22 +113,22 @@ export default function Training() {
                     {/* Scenario Selection */}
                     <div className="glass-card p-6 animate-fade-in-up stagger-1">
                         <div className="flex items-center gap-2 mb-4">
-                            <Target className="h-6 w-6 text-purple-400" />
-                            <h2 className="text-2xl font-bold text-white">Sales Scenario</h2>
+                            <Target className="h-6 w-6 text-theme-accent" />
+                            <h2 className="text-2xl font-bold text-theme-primary">Sales Scenario</h2>
                         </div>
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {scenarios.map((scenario) => (
+                            {availableScenarios.map((scenario) => (
                                 <button
                                     key={scenario.value}
                                     type="button"
                                     onClick={() => setFormData({ ...formData, scenario: scenario.value })}
                                     className={`p-4 rounded-lg border-2 transition-all text-left ${formData.scenario === scenario.value
-                                            ? 'border-purple-500 bg-purple-500/20'
-                                            : 'border-white/20 bg-white/5 hover:border-white/40'
+                                        ? 'border-[rgb(var(--accent-primary))] bg-[rgba(var(--accent-primary),0.2)]'
+                                        : 'border-border-color bg-theme-tertiary hover:border-theme-muted'
                                         }`}
                                 >
-                                    <h3 className="text-white font-semibold mb-1">{scenario.label}</h3>
-                                    <p className="text-gray-300 text-sm">{scenario.description}</p>
+                                    <h3 className="text-theme-primary font-semibold mb-1">{scenario.label}</h3>
+                                    <p className="text-theme-muted text-sm">{scenario.description}</p>
                                 </button>
                             ))}
                         </div>
@@ -106,8 +137,8 @@ export default function Training() {
                     {/* Difficulty Level */}
                     <div className="glass-card p-6 animate-fade-in-up stagger-2">
                         <div className="flex items-center gap-2 mb-4">
-                            <TrendingUp className="h-6 w-6 text-purple-400" />
-                            <h2 className="text-2xl font-bold text-white">Difficulty Level</h2>
+                            <TrendingUp className="h-6 w-6 text-theme-accent" />
+                            <h2 className="text-2xl font-bold text-theme-primary">Difficulty Level</h2>
                         </div>
                         <div className="grid md:grid-cols-3 gap-4">
                             {difficulties.map((diff) => (
@@ -116,12 +147,12 @@ export default function Training() {
                                     type="button"
                                     onClick={() => setFormData({ ...formData, difficulty: diff.value })}
                                     className={`p-6 rounded-lg border-2 transition-all ${formData.difficulty === diff.value
-                                            ? `border-transparent bg-gradient-to-r ${diff.color}`
-                                            : 'border-white/20 bg-white/5 hover:border-white/40'
+                                        ? `border-transparent bg-gradient-to-r ${diff.color}`
+                                        : 'border-border-color bg-theme-tertiary hover:border-theme-muted'
                                         }`}
                                 >
-                                    <h3 className="text-white font-bold text-lg mb-1">{diff.label}</h3>
-                                    <p className="text-white/80 text-sm">+{diff.xp} XP</p>
+                                    <h3 className={`font-bold text-lg mb-1 ${formData.difficulty === diff.value ? 'text-white' : 'text-theme-primary'}`}>{diff.label}</h3>
+                                    <p className={`text-sm ${formData.difficulty === diff.value ? 'text-white/80' : 'text-theme-muted'}`}>+{diff.xp} XP</p>
                                 </button>
                             ))}
                         </div>
@@ -129,10 +160,10 @@ export default function Training() {
 
                     {/* Additional Configuration */}
                     <div className="glass-card p-6 animate-fade-in-up stagger-3">
-                        <h2 className="text-2xl font-bold text-white mb-6">Additional Details</h2>
+                        <h2 className="text-2xl font-bold text-theme-primary mb-6">Additional Details</h2>
                         <div className="grid md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-gray-300 mb-2 font-medium">
+                                <label className="block text-theme-muted mb-2 font-medium">
                                     Target Persona
                                 </label>
                                 <input
@@ -140,12 +171,12 @@ export default function Training() {
                                     value={formData.targetPersona}
                                     onChange={(e) => setFormData({ ...formData, targetPersona: e.target.value })}
                                     placeholder="e.g., VP of Sales, CTO, Marketing Director"
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
+                                    className="input-glass"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-gray-300 mb-2 font-medium">
+                                <label className="block text-theme-muted mb-2 font-medium">
                                     Pitch Goal
                                 </label>
                                 <input
@@ -153,19 +184,19 @@ export default function Training() {
                                     value={formData.pitchGoal}
                                     onChange={(e) => setFormData({ ...formData, pitchGoal: e.target.value })}
                                     placeholder="e.g., Book a demo, Close deal, Qualify lead"
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
+                                    className="input-glass"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-gray-300 mb-2 font-medium flex items-center gap-2">
+                                <label className="block text-theme-muted mb-2 font-medium flex items-center gap-2">
                                     <Clock className="h-4 w-4" />
                                     Time Limit (seconds)
                                 </label>
                                 <select
                                     value={formData.timeLimit}
                                     onChange={(e) => setFormData({ ...formData, timeLimit: parseInt(e.target.value) })}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:border-purple-500 transition-colors"
+                                    className="input-glass"
                                 >
                                     <option value={60}>1 minute</option>
                                     <option value={120}>2 minutes</option>
@@ -176,14 +207,14 @@ export default function Training() {
                             </div>
 
                             <div>
-                                <label className="block text-gray-300 mb-2 font-medium flex items-center gap-2">
+                                <label className="block text-theme-muted mb-2 font-medium flex items-center gap-2">
                                     <Globe className="h-4 w-4" />
                                     Language
                                 </label>
                                 <select
                                     value={formData.language}
                                     onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:border-purple-500 transition-colors"
+                                    className="input-glass"
                                 >
                                     <option value="en">English</option>
                                     <option value="es">Spanish</option>
@@ -195,13 +226,13 @@ export default function Training() {
 
                             {industries.length > 0 && (
                                 <div className="md:col-span-2">
-                                    <label className="block text-gray-300 mb-2 font-medium">
+                                    <label className="block text-theme-muted mb-2 font-medium">
                                         Industry (Optional)
                                     </label>
                                     <select
                                         value={formData.industryId}
                                         onChange={(e) => setFormData({ ...formData, industryId: e.target.value })}
-                                        className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:border-purple-500 transition-colors"
+                                        className="input-glass"
                                     >
                                         <option value="">Select an industry</option>
                                         {industries.map((industry) => (

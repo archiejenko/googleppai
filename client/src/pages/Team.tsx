@@ -79,10 +79,10 @@ export default function Team() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Header */}
                 <div className="mb-12 animate-fade-in-up">
-                    <h1 className="text-4xl font-extrabold text-white mb-2">
+                    <h1 className="text-4xl font-extrabold text-theme-primary mb-2">
                         Team Performance
                     </h1>
-                    <p className="text-gray-300 text-lg">
+                    <p className="text-theme-muted text-lg">
                         Track your team's progress and identify areas for improvement
                     </p>
                 </div>
@@ -128,9 +128,9 @@ export default function Team() {
                     <div className="glass-card p-6 animate-fade-in-up stagger-4">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-gray-300 text-sm font-medium mb-1">Top Performer</p>
-                                <p className="text-lg font-bold text-white truncate">{analytics.topPerformer.name}</p>
-                                <p className="text-sm text-gray-300">Score: {Math.round(analytics.topPerformer.avgScore)}</p>
+                                <p className="text-theme-muted text-sm font-medium mb-1">Top Performer</p>
+                                <p className="text-lg font-bold text-theme-primary truncate">{analytics.topPerformer.name}</p>
+                                <p className="text-sm text-theme-muted">Score: {Math.round(analytics.topPerformer.avgScore)}</p>
                             </div>
                             <div className="bg-purple-500/20 p-4 rounded-xl">
                                 <Award className="h-8 w-8 text-purple-400" />
@@ -141,7 +141,7 @@ export default function Team() {
 
                 {/* Team Members */}
                 <div className="animate-fade-in-up stagger-5">
-                    <h2 className="text-2xl font-bold text-white mb-6">Team Members</h2>
+                    <h2 className="text-2xl font-bold text-theme-primary mb-6">Team Members</h2>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {team.members.map((member, index) => (
                             <div
@@ -162,7 +162,7 @@ export default function Team() {
                                 </div>
 
                                 <div className="mb-4">
-                                    <div className="flex items-center gap-2 text-sm text-gray-300 mb-2">
+                                    <div className="flex items-center gap-2 text-sm text-theme-muted mb-2">
                                         <TrendingUp className="h-4 w-4 text-yellow-400" />
                                         <span>{member.totalXP} XP</span>
                                     </div>

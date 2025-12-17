@@ -24,7 +24,7 @@ export default function Layout() {
                                     <Mic className="h-6 w-6 text-white" />
                                 </div>
                             </div>
-                            <span className="ml-3 text-xl font-bold text-white">PitchPerfect AI</span>
+                            <span className="ml-3 text-xl font-bold text-theme-primary">PitchPerfect AI</span>
                         </div>
                         <div className="flex items-center space-x-4">
                             <Link
@@ -73,13 +73,7 @@ export default function Layout() {
                                     Admin
                                 </Link>
                             )}
-                            <Link
-                                to="/pricing"
-                                className="text-theme-muted hover:text-theme-primary flex items-center font-medium transition-colors"
-                            >
-                                <DollarSign className="h-5 w-5 mr-1" />
-                                Pricing
-                            </Link>
+
                             <Link
                                 to="/profile"
                                 className="text-theme-muted hover:text-theme-primary flex items-center font-medium transition-colors"

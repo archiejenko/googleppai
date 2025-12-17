@@ -100,13 +100,13 @@
         --text-muted: 115 115 115;
         /* neutral-500 */
 
-        /* Accent Colors - Orange */
-        --accent-primary: 249 115 22;
-        /* orange-500 */
-        --accent-secondary: 251 146 60;
-        /* orange-400 */
-        --accent-hover: 234 88 12;
-        /* orange-600 */
+        /* Accent Colors - Purple (Keep consistency with dark mode but readable) */
+        --accent-primary: 147 51 234;
+        /* purple-600 */
+        --accent-secondary: 168 85 247;
+        /* purple-500 */
+        --accent-hover: 126 34 206;
+        /* purple-700 */
 
         /* UI Colors */
         --border-color: 0 0 0 / 0.1;
@@ -115,9 +115,9 @@
         --glass-bg-hover: 255 255 255 / 0.85;
 
         /* Gradients */
-        --gradient-primary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-        --gradient-secondary: linear-gradient(135deg, #fb923c 0%, #f97316 50%, #ea580c 100%);
-        --gradient-bg: linear-gradient(180deg, #fafafa 0%, #f5f5f5 50%, #e5e5e5 100%);
+        --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+        --gradient-secondary: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+        --gradient-bg: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 
         /* Glass Effect */
         --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
@@ -159,7 +159,7 @@
         background: rgba(var(--glass-bg-hover));
         border-color: rgba(var(--border-hover));
         transform: translateY(-4px);
-        box-shadow: 0 12px 48px 0 rgba(31, 38, 135, 0.3);
+        box-shadow: 0 12px 48px 0 rgba(var(--accent-primary) / 0.1);
     }
 
     /* Gradient Background */
