@@ -63,3 +63,7 @@ server/JWT SECRET.txt
 *.p12
 *secret*
 *SECRET*
+
+# Accidental secrets
+env_recovery.md
+server/env_dump.md
