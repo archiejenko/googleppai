@@ -1,30 +1,39 @@
-import { Storage } from '@google-cloud/storage';
+import { createClient } from '@supabase/supabase-js';
 import multer from 'multer';
-import path from 'path';
 
-const storage = new Storage();
-const bucketName = process.env.GCS_BUCKET_NAME || 'pitchperfectai';
-const bucket = storage.bucket(bucketName);
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export const uploadFile = (file: Express.Multer.File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const { originalname, buffer } = file;
-        const blob = bucket.file(Date.now() + '-' + originalname.replace(/ /g, "_"));
-        const blobStream = blob.createWriteStream({
-            resumable: false,
+if (!supabaseUrl || !supabaseKey) {
+    console.warn('Supabase credentials missing for storage');
+}
+
+const supabase = createClient(supabaseUrl || '', supabaseKey || '');
+const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'pitch-recordings';
+
+export const uploadFile = async (file: Express.Multer.File): Promise<string> => {
+    const { originalname, buffer, mimetype } = file;
+    const fileName = `${Date.now()}-${originalname.replace(/ /g, "_")}`;
+
+    const { data, error } = await supabase
+        .storage
+        .from(bucketName)
+        .upload(fileName, buffer, {
+            contentType: mimetype,
+            upsert: false
         });
 
-        blobStream.on('finish', () => {
-            const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-            resolve(publicUrl);
-        });
+    if (error) {
+        throw new Error(`Storage upload failed: ${error.message}`);
+    }
 
-        blobStream.on('error', (err) => {
-            reject(err);
-        });
+    const { data: publicUrlData } = supabase
+        .storage
+        .from(bucketName)
+        .getPublicUrl(fileName);
 
-        blobStream.end(buffer);
-    });
+    return publicUrlData.publicUrl;
 };
 
 export const upload = multer({

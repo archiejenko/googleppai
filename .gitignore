@@ -50,19 +50,17 @@ Thumbs.db
 # Local Netlify folder
 .netlify
 
-# CRITICAL: Secret files (NEVER COMMIT THESE)
+# Secrets
 server/secrets.env
-server/secrets.env.txt
-server/*.txt
-server/GAPI_PPAI.txt
-server/GCS_BUCKET_NAME.txt
-server/GEMINI_API_KEY.txt
-server/JWT SECRET.txt
+server/service.json
+service_account.json
 *.key
 *.pem
 *.p12
-*secret*
-*SECRET*
+
+# Allow examples
+!secrets.env.example
+!*.example
 
 # Accidental secrets
 env_recovery.md

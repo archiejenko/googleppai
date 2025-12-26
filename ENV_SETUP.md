@@ -1,83 +1,44 @@
-# Environment Variables Setup for Pitch Perfect AI Backend
+# Environment Variables & Deployment Guide
 
-## Required Environment Variables
+## Environment Variables
 
-After the backend successfully deploys, you need to set these environment variables with your actual values:
+### Backend (Server)
+These variables must be set in the deployment environment (e.g., Cloud Run, Render, Railway) or `server/secrets.env` for local.
 
-### 1. Database Connection String
+| Variable | Description |
+|----------|-------------|
+| `SUPABASE_URL` | URL of your Supabase project (from "oast" project) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key for backend access (Privileged!) |
+| `GEMINI_API_KEY` | API Key for Google Gemini (AI features) |
+| `ADMIN_INITIAL_PASSWORD` | Password for the initial admin account (for setup endpoints) |
+| `SUPABASE_STORAGE_BUCKET` | (Optional) Storage bucket name. Default: `pitch-recordings` |
+| `PORT` | (Optional) Port to listen on. Default: 3000 |
+| `FRONTEND_URL` | (Optional) URL of the frontend for CORS. Default: localhost |
 
-```bash
-cmd /c "gcloud run services update pitchperfectai-backend --region europe-west2 --set-env-vars DATABASE_URL=\"postgresql://postgres:YOUR_POSTGRES_PASSWORD@/pitchperfect?host=/cloudsql/gen-lang-client-0916212640:europe-west2:pitch-perfect-ai\""
-```
+### Frontend (Client / Netlify)
+These variables must be set in Netlify "Site configuration > Environment variables".
 
-**Replace `YOUR_POSTGRES_PASSWORD` with your actual Cloud SQL password.**
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | The full URL of your deployed backend API (e.g., `https://my-api.onrender.com`) |
 
-### 2. JWT Secret (for authentication tokens)
+## Deployment Configuration
 
-```bash
-cmd /c "gcloud run services update pitchperfectai-backend --region europe-west2 --set-env-vars JWT_SECRET=\"YOUR_STRONG_SECRET_KEY_MIN_32_CHARS\""
-```
+### Netlify (Frontend)
+- **Repo**: Connect to your GitHub repo.
+- **Base directory**: `client`
+- **Build command**: `npm run build`
+- **Publish directory**: `client/dist` (or `dist` relative to base)
+- **Environment Variables**: Add `VITE_API_URL`.
 
-**Generate a strong random secret (32+ characters). Example:**
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
+### Backend
+- Deploy the `server` directory.
+- Ensure all Backend variables listed above are set.
+- Ensure the service has public internet access (for Supabase/Gemini calls).
 
-### 3. Google Gemini API Key
-
-```bash
-cmd /c "gcloud run services update pitchperfectai-backend --region europe-west2 --set-env-vars GEMINI_API_KEY=\"YOUR_GEMINI_API_KEY\""
-```
-
-**Get your Gemini API key from:** https://makersuite.google.com/app/apikey
-
-### 4. Google Cloud Storage Bucket
-
-```bash
-cmd /c "gcloud run services update pitchperfectai-backend --region europe-west2 --set-env-vars GCS_BUCKET_NAME=\"pitchperfect-audio-files\""
-```
-
-(This one is already correct)
-
-### 5. Frontend URL (for CORS)
-
-```bash
-cmd /c "gcloud run services update pitchperfectai-backend --region europe-west2 --set-env-vars FRONTEND_URL=\"https://YOUR_NETLIFY_SITE.netlify.app\""
-```
-
-**You'll get this after deploying the frontend to Netlify.**
-
----
-
-## All-in-One Command
-
-Once you have all values, you can set them all at once:
-
-```bash
-cmd /c "gcloud run services update pitchperfectai-backend --region europe-west2 --set-env-vars DATABASE_URL=\"postgresql://postgres:YOUR_PASSWORD@/pitchperfect?host=/cloudsql/gen-lang-client-0916212640:europe-west2:pitch-perfect-ai\" --set-env-vars JWT_SECRET=\"YOUR_JWT_SECRET\" --set-env-vars GEMINI_API_KEY=\"YOUR_GEMINI_KEY\" --set-env-vars GCS_BUCKET_NAME=\"pitchperfect-audio-files\" --set-env-vars FRONTEND_URL=\"https://YOUR_NETLIFY_SITE.netlify.app\""
-```
-
----
-
-## Verify Environment Variables
-
-Check what's currently set:
-
-```bash
-cmd /c "gcloud run services describe pitchperfectai-backend --region europe-west2 --format=\"value(spec.template.spec.containers[0].env)\""
-```
-
----
-
-## After Setting Environment Variables
-
-Once all environment variables are set, the backend will automatically restart with the new values.
-
-**Then run database migrations:**
-
-```bash
-cd server
-npx prisma migrate deploy
-```
-
-This will create all the necessary database tables.
+## Secrets Management
+- **Local**: Use `server/secrets.env` (never committed).
+- **Production**: Use platform-specific secret storage.
+- **Checklist**:
+  - [ ] Rotate keys if they were previously exposed in git.
+  - [ ] Ensure `VITE_` vars are NOT secrets (they are bundled in JS).

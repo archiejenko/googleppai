@@ -48,7 +48,10 @@ app.post('/setup-admin', async (req, res) => {
 
     try {
         const adminEmail = 'enquiries@ejtech.co.uk';
-        const adminPassword = 'AdminPass123!';
+        const adminPassword = process.env.ADMIN_INITIAL_PASSWORD;
+        if (!adminPassword) {
+            return res.status(500).json({ error: 'Admin password not configured' });
+        }
 
         // Check if admin exists
         const existingAdmin = await prisma.user.findUnique({
