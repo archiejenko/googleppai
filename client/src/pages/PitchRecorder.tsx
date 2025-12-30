@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import api from '../utils/api';
+import { supabase } from '../utils/supabase';
 import { Mic, Square, Upload, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function PitchRecorder() {
@@ -55,28 +55,40 @@ export default function PitchRecorder() {
         setIsUploading(true);
         setError('');
 
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'pitch.webm');
-        if (sessionId) {
-            formData.append('trainingSessionId', sessionId);
-        }
-
         try {
-            const response = await api.post('/pitches/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+            const fileName = `pitch-${Date.now()}.webm`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('pitch-recordings')
+                .upload(`${fileName}`, audioBlob);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('pitch-recordings')
+                .getPublicUrl(fileName);
+
+            // Call Edge Function to analyze
+            const { data: analysisData, error: analysisError } = await supabase.functions.invoke('pitch-api', {
+                body: {
+                    audioUrl: publicUrl,
+                    trainingSessionId: sessionId
+                }
             });
+
+            if (analysisError) throw analysisError;
+
             setSuccess(true);
             setTimeout(() => {
                 if (sessionId) {
-                    // Navigate to training completion or specific pitch view
                     navigate(`/training`);
                 } else {
-                    // Navigate directly to the analysis result for immediate feedback
-                    navigate(`/pitch/${response.data.id}`);
+                    navigate(`/pitch/${analysisData.id}`);
                 }
             }, 2000);
+
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Upload failed');
+            console.error('Upload failed', err);
+            setError(err.message || 'Upload failed');
         } finally {
             setIsUploading(false);
         }

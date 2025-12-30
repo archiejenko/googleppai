@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../utils/api';
+import { supabase } from '../utils/supabase';
 import { Sparkles, UserPlus } from 'lucide-react';
 
 export default function Register() {
@@ -9,17 +9,28 @@ export default function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const { login } = useAuth();
+    const { login } = useAuth(); // Keeping destructured for now if other logic needs it, or remove if truly unused.
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
         try {
-            const response = await api.post('/auth/register', { name, email, password });
-            login(response.data.token, response.data.user);
+            const { error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        name: name,
+                    },
+                },
+            });
+
+            if (error) throw error;
+
             navigate('/dashboard');
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Registration failed');
+            setError(err.message || 'Registration failed');
         }
     };
 

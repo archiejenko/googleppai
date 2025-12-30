@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Mic, MicOff, ArrowLeft, VolumeX } from 'lucide-react';
-import api from '../utils/api';
+import { supabase } from '../utils/supabase';
 
 interface Message {
     role: 'user' | 'ai';
@@ -140,13 +140,17 @@ export default function ActiveTraining() {
         setIsProcessing(true);
 
         try {
-            const response = await api.post('/training/chat', {
-                sessionId,
-                message: userMessage,
-                history: newMessages.map(m => ({ role: m.role, text: m.text }))
+            const { data, error } = await supabase.functions.invoke('chat-ai', {
+                body: {
+                    sessionId,
+                    message: userMessage,
+                    history: newMessages.map(m => ({ role: m.role, text: m.text }))
+                }
             });
 
-            handleAiResponse(response.data.response);
+            if (error) throw error;
+
+            handleAiResponse(data.response);
 
         } catch (error) {
             console.error('Failed to get AI response', error);
@@ -182,8 +186,17 @@ export default function ActiveTraining() {
 
             try {
                 // Call complete session with messages to analyze
-                const response = await api.post(`/training/${sessionId}/complete`, { messages });
-                const { pitchId } = response.data;
+                const { data, error } = await supabase.functions.invoke('training-api', {
+                    body: {
+                        action: 'complete',
+                        sessionId,
+                        messages
+                    }
+                });
+
+                if (error) throw error;
+
+                const { pitchId } = data;
 
                 if (pitchId) {
                     navigate(`/pitch/${pitchId}`);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../utils/api';
+import { supabase } from '../utils/supabase';
 import { FileText, Calendar, TrendingUp, Mic, Award, BarChart3, Zap } from 'lucide-react';
 
 interface Pitch {
@@ -18,8 +18,22 @@ export default function Dashboard() {
     useEffect(() => {
         const fetchPitches = async () => {
             try {
-                const response = await api.get('/pitches');
-                setPitches(response.data);
+                const { data, error } = await supabase
+                    .from('pitches')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                const mappedPitches = data.map((p: any) => ({
+                    id: p.id,
+                    createdAt: p.created_at,
+                    score: p.score,
+                    feedback: p.feedback,
+                    transcript: p.transcript,
+                }));
+
+                setPitches(mappedPitches);
             } catch (error) {
                 console.error('Failed to fetch pitches', error);
             } finally {

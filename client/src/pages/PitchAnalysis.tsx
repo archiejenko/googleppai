@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import { supabase } from '../utils/supabase';
 import { ArrowLeft, TrendingUp, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface MEDDICScore {
@@ -79,9 +79,23 @@ export default function PitchAnalysis() {
 
     useEffect(() => {
         const fetchPitch = async () => {
+            if (!id) return;
             try {
-                const response = await api.get(`/pitches/${id}`);
-                setPitch(response.data);
+                const { data, error } = await supabase
+                    .from('pitches')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (error) throw error;
+
+                // Map snake_case to camelCase
+                const mappedPitch = {
+                    ...data,
+                    createdAt: data.created_at
+                };
+
+                setPitch(mappedPitch);
             } catch (error) {
                 console.error('Failed to fetch pitch', error);
             } finally {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import { supabase } from '../utils/supabase';
 import { Play, Target, Clock, Globe, TrendingUp } from 'lucide-react';
 
 interface Industry {
@@ -34,8 +34,21 @@ export default function Training() {
     useEffect(() => {
         const fetchIndustries = async () => {
             try {
-                const response = await api.get('/industries');
-                setIndustries(response.data);
+                const { data, error } = await supabase
+                    .from('industries')
+                    .select('*');
+
+                if (error) throw error;
+
+                const mappedIndustries = data.map((ind: any) => ({
+                    id: ind.id,
+                    name: ind.name,
+                    description: ind.description,
+                    icon: ind.icon,
+                    scenarioTemplates: ind.scenario_templates
+                }));
+
+                setIndustries(mappedIndustries);
             } catch (error) {
                 console.error('Failed to fetch industries', error);
             }
@@ -86,9 +99,14 @@ export default function Training() {
         setLoading(true);
 
         try {
-            const response = await api.post('/training', formData);
+            const { data, error } = await supabase.functions.invoke('training-api', {
+                body: formData
+            });
+
+            if (error) throw error;
+
             // Navigate to active training (conversation mode) with session ID
-            navigate(`/active-training?sessionId=${response.data.id}`);
+            navigate(`/active-training?sessionId=${data.id}`);
         } catch (error) {
             console.error('Failed to create training session', error);
         } finally {

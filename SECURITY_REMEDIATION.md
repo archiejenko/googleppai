@@ -37,3 +37,18 @@
 ## 4. Validation
 - Run `git ls-files | grep "secrets"` to ensure no secret files are tracked.
 - Verify `server/package.json` does not contain `@google-cloud/*` dependencies.
+
+## 5. Application Security & RLS (Supabase)
+**Status**: Initial RLS policies had gaps (public profiles, missing admin access).
+**Action**:
+- [x] **Deleted Unused Code**: Legacy `server/` directory archived to `_archived_server`. `client/src/utils/api.ts` deleted. `axios` uninstalled.
+- [x] **Created Remediation Migration**: `supabase/migrations/20250101000002_security_remediation.sql`.
+    - Fixes `public.profiles` being viewable by unauthenticated users.
+    - Adds policies for Teams/Admins to view `pitches` and `training_sessions`.
+    - Fixes syntax in Team RLS policy.
+- [x] **Run Migration**: Executed `CONSOLIDATED_SETUP.sql` in Supabase (includes all tables + security policies).
+- [ ] **Verify Storage Policies**: Ensure `pitch-recordings` bucket allows authenticated uploads (included in `MIGRATION_GUIDE.md`).
+
+## 6. Dependency Cleanup
+- [x] `client`: Uninstalled `axios`.
+- [x] `server`: Directory archived. Future cleanup can delete `_archived_server` after key rotation is confirmed.

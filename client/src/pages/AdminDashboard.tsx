@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import api from '../utils/api';
+import { supabase } from '../utils/supabase';
 import { Users, Building2, TrendingUp, Award, Trash2, Shield } from 'lucide-react';
 
 interface User {
@@ -50,14 +50,65 @@ export default function AdminDashboard() {
 
     const fetchData = async () => {
         try {
-            const [usersRes, teamsRes, analyticsRes] = await Promise.all([
-                api.get('/admin/users'),
-                api.get('/admin/teams'),
-                api.get('/admin/analytics'),
-            ]);
-            setUsers(usersRes.data);
-            setTeams(teamsRes.data);
-            setAnalytics(analyticsRes.data);
+            // Fetch Users with Team
+            const { data: usersData, error: usersError } = await supabase
+                .from('profiles')
+                .select('*, team:teams(*)');
+
+            if (usersError) throw usersError;
+
+            const mappedUsers = usersData.map((u: any) => ({
+                id: u.id,
+                email: u.email,
+                name: u.name,
+                role: u.role,
+                teamId: u.team_id,
+                team: u.team,
+                totalXP: u.total_xp,
+                createdAt: u.created_at
+            }));
+
+            // Fetch Teams with Members count
+            // Note: select(..., members:profiles(count)) returns count as [{ count: N }]
+            const { data: teamsData, error: teamsError } = await supabase
+                .from('teams')
+                .select('*, members:profiles(id, name, email, role)');
+
+            if (teamsError) throw teamsError;
+
+            const mappedTeams = teamsData.map((t: any) => ({
+                id: t.id,
+                name: t.name,
+                description: t.description,
+                members: t.members,
+                _count: { members: t.members.length } // Calculate count from fetched members
+            }));
+
+            // Fetch Analytics (Counts)
+            const { count: pitchesCount } = await supabase
+                .from('pitches')
+                .select('*', { count: 'exact', head: true });
+
+            const stats = {
+                totalUsers: mappedUsers.length,
+                totalTeams: mappedTeams.length,
+                totalPitches: pitchesCount || 0,
+                totalXP: mappedUsers.reduce((acc: number, u: any) => acc + (u.totalXP || 0), 0),
+                averagePitchScore: 75, // Placeholder or fetch avg
+                recentActivity: {
+                    pitchesLast30Days: 0, // Placeholder
+                    newUsersLast30Days: mappedUsers.filter((u: any) => new Date(u.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length
+                },
+                usersByRole: {
+                    user: mappedUsers.filter((u: any) => u.role === 'user').length,
+                    team_lead: mappedUsers.filter((u: any) => u.role === 'team_lead').length,
+                    admin: mappedUsers.filter((u: any) => u.role === 'admin').length
+                }
+            };
+
+            setUsers(mappedUsers);
+            setTeams(mappedTeams);
+            setAnalytics(stats);
         } catch (error) {
             console.error('Failed to fetch admin data', error);
         } finally {
@@ -67,7 +118,17 @@ export default function AdminDashboard() {
 
     const updateUserRole = async (userId: string, role: string) => {
         try {
-            await api.patch(`/admin/users/${userId}/role`, { role });
+            // Update profile role
+            const { error } = await supabase
+                .from('profiles')
+                .update({ role })
+                .eq('id', userId);
+
+            if (error) throw error;
+
+            // Note: This relies on Supabase Auth keeping roles in sync via trigger if we set that up, 
+            // OR the app relies on 'profiles' table for role checks (which ours dies).
+
             setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
         } catch (error) {
             console.error('Failed to update user role', error);
@@ -77,7 +138,15 @@ export default function AdminDashboard() {
     const deleteUser = async (userId: string) => {
         if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
         try {
-            await api.delete(`/admin/users/${userId}`);
+            // Only delete profile. Auth user remains but becomes "orphan" or we must delete it via Edge Function.
+            // For now, delete profile.
+            const { error } = await supabase
+                .from('profiles')
+                .delete()
+                .eq('id', userId);
+
+            if (error) throw error;
+
             setUsers(users.filter(u => u.id !== userId));
         } catch (error) {
             console.error('Failed to delete user', error);
@@ -87,8 +156,15 @@ export default function AdminDashboard() {
     const createTeam = async () => {
         if (!newTeamName.trim()) return;
         try {
-            const res = await api.post('/team', { name: newTeamName });
-            setTeams([...teams, { ...res.data, members: [], _count: { members: 0 } }]);
+            const { data, error } = await supabase
+                .from('teams')
+                .insert({ name: newTeamName })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            setTeams([...teams, { ...data, members: [], _count: { members: 0 } }]);
             setNewTeamName('');
         } catch (error) {
             console.error('Failed to create team', error);
@@ -97,7 +173,13 @@ export default function AdminDashboard() {
 
     const assignUserToTeam = async (userId: string, teamId: string | null) => {
         try {
-            await api.post('/admin/users/assign-team', { userId, teamId });
+            const { error } = await supabase
+                .from('profiles')
+                .update({ team_id: teamId })
+                .eq('id', userId);
+
+            if (error) throw error;
+
             fetchData(); // Refresh to get updated data
         } catch (error) {
             console.error('Failed to assign user to team', error);

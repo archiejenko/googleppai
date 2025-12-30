@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import { supabase } from '../utils/supabase';
+import { useAuth } from '../context/AuthContext';
 import { BookOpen, Clock, Award, TrendingUp, CheckCircle, Lock } from 'lucide-react';
 
 interface LearningModule {
@@ -27,11 +28,47 @@ export default function LearningPath() {
     const [modules, setModules] = useState<LearningModule[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const { user } = useAuth();
+
     useEffect(() => {
         const fetchModules = async () => {
+            if (!user) return;
             try {
-                const response = await api.get('/learning/modules');
-                setModules(response.data);
+                // Fetch modules and user's specific progress
+                // Relation is one-to-many, but filtered for this user
+                // However, basic filtering in 'select' for nested resource is limited in JS client without exact syntax
+                // "user_progress!inner(..)" would filter modules that HAVE progress. We want ALL modules.
+                // "user_progress(..)" returns all progress for that module (for all users? No, RLS handles that!).
+                // Since RLS is set to "Users can view own progress", simply asking for user_progress will ONLY return THIS user's progress.
+
+                const { data, error } = await supabase
+                    .from('learning_modules')
+                    .select('*, userProgress:user_progress(*)')
+                    .order('order', { ascending: true });
+
+                if (error) throw error;
+
+                // Map snake_case to camelCase and ensure userProgress is an array with mapped props
+                const mappedModules = data.map((m: any) => ({
+                    id: m.id,
+                    title: m.title,
+                    description: m.description,
+                    difficulty: m.difficulty,
+                    estimatedTime: m.estimated_time,
+                    xpReward: m.xp_reward,
+                    skills: m.skills || [],
+                    prerequisites: m.prerequisites || [],
+                    scenarioType: m.scenario_type,
+                    industry: m.industry,
+                    order: m.order,
+                    userProgress: m.userProgress.map((p: any) => ({
+                        status: p.status,
+                        progress: p.progress,
+                        score: p.score
+                    }))
+                }));
+
+                setModules(mappedModules);
             } catch (error) {
                 console.error('Failed to fetch learning modules', error);
             } finally {
@@ -39,7 +76,7 @@ export default function LearningPath() {
             }
         };
         fetchModules();
-    }, []);
+    }, [user]);
 
     const getDifficultyColor = (difficulty: string) => {
         switch (difficulty) {
@@ -66,8 +103,21 @@ export default function LearningPath() {
     };
 
     const handleStartModule = async (moduleId: string) => {
+        if (!user) return;
         try {
-            await api.post(`/learning/modules/${moduleId}/start`);
+            // Upsert progress to 'in_progress' if not exists
+            const { error } = await supabase
+                .from('user_progress')
+                .upsert({
+                    user_id: user.id,
+                    module_id: moduleId,
+                    status: 'in_progress',
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id, module_id' })
+                .select(); // to ensure return?
+
+            if (error) throw error;
+
             // Navigate to training with module context
             navigate(`/training?moduleId=${moduleId}`);
         } catch (error) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../utils/api';
+import { supabase } from '../utils/supabase';
 import { TrendingUp, Phone, AlertCircle, Award } from 'lucide-react';
 
 interface TeamMember {
@@ -36,12 +36,82 @@ export default function Team() {
     useEffect(() => {
         const fetchTeamData = async () => {
             try {
-                const [teamRes, analyticsRes] = await Promise.all([
-                    api.get('/team'),
-                    api.get('/team/analytics'),
-                ]);
-                setTeam(teamRes.data);
-                setAnalytics(analyticsRes.data);
+                // Get current user to find their team_id
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
+                const { data: userProfile } = await supabase
+                    .from('profiles')
+                    .select('team_id')
+                    .eq('id', user.id)
+                    .single();
+
+                if (!userProfile?.team_id) {
+                    setTeam(null);
+                    setAnalytics(null);
+                    setLoading(false);
+                    return;
+                }
+
+                // Fetch Team and Members
+                const { data: teamData, error: teamError } = await supabase
+                    .from('teams')
+                    .select(`
+                        id,
+                        name,
+                        members:profiles (
+                            id,
+                            name,
+                            email,
+                            role,
+                            total_xp,
+                            skills:user_skills (
+                                level,
+                                skill:skills (name, category)
+                            )
+                        )
+                    `)
+                    .eq('id', userProfile.team_id)
+                    .single();
+
+                if (teamError) throw teamError;
+
+                // Process Members for Frontend
+                const members = teamData.members.map((m: any) => ({
+                    id: m.id,
+                    name: m.name,
+                    email: m.email,
+                    role: m.role,
+                    totalXP: m.total_xp,
+                    skills: m.skills.map((s: any) => ({
+                        level: s.level,
+                        skill: s.skill
+                    }))
+                }));
+
+                // Fetch Analytics (Mocking logic or basic aggregation)
+                // In a real app we might fetch recent calls count from 'pitches' table for these members
+                const avgScore = 75; // Placeholder or calculate if we fetch pitches
+                const totalCalls = 0; // Placeholder
+                const membersNeedingAttention = 0;
+
+                // Simple aggregation
+                const topPerformer = members.reduce((prev: any, current: any) =>
+                    (current.totalXP > (prev?.totalXP || 0)) ? current : prev
+                    , null);
+
+                setTeam({ members });
+                setAnalytics({
+                    averageScore: avgScore,
+                    totalCalls: totalCalls,
+                    membersNeedingAttention: membersNeedingAttention,
+                    topPerformer: {
+                        name: topPerformer?.name || 'None',
+                        avgScore: 0 // Fetch pitch average if needed
+                    },
+                    memberCount: members.length
+                });
+
             } catch (error) {
                 console.error('Failed to fetch team data', error);
             } finally {
