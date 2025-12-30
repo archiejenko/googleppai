@@ -40,36 +40,35 @@ We have created three specific functions for Pitch Perfect AI:
 
 ## 4. How to Deploy Them (Implementation Plan)
 
-Since the code is already written in `supabase/functions/`, you just need to put it on the internet ("deploy" it).
-
-### Prerequisites
-You need the **Supabase CLI** (Command Line Interface) installed on your computer.
+We have installed the Supabase CLI in your project, so you can run commands reliably using `npx`.
 
 ### Step 1: Login
-Open your terminal and verify you are logged in to Supabase.
+Open your terminal (in the project root) and run:
 ```bash
-supabase login
+npx supabase login
 ```
+*This will open your browser to authorize.*
 
 ### Step 2: Link Your Project
-Tell the CLI which project on Supabase you are working with (replace `your-project-ref` with the "Reference ID" from your Supabase Dashboard settings).
+Tell the CLI which project on Supabase you are working with.
+**Important**: You need your **Project Reference ID** (it's the code in your Supabase URL, e.g., `https://abcdefg.supabase.co` -> `abcdefg`).
 ```bash
-supabase link --project-ref your-project-ref
+npx supabase link --project-ref your-project-ref
 ```
 *Note: You might be asked for your database password.*
 
 ### Step 3: Set Your Secrets
 Upload your secure keys so the functions can use them.
 ```bash
-supabase secrets set GEMINI_API_KEY=your_actual_gemini_key
+npx supabase secrets set GEMINI_API_KEY=your_actual_gemini_key
 ```
 
 ### Step 4: Deploy!
 Push your code to the cloud.
 ```bash
-supabase functions deploy training-api
-supabase functions deploy chat-ai
-supabase functions deploy pitch-api
+npx supabase functions deploy training-api
+npx supabase functions deploy chat-ai
+npx supabase functions deploy pitch-api
 ```
 
 ### Success! 🎉
