@@ -20,7 +20,8 @@ These variables must be set in Netlify "Site configuration > Environment variabl
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_API_URL` | The full URL of your deployed backend API (e.g., `https://my-api.onrender.com`) |
+| `VITE_SUPABASE_URL` | The URL of your Supabase project (from Settings > API) |
+| `VITE_SUPABASE_ANON_KEY` | The `anon` public key (from Settings > API) |
 
 ## Deployment Configuration
 
