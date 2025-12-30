@@ -11,7 +11,7 @@ import Team from './pages/Team';
 import Pricing from './pages/Pricing';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
-import Layout from './components/Layout';
+import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './components/ProtectedRoute';
 import ActiveTraining from './pages/ActiveTraining';
 
@@ -27,7 +27,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/pricing" element={<Pricing />} />
-          <Route element={<Layout />}>
+          <Route element={<AppShell />}>
 
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/record" element={<PitchRecorder />} />
