@@ -57,7 +57,7 @@ export default function PitchRecorder() {
 
         try {
             const fileName = `pitch-${Date.now()}.webm`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('pitch-recordings')
                 .upload(`${fileName}`, audioBlob);
 

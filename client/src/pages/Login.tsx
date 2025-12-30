@@ -1,5 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+// import { useAuth } from '../context/AuthContext'; // Removed unused import
 import { supabase } from '../utils/supabase';
 import { Mic, Sparkles } from 'lucide-react';
 import { useState } from 'react';

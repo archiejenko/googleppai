@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+// import api from '../utils/api';
+import { supabase } from '../utils/supabase';
 import { Building2, ArrowRight } from 'lucide-react';
 
 interface Industry {
@@ -18,8 +19,12 @@ export default function Industries() {
     useEffect(() => {
         const fetchIndustries = async () => {
             try {
-                const response = await api.get('/industries');
-                setIndustries(response.data);
+                const { data, error } = await supabase
+                    .from('industries')
+                    .select('*');
+
+                if (error) throw error;
+                setIndustries(data || []);
             } catch (error) {
                 console.error('Failed to fetch industries', error);
             } finally {

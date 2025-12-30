@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+// import { useAuth } from '../context/AuthContext'; // Removed unused import
 import { supabase } from '../utils/supabase';
 import { Sparkles, UserPlus } from 'lucide-react';
 
@@ -9,7 +9,7 @@ export default function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const { login } = useAuth(); // Keeping destructured for now if other logic needs it, or remove if truly unused.
+    // const { login } = useAuth(); // Removed unused variable
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
