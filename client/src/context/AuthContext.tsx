@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../utils/supabase'; // Ensure this path is correct based on project structure
+import { Session } from '@supabase/supabase-js';
 
 type UserRole = 'user' | 'team_lead' | 'admin';
 
@@ -7,54 +9,103 @@ interface User {
     email: string;
     name?: string;
     role: UserRole;
+    email_confirmed_at: string | null;
     simulatedRole?: UserRole | null;
 }
 
 interface AuthContextType {
     user: User | null;
-    token: string | null;
-    login: (token: string, user: User) => void;
-    logout: () => void;
+    session: Session | null;
     updateUser: (user: Partial<User>) => void;
     simulateRole: (role: UserRole | null) => void;
     isAuthenticated: boolean;
     isAdmin: boolean;
     isManager: boolean;
+    isLoading: boolean;
+    signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<User | null>(() => {
-        const savedUser = localStorage.getItem('user');
-        return savedUser ? JSON.parse(savedUser) : null;
-    });
-    const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+    const [user, setUser] = useState<User | null>(null);
+    const [session, setSession] = useState<Session | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (token) {
-            localStorage.setItem('token', token);
-        } else {
-            localStorage.removeItem('token');
-        }
-    }, [token]);
+        // 1. Get initial session
+        const initAuth = async () => {
+            try {
+                const { data: { session: initialSession } } = await supabase.auth.getSession();
+                setSession(initialSession);
+                if (initialSession?.user) {
+                    await fetchProfile(initialSession.user);
+                } else {
+                    setUser(null);
+                }
+            } catch (error) {
+                console.error('Error initializing auth:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-    useEffect(() => {
-        if (user) {
-            localStorage.setItem('user', JSON.stringify(user));
-        } else {
-            localStorage.removeItem('user');
-        }
-    }, [user]);
+        initAuth();
 
-    const login = (newToken: string, newUser: User) => {
-        setToken(newToken);
-        setUser(newUser);
+        // 2. Listen for changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+            setSession(newSession);
+            if (newSession?.user) {
+                await fetchProfile(newSession.user);
+            } else {
+                setUser(null);
+                setIsLoading(false);
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
+
+    const fetchProfile = async (authUser: any) => {
+        try {
+            // Fetch public profile for role/name
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('name, role, industry')
+                .eq('id', authUser.id)
+                .single();
+
+            if (error && error.code !== 'PGRST116') {
+                console.error('Error fetching profile:', error);
+            }
+
+            // Construct unified user object
+            const newUser: User = {
+                id: authUser.id,
+                email: authUser.email!,
+                email_confirmed_at: authUser.email_confirmed_at || null,
+                name: profile?.name || authUser.user_metadata?.name,
+                role: profile?.role || 'user',
+                simulatedRole: null // Reset simulation on login/refresh
+            };
+
+            // Preserve simulation if it was already active in state (optional, but cleaner to reset)
+            // But if we just refreshed, we might lose it. Let's keep it simple: Reset.
+
+            setUser(newUser);
+        } catch (error) {
+            console.error('Profile fetch error', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const logout = () => {
-        setToken(null);
+    const signOut = async () => {
+        await supabase.auth.signOut();
         setUser(null);
+        setSession(null);
     };
 
     const updateUser = (updatedUser: Partial<User>) => {
@@ -65,39 +116,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const simulateRole = (role: UserRole | null) => {
         if (user && user.role === 'admin') {
-            // Apply simulation only for UI logic
-            // The actual backend token still has admin permissions
-            const simulatedUser = { ...user, simulatedRole: role };
-            setUser(simulatedUser);
+            setUser({ ...user, simulatedRole: role });
         } else if (user && role === null) {
-            // Reset simulation
-            const { simulatedRole, ...realUser } = user as any;
-            setUser(realUser);
+            // Reset
+            const { simulatedRole, ...realUser } = user;
+            setUser(realUser as User);
         }
     };
 
-    // Determine effective role (simulated or real)
-    const effectiveRole = (user as any)?.simulatedRole || user?.role;
+    // Determine effective role
+    const effectiveRole = user?.simulatedRole || user?.role;
     const isAdmin = effectiveRole === 'admin';
     const isManager = effectiveRole === 'admin' || effectiveRole === 'team_lead';
 
     return (
         <AuthContext.Provider value={{
             user,
-            token,
-            login,
-            logout,
+            session,
             updateUser,
             simulateRole,
-            isAuthenticated: !!token,
+            isAuthenticated: !!session?.user,
             isAdmin,
             isManager,
+            isLoading,
+            signOut
         }}>
             {children}
-            {/* Visual indicator for role simulation */}
-            {(user as any)?.simulatedRole && (
-                <div className="fixed bottom-4 right-4 z-50 bg-yellow-500 text-black px-4 py-2 rounded-full font-bold shadow-lg animate-pulse">
-                    Viewing as: {(user as any).simulatedRole}
+            {user?.simulatedRole && (
+                <div className="fixed bottom-4 right-4 z-50 bg-status-warning text-black px-4 py-2 rounded-full font-bold shadow-[0_0_20px_rgba(234,179,8,0.5)] animate-pulse border-2 border-yellow-400">
+                    Viewing as: {user.simulatedRole}
                 </div>
             )}
         </AuthContext.Provider>
