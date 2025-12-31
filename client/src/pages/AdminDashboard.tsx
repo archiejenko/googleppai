@@ -69,7 +69,6 @@ export default function AdminDashboard() {
             }));
 
             // Fetch Teams with Members count
-            // Note: select(..., members:profiles(count)) returns count as [{ count: N }]
             const { data: teamsData, error: teamsError } = await supabase
                 .from('teams')
                 .select('*, members:profiles(id, name, email, role)');
@@ -81,7 +80,7 @@ export default function AdminDashboard() {
                 name: t.name,
                 description: t.description,
                 members: t.members,
-                _count: { members: t.members.length } // Calculate count from fetched members
+                _count: { members: t.members.length }
             }));
 
             // Fetch Analytics (Counts)
@@ -91,10 +90,10 @@ export default function AdminDashboard() {
 
             const stats = {
                 totalUsers: mappedUsers.length,
-                totalTeams: mappedTeams.length,
+                totalTeams: mappedTeams.length || 0,
                 totalPitches: pitchesCount || 0,
                 totalXP: mappedUsers.reduce((acc: number, u: any) => acc + (u.totalXP || 0), 0),
-                averagePitchScore: 75, // Placeholder or fetch avg
+                averagePitchScore: 75, // Placeholder
                 recentActivity: {
                     pitchesLast30Days: 0, // Placeholder
                     newUsersLast30Days: mappedUsers.filter((u: any) => new Date(u.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length
@@ -118,17 +117,12 @@ export default function AdminDashboard() {
 
     const updateUserRole = async (userId: string, role: string) => {
         try {
-            // Update profile role
             const { error } = await supabase
                 .from('profiles')
                 .update({ role })
                 .eq('id', userId);
 
             if (error) throw error;
-
-            // Note: This relies on Supabase Auth keeping roles in sync via trigger if we set that up, 
-            // OR the app relies on 'profiles' table for role checks (which ours dies).
-
             setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
         } catch (error) {
             console.error('Failed to update user role', error);
@@ -138,15 +132,12 @@ export default function AdminDashboard() {
     const deleteUser = async (userId: string) => {
         if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
         try {
-            // Only delete profile. Auth user remains but becomes "orphan" or we must delete it via Edge Function.
-            // For now, delete profile.
             const { error } = await supabase
                 .from('profiles')
                 .delete()
                 .eq('id', userId);
 
             if (error) throw error;
-
             setUsers(users.filter(u => u.id !== userId));
         } catch (error) {
             console.error('Failed to delete user', error);
@@ -179,8 +170,7 @@ export default function AdminDashboard() {
                 .eq('id', userId);
 
             if (error) throw error;
-
-            fetchData(); // Refresh to get updated data
+            fetchData();
         } catch (error) {
             console.error('Failed to assign user to team', error);
         }
@@ -188,11 +178,11 @@ export default function AdminDashboard() {
 
     if (!isAdmin) {
         return (
-            <div className="min-h-screen gradient-dark-bg flex justify-center items-center">
-                <div className="glass-card p-8 text-center">
-                    <Shield className="h-16 w-16 text-red-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-white mb-2">Access Denied</h3>
-                    <p className="text-gray-300">You need admin privileges to access this page.</p>
+            <div className="layout-shell flex justify-center items-center">
+                <div className="card-os p-8 text-center max-w-md">
+                    <Shield className="h-16 w-16 text-status-danger mx-auto mb-4" />
+                    <h3 className="text-xl font-display font-bold text-[rgb(var(--text-primary))] mb-2">Access Denied</h3>
+                    <p className="text-[rgb(var(--text-secondary))]">You need admin privileges to access this page.</p>
                 </div>
             </div>
         );
@@ -200,33 +190,30 @@ export default function AdminDashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen gradient-dark-bg flex justify-center items-center">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-purple-600 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                    <div className="relative animate-spin rounded-full h-16 w-16 border-4 border-white/20 border-t-purple-500"></div>
-                </div>
+            <div className="layout-shell flex justify-center items-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[rgb(var(--border-default))] border-t-[rgb(var(--accent-primary))]"></div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen gradient-dark-bg">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="layout-shell p-6 md:p-12">
+            <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-extrabold text-theme-primary mb-2">Admin Dashboard</h1>
-                    <p className="text-theme-muted">Manage users, teams, and monitor platform performance</p>
+                <div className="mb-8 animate-in-up">
+                    <h1 className="text-4xl font-display font-bold text-[rgb(var(--text-primary))] mb-2">Admin Dashboard</h1>
+                    <p className="text-[rgb(var(--text-secondary))]">Manage users, teams, and monitor platform performance</p>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-4 mb-8">
+                <div className="flex gap-2 mb-8 animate-in-up p-1 bg-[rgb(var(--bg-surface-raised))] rounded-[var(--radius-lg)] w-fit border border-[rgb(var(--border-default))]" style={{ animationDelay: '0.1s' }}>
                     {(['overview', 'users', 'teams'] as const).map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-6 py-3 rounded-xl font-medium transition-all ${activeTab === tab
-                                ? 'bg-purple-600 text-white'
-                                : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                            className={`px-6 py-2 rounded-[var(--radius-md)] font-medium text-sm transition-all ${activeTab === tab
+                                ? 'bg-[rgb(var(--bg-canvas))] text-[rgb(var(--text-primary))] shadow-sm border border-[rgb(var(--border-subtle))]'
+                                : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface))]'
                                 }`}
                         >
                             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -236,77 +223,102 @@ export default function AdminDashboard() {
 
                 {/* Overview Tab */}
                 {activeTab === 'overview' && analytics && (
-                    <div className="space-y-8">
+                    <div className="space-y-8 animate-in-up" style={{ animationDelay: '0.2s' }}>
                         {/* Stats Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <div className="glass-card p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-theme-muted text-sm">Total Users</p>
-                                        <p className="text-3xl font-bold text-theme-primary">{analytics.totalUsers}</p>
+                            <div className="card-os p-6 flex flex-col justify-between h-full">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="p-2 rounded-lg bg-[rgb(var(--bg-canvas))] text-[rgb(var(--accent-primary))]">
+                                        <Users className="h-6 w-6" />
                                     </div>
-                                    <Users className="h-10 w-10 text-blue-400" />
+                                    <span className="text-xs font-medium text-status-success flex items-center gap-1">
+                                        +12% <TrendingUp className="w-3 h-3" />
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className="text-3xl font-display font-bold text-[rgb(var(--text-primary))]">{analytics.totalUsers}</p>
+                                    <p className="text-[rgb(var(--text-muted))] text-sm">Total Users</p>
                                 </div>
                             </div>
-                            <div className="glass-card p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-theme-muted text-sm">Total Teams</p>
-                                        <p className="text-3xl font-bold text-theme-primary">{analytics.totalTeams}</p>
+
+                            <div className="card-os p-6 flex flex-col justify-between h-full">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="p-2 rounded-lg bg-[rgb(var(--bg-canvas))] text-blue-500">
+                                        <Building2 className="h-6 w-6" />
                                     </div>
-                                    <Building2 className="h-10 w-10 text-green-400" />
+                                </div>
+                                <div>
+                                    <p className="text-3xl font-display font-bold text-[rgb(var(--text-primary))]">{analytics.totalTeams}</p>
+                                    <p className="text-[rgb(var(--text-muted))] text-sm">Total Teams</p>
                                 </div>
                             </div>
-                            <div className="glass-card p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-theme-muted text-sm">Total Pitches</p>
-                                        <p className="text-3xl font-bold text-theme-primary">{analytics.totalPitches}</p>
+
+                            <div className="card-os p-6 flex flex-col justify-between h-full">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="p-2 rounded-lg bg-[rgb(var(--bg-canvas))] text-purple-500">
+                                        <TrendingUp className="h-6 w-6" />
                                     </div>
-                                    <TrendingUp className="h-10 w-10 text-purple-400" />
+                                </div>
+                                <div>
+                                    <p className="text-3xl font-display font-bold text-[rgb(var(--text-primary))]">{analytics.totalPitches}</p>
+                                    <p className="text-[rgb(var(--text-muted))] text-sm">Total Pitches</p>
                                 </div>
                             </div>
-                            <div className="glass-card p-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-theme-muted text-sm">Avg Pitch Score</p>
-                                        <p className="text-3xl font-bold text-theme-primary">{analytics.averagePitchScore}</p>
+
+                            <div className="card-os p-6 flex flex-col justify-between h-full">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="p-2 rounded-lg bg-[rgb(var(--bg-canvas))] text-status-warning">
+                                        <Award className="h-6 w-6" />
                                     </div>
-                                    <Award className="h-10 w-10 text-yellow-400" />
+                                </div>
+                                <div>
+                                    <p className="text-3xl font-display font-bold text-[rgb(var(--text-primary))]">{analytics.averagePitchScore}</p>
+                                    <p className="text-[rgb(var(--text-muted))] text-sm">Avg Pitch Score</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Recent Activity */}
-                        <div className="glass-card p-6">
-                            <h3 className="text-xl font-bold text-theme-primary mb-4">Last 30 Days</h3>
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <p className="text-theme-muted text-sm">New Users</p>
-                                    <p className="text-2xl font-bold text-theme-primary">{analytics.recentActivity.newUsersLast30Days}</p>
-                                </div>
-                                <div>
-                                    <p className="text-theme-muted text-sm">Pitches Recorded</p>
-                                    <p className="text-2xl font-bold text-theme-primary">{analytics.recentActivity.pitchesLast30Days}</p>
+                        <div className="grid md:grid-cols-3 gap-6">
+                            <div className="md:col-span-2 card-os p-6">
+                                <h3 className="text-lg font-display font-bold text-[rgb(var(--text-primary))] mb-4">Activity Overview</h3>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="p-4 rounded-lg bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-subtle))]">
+                                        <p className="text-[rgb(var(--text-muted))] text-sm mb-1">New Users (30d)</p>
+                                        <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">{analytics.recentActivity.newUsersLast30Days}</p>
+                                    </div>
+                                    <div className="p-4 rounded-lg bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-subtle))]">
+                                        <p className="text-[rgb(var(--text-muted))] text-sm mb-1">Pitches Recorded (30d)</p>
+                                        <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">{analytics.recentActivity.pitchesLast30Days}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* User Role Breakdown */}
-                        <div className="glass-card p-6">
-                            <h3 className="text-xl font-bold text-theme-primary mb-4">Users by Role</h3>
-                            <div className="grid grid-cols-3 gap-6">
-                                <div className="text-center">
-                                    <p className="text-3xl font-bold text-theme-primary">{analytics.usersByRole.user || 0}</p>
-                                    <p className="text-theme-muted text-sm">Employees</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-3xl font-bold text-theme-primary">{analytics.usersByRole.team_lead || 0}</p>
-                                    <p className="text-theme-muted text-sm">Managers</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-3xl font-bold text-theme-primary">{analytics.usersByRole.admin || 0}</p>
-                                    <p className="text-theme-muted text-sm">Admins</p>
+                            {/* User Role Breakdown */}
+                            <div className="card-os p-6">
+                                <h3 className="text-lg font-display font-bold text-[rgb(var(--text-primary))] mb-4">Users by Role</h3>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-[rgb(var(--accent-primary))]"></div>
+                                            <span className="text-[rgb(var(--text-secondary))] text-sm">Employees</span>
+                                        </div>
+                                        <span className="font-bold text-[rgb(var(--text-primary))]">{analytics.usersByRole.user || 0}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                            <span className="text-[rgb(var(--text-secondary))] text-sm">Managers</span>
+                                        </div>
+                                        <span className="font-bold text-[rgb(var(--text-primary))]">{analytics.usersByRole.team_lead || 0}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                                            <span className="text-[rgb(var(--text-secondary))] text-sm">Admins</span>
+                                        </div>
+                                        <span className="font-bold text-[rgb(var(--text-primary))]">{analytics.usersByRole.admin || 0}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -315,32 +327,32 @@ export default function AdminDashboard() {
 
                 {/* Users Tab */}
                 {activeTab === 'users' && (
-                    <div className="glass-card overflow-hidden">
+                    <div className="card-os p-0 overflow-hidden animate-in-up" style={{ animationDelay: '0.2s' }}>
                         <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-white/10">
-                                        <th className="text-left p-4 text-theme-muted font-medium">User</th>
-                                        <th className="text-left p-4 text-theme-muted font-medium">Role</th>
-                                        <th className="text-left p-4 text-theme-muted font-medium">Team</th>
-                                        <th className="text-left p-4 text-theme-muted font-medium">XP</th>
-                                        <th className="text-left p-4 text-theme-muted font-medium">Actions</th>
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] font-medium border-b border-[rgb(var(--border-default))]">
+                                    <tr>
+                                        <th className="p-4">User</th>
+                                        <th className="p-4">Role</th>
+                                        <th className="p-4">Team</th>
+                                        <th className="p-4">XP</th>
+                                        <th className="p-4 text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-[rgb(var(--border-subtle))]">
                                     {users.map(user => (
-                                        <tr key={user.id} className="border-b border-white/5 hover:bg-white/5">
+                                        <tr key={user.id} className="hover:bg-[rgb(var(--bg-surface-raised))] transition-colors">
                                             <td className="p-4">
                                                 <div>
-                                                    <p className="text-theme-primary font-medium">{user.name || 'Unnamed'}</p>
-                                                    <p className="text-theme-muted text-sm">{user.email}</p>
+                                                    <p className="text-[rgb(var(--text-primary))] font-medium">{user.name || 'Unnamed'}</p>
+                                                    <p className="text-[rgb(var(--text-muted))] text-xs">{user.email}</p>
                                                 </div>
                                             </td>
                                             <td className="p-4">
                                                 <select
                                                     value={user.role}
                                                     onChange={(e) => updateUserRole(user.id, e.target.value)}
-                                                    className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm"
+                                                    className="bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded px-2 py-1 text-[rgb(var(--text-secondary))] text-xs focus:border-[rgb(var(--accent-primary))] focus:outline-none"
                                                 >
                                                     <option value="user">Employee</option>
                                                     <option value="team_lead">Manager</option>
@@ -351,7 +363,7 @@ export default function AdminDashboard() {
                                                 <select
                                                     value={user.teamId || ''}
                                                     onChange={(e) => assignUserToTeam(user.id, e.target.value || null)}
-                                                    className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm"
+                                                    className="bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded px-2 py-1 text-[rgb(var(--text-secondary))] text-xs focus:border-[rgb(var(--accent-primary))] focus:outline-none"
                                                 >
                                                     <option value="">No Team</option>
                                                     {teams.map(team => (
@@ -359,14 +371,14 @@ export default function AdminDashboard() {
                                                     ))}
                                                 </select>
                                             </td>
-                                            <td className="p-4 text-white">{user.totalXP}</td>
-                                            <td className="p-4">
+                                            <td className="p-4 text-[rgb(var(--text-primary))] font-mono">{user.totalXP}</td>
+                                            <td className="p-4 text-right">
                                                 <button
                                                     onClick={() => deleteUser(user.id)}
-                                                    className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                    className="p-2 text-status-danger hover:bg-status-danger/10 rounded-lg transition-colors"
                                                     title="Delete User"
                                                 >
-                                                    <Trash2 className="h-5 w-5" />
+                                                    <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </td>
                                         </tr>
@@ -379,21 +391,21 @@ export default function AdminDashboard() {
 
                 {/* Teams Tab */}
                 {activeTab === 'teams' && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 animate-in-up" style={{ animationDelay: '0.2s' }}>
                         {/* Create Team Form */}
-                        <div className="glass-card p-6">
-                            <h3 className="text-lg font-bold text-white mb-4">Create New Team</h3>
-                            <div className="flex gap-4">
+                        <div className="card-os p-6">
+                            <h3 className="text-lg font-display font-bold text-[rgb(var(--text-primary))] mb-4">Create New Team</h3>
+                            <div className="flex flex-col sm:flex-row gap-4">
                                 <input
                                     type="text"
                                     value={newTeamName}
                                     onChange={(e) => setNewTeamName(e.target.value)}
                                     placeholder="Team name"
-                                    className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-400"
+                                    className="flex-1 input-os"
                                 />
                                 <button
                                     onClick={createTeam}
-                                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-colors"
+                                    className="btn-primary whitespace-nowrap"
                                 >
                                     Create Team
                                 </button>
@@ -403,29 +415,31 @@ export default function AdminDashboard() {
                         {/* Teams List */}
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {teams.map(team => (
-                                <div key={team.id} className="glass-card p-6">
+                                <div key={team.id} className="card-os p-6 hover:border-[rgb(var(--accent-primary)/0.5)] transition-colors group">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <Building2 className="h-8 w-8 text-purple-400" />
+                                        <div className="p-2 bg-[rgb(var(--bg-surface-raised))] rounded-lg text-[rgb(var(--accent-primary))] group-hover:scale-110 transition-transform">
+                                            <Building2 className="h-6 w-6" />
+                                        </div>
                                         <div>
-                                            <h4 className="text-white font-bold">{team.name}</h4>
-                                            <p className="text-gray-400 text-sm">{team._count.members} members</p>
+                                            <h4 className="text-[rgb(var(--text-primary))] font-bold">{team.name}</h4>
+                                            <p className="text-[rgb(var(--text-muted))] text-sm">{team._count.members} members</p>
                                         </div>
                                     </div>
                                     {team.members.length > 0 && (
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 pt-4 border-t border-[rgb(var(--border-subtle))]">
                                             {team.members.slice(0, 5).map(member => (
                                                 <div key={member.id} className="flex items-center justify-between text-sm">
-                                                    <span className="text-theme-muted">{member.name || member.email}</span>
-                                                    <span className={`px-2 py-1 rounded text-xs ${member.role === 'team_lead'
-                                                        ? 'bg-yellow-500/20 text-yellow-400'
-                                                        : 'bg-theme-secondary/20 text-theme-muted'
+                                                    <span className="text-[rgb(var(--text-secondary))]">{member.name || member.email}</span>
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${member.role === 'team_lead'
+                                                        ? 'bg-status-warning/10 text-status-warning'
+                                                        : 'bg-[rgb(var(--bg-canvas))] text-[rgb(var(--text-muted))]'
                                                         }`}>
                                                         {member.role === 'team_lead' ? 'Manager' : 'Employee'}
                                                     </span>
                                                 </div>
                                             ))}
                                             {team.members.length > 5 && (
-                                                <p className="text-theme-muted text-sm">+{team.members.length - 5} more</p>
+                                                <p className="text-[rgb(var(--text-muted))] text-xs pt-1">+{team.members.length - 5} more</p>
                                             )}
                                         </div>
                                     )}

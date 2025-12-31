@@ -95,39 +95,43 @@ export default function PitchRecorder() {
     };
 
     return (
-        <div className="min-h-screen gradient-dark-bg">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="layout-shell flex items-center justify-center p-4 sm:p-8">
+            <div className="max-w-4xl w-full mx-auto">
                 {/* Header */}
-                <div className="text-center mb-12 animate-fade-in-up">
-                    <h1 className="text-4xl font-extrabold text-theme-primary mb-3">
+                <div className="text-center mb-12 animate-in-up">
+                    <h1 className="text-4xl font-display font-bold text-[rgb(var(--text-primary))] mb-3">
                         Record Your Pitch
                     </h1>
-                    <p className="text-theme-muted text-lg">
+                    <p className="text-[rgb(var(--text-secondary))] text-lg">
                         Practice your pitch and get instant AI-powered feedback
                     </p>
                 </div>
 
                 {/* Main Recording Card */}
-                <div className="glass-card p-8 md:p-12 text-center animate-fade-in-up stagger-1">
+                <div className="card-hero p-8 md:p-12 text-center animate-in-up" style={{ animationDelay: '0.1s' }}>
                     {/* Recording Button */}
-                    <div className="mb-8">
+                    <div className="mb-10">
                         <div className="relative inline-block">
                             {isRecording && (
                                 <>
-                                    <div className="pulse-ring"></div>
-                                    <div className="pulse-ring" style={{ animationDelay: '0.5s' }}></div>
+                                    <div className="absolute inset-0 rounded-full bg-status-danger/30 animate-ping"></div>
+                                    <div className="absolute inset-0 rounded-full bg-status-danger/20 animate-pulse delay-75"></div>
                                 </>
                             )}
                             <button
                                 onClick={isRecording ? stopRecording : startRecording}
                                 disabled={isUploading}
-                                className={`relative w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 ${isRecording
-                                    ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/50'
-                                    : 'bg-gradient-to-br from-purple-600 to-blue-600 hover:scale-110 shadow-xl shadow-purple-500/50'
-                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                className={`
+                                    relative w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300
+                                    ${isRecording
+                                        ? 'bg-status-danger hover:bg-red-600 shadow-[0_0_30px_rgba(239,68,68,0.5)]'
+                                        : 'bg-[rgb(var(--accent-primary))] hover:scale-105 shadow-[0_0_30px_rgb(var(--accent-glow)/0.5)]'
+                                    } 
+                                    disabled:opacity-50 disabled:cursor-not-allowed
+                                `}
                             >
                                 {isRecording ? (
-                                    <Square className="h-12 w-12 text-white" />
+                                    <Square className="h-12 w-12 text-white fill-current" />
                                 ) : (
                                     <Mic className="h-12 w-12 text-white" />
                                 )}
@@ -136,31 +140,31 @@ export default function PitchRecorder() {
                     </div>
 
                     {/* Status Text */}
-                    <div className="mb-8">
+                    <div className="mb-8 min-h-[5rem]">
                         {isRecording ? (
                             <div className="animate-pulse">
-                                <p className="text-2xl font-bold text-theme-primary mb-2">Recording...</p>
-                                <p className="text-theme-muted">Click the button to stop</p>
+                                <p className="text-2xl font-display font-bold text-[rgb(var(--text-primary))] mb-2">Recording...</p>
+                                <p className="text-[rgb(var(--text-secondary))]">Click the button to stop</p>
                             </div>
                         ) : audioBlob ? (
-                            <div>
+                            <div className="animate-in-up">
                                 <div className="flex items-center justify-center gap-2 mb-2">
-                                    <CheckCircle className="h-6 w-6 text-green-400" />
-                                    <p className="text-2xl font-bold text-theme-primary">Recording Complete!</p>
+                                    <CheckCircle className="h-6 w-6 text-status-success" />
+                                    <p className="text-2xl font-display font-bold text-[rgb(var(--text-primary))]">Recording Complete!</p>
                                 </div>
-                                <p className="text-theme-muted">Ready to upload for analysis</p>
+                                <p className="text-[rgb(var(--text-muted))]">Ready to upload for analysis</p>
                             </div>
                         ) : (
                             <div>
-                                <p className="text-2xl font-bold text-theme-primary mb-2">Ready to Record</p>
-                                <p className="text-theme-muted">Click the microphone to start</p>
+                                <p className="text-2xl font-display font-bold text-[rgb(var(--text-primary))] mb-2">Ready to Record</p>
+                                <p className="text-[rgb(var(--text-secondary))]">Click the microphone to start</p>
                             </div>
                         )}
                     </div>
 
                     {/* Error Message */}
                     {error && (
-                        <div className="mb-6 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg animate-fade-in">
+                        <div className="mb-6 bg-status-danger/10 border border-status-danger/20 text-status-danger px-4 py-3 rounded-[var(--radius-md)] animate-in-up">
                             <div className="flex items-center justify-center gap-2">
                                 <AlertCircle className="h-5 w-5" />
                                 <span>{error}</span>
@@ -170,7 +174,7 @@ export default function PitchRecorder() {
 
                     {/* Success Message */}
                     {success && (
-                        <div className="mb-6 bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg animate-fade-in">
+                        <div className="mb-6 bg-status-success/10 border border-status-success/20 text-status-success px-4 py-3 rounded-[var(--radius-md)] animate-in-up">
                             <div className="flex items-center justify-center gap-2">
                                 <CheckCircle className="h-5 w-5" />
                                 <span>Upload successful! Redirecting to dashboard...</span>
@@ -183,7 +187,7 @@ export default function PitchRecorder() {
                         <button
                             onClick={uploadPitch}
                             disabled={isUploading}
-                            className="btn-gradient disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="btn-primary w-full max-w-xs mx-auto text-lg py-3 flex items-center justify-center gap-2 animate-in-up"
                         >
                             {isUploading ? (
                                 <span className="flex items-center gap-2">
@@ -202,28 +206,28 @@ export default function PitchRecorder() {
 
                 {/* Tips Section */}
                 <div className="mt-12 grid md:grid-cols-3 gap-6">
-                    <div className="glass-card p-6 text-center animate-fade-in-up stagger-2">
-                        <div className="bg-purple-500/20 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
-                            <Mic className="h-6 w-6 text-purple-400" />
+                    <div className="card-os p-6 text-center animate-in-up" style={{ animationDelay: '0.2s' }}>
+                        <div className="bg-[rgb(var(--accent-primary)/0.1)] w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
+                            <Mic className="h-6 w-6 text-[rgb(var(--accent-primary))]" />
                         </div>
-                        <h3 className="text-white font-semibold mb-2">Clear Audio</h3>
-                        <p className="text-gray-300 text-sm">Ensure you're in a quiet environment for best results</p>
+                        <h3 className="text-[rgb(var(--text-primary))] font-medium mb-2">Clear Audio</h3>
+                        <p className="text-[rgb(var(--text-muted))] text-sm">Ensure you're in a quiet environment for best results</p>
                     </div>
 
-                    <div className="glass-card p-6 text-center animate-fade-in-up stagger-3">
-                        <div className="bg-blue-500/20 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <div className="card-os p-6 text-center animate-in-up" style={{ animationDelay: '0.3s' }}>
+                        <div className="bg-blue-500/10 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
                             <CheckCircle className="h-6 w-6 text-blue-400" />
                         </div>
-                        <h3 className="text-white font-semibold mb-2">Be Natural</h3>
-                        <p className="text-gray-300 text-sm">Speak naturally and confidently as you would in a real pitch</p>
+                        <h3 className="text-[rgb(var(--text-primary))] font-medium mb-2">Be Natural</h3>
+                        <p className="text-[rgb(var(--text-muted))] text-sm">Speak naturally and confidently as you would in a real pitch</p>
                     </div>
 
-                    <div className="glass-card p-6 text-center animate-fade-in-up stagger-4">
-                        <div className="bg-green-500/20 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
-                            <Upload className="h-6 w-6 text-green-400" />
+                    <div className="card-os p-6 text-center animate-in-up" style={{ animationDelay: '0.4s' }}>
+                        <div className="bg-status-success/10 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4">
+                            <Upload className="h-6 w-6 text-status-success" />
                         </div>
-                        <h3 className="text-white font-semibold mb-2">Get Feedback</h3>
-                        <p className="text-gray-300 text-sm">Receive instant AI-powered analysis and improvement tips</p>
+                        <h3 className="text-[rgb(var(--text-primary))] font-medium mb-2">Get Feedback</h3>
+                        <p className="text-[rgb(var(--text-muted))] text-sm">Receive instant AI-powered analysis and improvement tips</p>
                     </div>
                 </div>
             </div>

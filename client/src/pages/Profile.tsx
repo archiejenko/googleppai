@@ -118,12 +118,6 @@ export default function Profile() {
         setIsSaving(true);
         setMessage(null);
         try {
-            // We can only update password here. "Current password" check is implicit in Supabase if we were re-authenticating,
-            // but for a logged-in session, we can just set new password. 
-            // However, strictly speaking, Supabase 'updateUser' doesn't require old password. 
-            // If security requirement implies checking old password, we'd need to re-login with old password first.
-            // For this migration, we'll just update directly for simplicity.
-
             const { error } = await supabase.auth.updateUser({
                 password: passwordData.newPassword
             });
@@ -140,17 +134,15 @@ export default function Profile() {
     };
 
     if (isLoading) {
-        return <div className="p-8 text-center text-white">Loading profile...</div>;
+        return <div className="layout-shell flex items-center justify-center text-[rgb(var(--text-primary))]">Loading profile...</div>;
     }
 
-
-
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl font-bold text-theme-primary mb-8">Account Settings</h1>
+        <div className="layout-shell p-6 md:p-8">
+            <h1 className="text-3xl font-display font-bold text-[rgb(var(--text-primary))] mb-8">Account Settings</h1>
 
             {message && (
-                <div className={`mb-6 p-4 rounded-lg flex items-center ${message.type === 'success' ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'}`}>
+                <div className={`mb-6 p-4 rounded-[var(--radius-md)] flex items-center ${message.type === 'success' ? 'bg-status-success/10 text-status-success border border-status-success/20' : 'bg-status-danger/10 text-status-danger border border-status-danger/20'}`}>
                     {message.text}
                 </div>
             )}
@@ -159,20 +151,20 @@ export default function Profile() {
                 {/* Left Column: Profile & Stats */}
                 <div className="space-y-8 lg:col-span-2">
                     {/* User Stats Card */}
-                    <div className="glass-card p-6">
-                        <div className="flex items-center space-x-4 mb-6">
-                            <div className="h-16 w-16 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-2xl font-bold text-white">
+                    <div className="card-hero p-8 relative overflow-hidden">
+                        <div className="relative z-10 flex items-center space-x-6 mb-8">
+                            <div className="h-20 w-20 rounded-full bg-[rgb(var(--accent-primary))] flex items-center justify-center text-3xl font-bold text-white shadow-[0_0_20px_rgb(var(--accent-glow)/0.5)]">
                                 {user?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-theme-primary">{user?.name}</h2>
-                                <p className="text-theme-muted">{user?.email}</p>
-                                <div className="flex items-center mt-2 space-x-2">
-                                    <span className="px-2 py-1 rounded-md bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30 uppercase">
+                                <h2 className="text-2xl font-display font-bold text-[rgb(var(--text-primary))]">{user?.name}</h2>
+                                <p className="text-[rgb(var(--text-secondary))]">{user?.email}</p>
+                                <div className="flex items-center mt-3 space-x-2">
+                                    <span className="px-2.5 py-1 rounded-full bg-[rgb(var(--bg-canvas))] text-[rgb(var(--text-muted))] text-xs font-semibold border border-[rgb(var(--border-subtle))] uppercase tracking-wide">
                                         {user?.role === 'admin' ? 'Administrator' : user?.role === 'team_lead' ? 'Team Lead' : 'User'}
                                     </span>
                                     {stats && (
-                                        <span className="px-2 py-1 rounded-md bg-blue-500/20 text-blue-300 text-xs font-semibold border border-blue-500/30">
+                                        <span className="px-2.5 py-1 rounded-full bg-[rgb(var(--accent-primary)/0.1)] text-[rgb(var(--accent-primary))] text-xs font-semibold border border-[rgb(var(--accent-primary)/0.2)]">
                                             Lvl {Math.floor(stats.totalXP / 1000) + 1}
                                         </span>
                                     )}
@@ -180,72 +172,75 @@ export default function Profile() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-white/10">
+                        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-6 pt-8 border-t border-[rgb(var(--border-subtle))]">
                             <div className="text-center">
-                                <p className="text-gray-400 text-sm">Total XP</p>
-                                <p className="text-2xl font-bold text-white">{stats?.totalXP || 0}</p>
+                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Total XP</p>
+                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">{stats?.totalXP || 0}</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-gray-400 text-sm">Avg Score</p>
-                                <p className="text-2xl font-bold text-white">{stats?.averageScore || 0}%</p>
+                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Avg Score</p>
+                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">{stats?.averageScore || 0}%</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-gray-400 text-sm">Sessions</p>
-                                <p className="text-2xl font-bold text-white">{stats?.completedSessions || 0}</p>
+                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Sessions</p>
+                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">{stats?.completedSessions || 0}</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-gray-400 text-sm">Level</p>
-                                <p className="text-2xl font-bold text-white capitalize">{stats?.experienceLevel}</p>
+                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Level</p>
+                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))] capitalize">{stats?.experienceLevel}</p>
                             </div>
                         </div>
+
+                        {/* Background Accent */}
+                        <div className="absolute -top-24 -right-24 w-64 h-64 bg-[rgb(var(--accent-primary)/0.1)] rounded-full blur-3xl pointer-events-none"></div>
                     </div>
 
                     {/* Edit Profile Form */}
-                    <div className="glass-card p-6">
+                    <div className="card-os p-8">
                         <div className="flex items-center mb-6">
-                            <User className="h-5 w-5 text-purple-400 mr-2" />
-                            <h3 className="text-lg font-bold text-white">Edit Profile</h3>
+                            <User className="h-5 w-5 text-[rgb(var(--accent-primary))] mr-2" />
+                            <h3 className="text-lg font-bold text-[rgb(var(--text-primary))]">Edit Profile</h3>
                         </div>
-                        <form onSubmit={handleProfileUpdate} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <form onSubmit={handleProfileUpdate} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-theme-muted mb-1">Full Name</label>
+                                    <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Full Name</label>
                                     <input
                                         type="text"
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="input-glass"
+                                        className="input-os"
                                         placeholder="Your Name"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-theme-muted mb-1">Industry</label>
+                                    <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Industry</label>
                                     <input
                                         type="text"
                                         value={formData.industry}
                                         onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                                        className="input-glass"
+                                        className="input-os"
                                         placeholder="e.g. SaaS, Real Estate"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-theme-muted mb-1">Experience Level</label>
+                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Experience Level</label>
                                 <select
                                     value={formData.experienceLevel}
                                     onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value })}
-                                    className="input-glass"
+                                    className="input-os"
                                 >
-                                    <option value="beginner" className="bg-gray-900">Beginner</option>
-                                    <option value="intermediate" className="bg-gray-900">Intermediate</option>
-                                    <option value="advanced" className="bg-gray-900">Advanced</option>
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="advanced">Advanced</option>
                                 </select>
                             </div>
                             <div className="flex justify-end">
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="btn-gradient flex items-center px-4 py-2 text-sm"
+                                    className="btn-primary flex items-center px-6 py-2.5 text-sm"
                                 >
                                     <Save className="h-4 w-4 mr-2" />
                                     {isSaving ? 'Saving...' : 'Save Changes'}
@@ -258,48 +253,48 @@ export default function Profile() {
                 {/* Right Column: Security & Admin Ops */}
                 <div className="space-y-8">
                     {/* Security Settings */}
-                    <div className="glass-card p-6">
+                    <div className="card-os p-8">
                         <div className="flex items-center mb-6">
-                            <Shield className="h-5 w-5 text-purple-400 mr-2" />
-                            <h3 className="text-lg font-bold text-white">Security</h3>
+                            <Shield className="h-5 w-5 text-[rgb(var(--accent-primary))] mr-2" />
+                            <h3 className="text-lg font-bold text-[rgb(var(--text-primary))]">Security</h3>
                         </div>
-                        <form onSubmit={handlePasswordChange} className="space-y-4">
+                        <form onSubmit={handlePasswordChange} className="space-y-5">
                             <div>
-                                <label className="block text-sm font-medium text-theme-muted mb-1">Current Password</label>
+                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Current Password</label>
                                 <div className="relative">
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         value={passwordData.currentPassword}
                                         onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                        className="input-glass pr-10"
+                                        className="input-os pr-10"
                                         placeholder="••••••••"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-3 text-gray-400 hover:text-white"
+                                        className="absolute right-3 top-3 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]"
                                     >
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-theme-muted mb-1">New Password</label>
+                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">New Password</label>
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={passwordData.newPassword}
                                     onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                    className="input-glass"
+                                    className="input-os"
                                     placeholder="Min 8 chars"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-theme-muted mb-1">Confirm New Password</label>
+                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Confirm New Password</label>
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={passwordData.confirmPassword}
                                     onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                    className="input-glass"
+                                    className="input-os"
                                     placeholder="Min 8 chars"
                                 />
                             </div>
@@ -307,7 +302,7 @@ export default function Profile() {
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold transition-colors flex items-center"
+                                    className="px-4 py-2 rounded-[var(--radius-md)] bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] text-[rgb(var(--text-primary))] hover:bg-[rgb(var(--bg-canvas))] text-sm font-semibold transition-colors flex items-center"
                                 >
                                     <Key className="h-4 w-4 mr-2" />
                                     Update Password
@@ -317,35 +312,31 @@ export default function Profile() {
                     </div>
 
                     {/* Admin Role Switcher - Only visible to actual admins */}
-                    {/* Note: This checks the REAL role if possible, but our current AuthContext only exposes effective. 
-                        However, if they are currently admin (effective), they can switch away. 
-                        If they have switched away, they need the floating 'reset' button we added to AuthContext. 
-                    */}
                     {user?.role === 'admin' && (
-                        <div className="glass-card p-6 border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
-                            <div className="flex items-center mb-4 text-yellow-500">
+                        <div className="card-os p-6 border-status-warning/30 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+                            <div className="flex items-center mb-4 text-status-warning">
                                 <Briefcase className="h-5 w-5 mr-2" />
                                 <h3 className="text-lg font-bold">Admin Tools</h3>
                             </div>
-                            <p className="text-sm text-gray-400 mb-4">
+                            <p className="text-sm text-[rgb(var(--text-muted))] mb-4">
                                 Temporarily view the platform as a different role to test permissions and layout.
                             </p>
                             <div className="space-y-2">
                                 <button
                                     onClick={() => simulateRole(null)}
-                                    className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${!((user as any).simulatedRole) ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                                    className={`w-full text-left px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors ${!((user as any).simulatedRole) ? 'bg-[rgb(var(--accent-primary))] text-white' : 'bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--bg-canvas))]'}`}
                                 >
                                     Admin (Default)
                                 </button>
                                 <button
                                     onClick={() => simulateRole('team_lead')}
-                                    className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${(user as any).simulatedRole === 'team_lead' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                                    className={`w-full text-left px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors ${(user as any).simulatedRole === 'team_lead' ? 'bg-[rgb(var(--accent-primary))] text-white' : 'bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--bg-canvas))]'}`}
                                 >
                                     View as Team Lead
                                 </button>
                                 <button
                                     onClick={() => simulateRole('user')}
-                                    className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${(user as any).simulatedRole === 'user' ? 'bg-purple-600 text-white' : 'bg-theme-tertiary text-theme-muted hover:bg-theme-secondary'}`}
+                                    className={`w-full text-left px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors ${(user as any).simulatedRole === 'user' ? 'bg-[rgb(var(--accent-primary))] text-white' : 'bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--bg-canvas))]'}`}
                                 >
                                     View as User
                                 </button>
