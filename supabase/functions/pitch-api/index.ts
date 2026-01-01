@@ -7,6 +7,15 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Simple IP Hashing to avoid storing raw PII
+async function hashIp(ip: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(ip + (Deno.env.get('SUPABASE_ANON_KEY') || 'salt')); // Use anon key as salt for simplicity
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
@@ -22,14 +31,59 @@ serve(async (req) => {
 
         const { data: { user } } = await supabaseClient.auth.getUser()
 
-        if (!user) {
+        // 2. Identify Requestor (Multi-Dimensional)
+        const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+        const ipHash = await hashIp(clientIp);
+
+        let identifiers = [`ip:${ipHash}`];
+        if (user) {
+            identifiers.push(`user:${user.id}`);
+        } else {
+            // If Unauthenticated, we strictly limit IP. 
+            // In this app, many routes require Auth, but Rate Limiter protects the door.
+            // If Auth failed above (user is null), we might block or proceed as Anon?
+            // The pitch-api requires Auth generally.
             return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        // 2. Parse Input
+        // 3. HARDENED RATE LIMIT CHECK
+        // Endpoint: PITCH-API
+        // Cost: 10 Tokens (High cost for audio analysis)
+        // Burst: 20 tokens / 1 min (Allows 2 rapid fire calls)
+        // Sustained: 100 tokens / 1 hour (Allows 10 calls per hour)
+
+        const supabaseAdmin = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        )
+
+        const { data: isAllowed, error: rateLimitError } = await supabaseAdmin
+            .rpc('check_rate_limit_hardened', {
+                dimension_keys: identifiers,
+                cost: 10,
+                burst_limit: 20,
+                burst_window_seconds: 60,
+                sustained_limit: 100,
+                sustained_window_seconds: 3600
+            })
+
+        if (rateLimitError) {
+            console.error("Rate Limiter Error (Fail Closed):", rateLimitError);
+            throw new Error("Service temporarily unavailable (Security Check Failed)");
+        }
+
+        if (!isAllowed) {
+            return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please wait before analyzing more pitches.' }), {
+                status: 429,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
+        }
+
+
+        // 4. Parse Input
         const { text, audioUrl, trainingSessionId } = await req.json()
 
-        // 3. AI Analysis (Gemini)
+        // 5. AI Analysis (Gemini)
         const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY') || '')
         const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
@@ -39,7 +93,6 @@ serve(async (req) => {
         })
 
         let promptParts: any[] = []
-        // System Prompt Hardening: Role Locking & JSON Enforcement
         promptParts.push(`
             SYSTEM INSTRUCTION: You are an expert Sales Coach AI. 
             ROLE: Analyze the provided sales pitch transcript/audio using the MEDDIC framework.
@@ -110,18 +163,11 @@ serve(async (req) => {
             }
         }
 
-        // 4. Secure DB Write (Using Service Role)
-        // We use the Service Role Key here so we can write to 'pitches' table
-        // while the User role has NO INSERT permissions.
-        const supabaseAdmin = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        )
-
+        // 6. Secure DB Write (Service Role)
         const { data: pitch, error } = await supabaseAdmin
             .from('pitches')
             .insert({
-                user_id: user.id, // Explicitly bind to the authenticated user ID from step 1
+                user_id: user.id,
                 training_session_id: trainingSessionId,
                 audio_url: audioUrl || 'text-only',
                 transcript: text || 'Audio analysis',
@@ -131,8 +177,8 @@ serve(async (req) => {
                 confidence_score: analysis.confidenceScore || 0,
                 pace_score: analysis.paceScore || 0,
                 clarity_score: analysis.clarityScore || 0,
-                feedback: analysis.meddicBreakdown, // Mapping feedback structure
-                duration: 0 // Placeholder
+                feedback: analysis.meddicBreakdown,
+                duration: 0
             })
             .select()
             .single()
@@ -148,7 +194,7 @@ serve(async (req) => {
         console.error("Function error:", error)
         return new Response(JSON.stringify({ error: error.message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
+            status: 400, // Or 429 if custom logic
         })
     }
 })

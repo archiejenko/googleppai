@@ -7,6 +7,14 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+async function hashIp(ip: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(ip + (Deno.env.get('SUPABASE_ANON_KEY') || 'salt'));
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
@@ -21,9 +29,50 @@ serve(async (req) => {
 
         const { data: { user } } = await supabaseClient.auth.getUser()
 
+        // Identify
+        const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+        const ipHash = await hashIp(clientIp);
+
+        // Chat allows access? Assuming Auth required.
         if (!user) {
             return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
+
+        const identifiers = [`ip:${ipHash}`, `user:${user.id}`];
+
+        // --- HARDENED RATE LIMIT CHECK ---
+        // Endpoint: CHAT-AI
+        // Cost: 1 Token
+        // Burst: 20 tokens / 1 min (Standard chat speed)
+        // Sustained: 500 tokens / 1 hour (Allows extensive practice, but stops abuse)
+
+        const supabaseAdmin = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        )
+
+        const { data: isAllowed, error: rateLimitError } = await supabaseAdmin
+            .rpc('check_rate_limit_hardened', {
+                dimension_keys: identifiers,
+                cost: 1,
+                burst_limit: 20,
+                burst_window_seconds: 60,
+                sustained_limit: 500,
+                sustained_window_seconds: 3600
+            })
+
+        if (rateLimitError) {
+            console.error("Rate Limiter Check Failed:", rateLimitError);
+            throw new Error("Security check failed");
+        }
+
+        if (!isAllowed) {
+            return new Response(JSON.stringify({ error: 'Rate limit exceeded. Slow down.' }), {
+                status: 429,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
+        }
+        // ------------------------
 
         const { sessionId, message, history } = await req.json()
 
@@ -61,8 +110,6 @@ serve(async (req) => {
         4. React aggressively or passively based on "Difficulty": ${session.difficulty || 'medium'}.
         `
 
-        // Add System Prompt to history as first turn if model config supports it, 
-        // or just prepend context for robustness.
         const chat = model.startChat({
             history: [
                 {
