@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle, TrendingUp } from 'lucide-react';
+
 
 const mockReps = [
     { id: 1, name: "Sarah Connor", risk: "High", metric: "Objection Handling", score: 42, activity: "2d ago" },

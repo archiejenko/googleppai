@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mic, BarChart3, Zap, Shield, ArrowRight, Play, Check } from 'lucide-react';
+import { ChartBar, Zap, Shield, ArrowRight, Play, Check } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Landing() {
@@ -98,7 +98,7 @@ export default function Landing() {
                         {/* Feature 1 */}
                         <div className="card-hero p-8 group hover:-translate-y-2 transition-transform duration-300">
                             <div className="w-14 h-14 rounded-2xl bg-[rgb(var(--accent-primary)/0.1)] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-                                <BarChart3 className="h-7 w-7 text-[rgb(var(--accent-primary))]" />
+                                <ChartBar className="h-7 w-7 text-[rgb(var(--accent-primary))]" />
                             </div>
                             <h3 className="text-2xl font-display font-bold mb-4">MEDDIC Scoring</h3>
                             <p className="text-[rgb(var(--text-secondary))] leading-relaxed">

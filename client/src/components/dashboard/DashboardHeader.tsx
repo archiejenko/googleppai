@@ -1,4 +1,4 @@
-import { Play, TrendingUp } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface DashboardHeaderProps {

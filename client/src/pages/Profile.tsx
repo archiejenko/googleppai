@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../utils/supabase';
 import { User, Shield, Briefcase, Key, Save, Eye, EyeOff } from 'lucide-react';
@@ -76,7 +76,7 @@ export default function Profile() {
         }
     };
 
-    const handleProfileUpdate = async (e: React.FormEvent) => {
+    const handleProfileUpdate = async (e: FormEvent) => {
         e.preventDefault();
         if (!user) return;
 
@@ -108,7 +108,7 @@ export default function Profile() {
         }
     };
 
-    const handlePasswordChange = async (e: React.FormEvent) => {
+    const handlePasswordChange = async (e: FormEvent) => {
         e.preventDefault();
         if (passwordData.newPassword !== passwordData.confirmPassword) {
             setMessage({ text: 'New passwords do not match', type: 'error' });

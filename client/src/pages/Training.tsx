@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { Play, Target, Clock, Globe, TrendingUp, Check } from 'lucide-react';
@@ -94,7 +94,7 @@ export default function Training() {
         { value: 'hard', label: 'Hard', color: 'text-status-danger', border: 'border-status-danger', xp: 200 },
     ];
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setLoading(true);
 

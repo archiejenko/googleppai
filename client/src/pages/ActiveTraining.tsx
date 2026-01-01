@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Mic, MicOff, X, MoreVertical, Timer, MessageSquare } from 'lucide-react';
+import { Mic, MicOff, X, Clock, MessageSquare } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import AudioVisualizer from '../components/training/AudioVisualizer';
 
@@ -159,7 +159,7 @@ export default function ActiveTraining() {
                 {/* Live Metrics Pill */}
                 <div className="hidden md:flex items-center gap-6 px-4 py-2 bg-[rgb(var(--bg-surface)/0.5)] backdrop-blur-md rounded-full border border-[rgb(var(--border-subtle))]">
                     <div className="flex items-center gap-2 text-sm text-[rgb(var(--text-muted))]">
-                        <Timer className="w-4 h-4" />
+                        <Clock className="w-4 h-4" />
                         <span className="font-mono text-[rgb(var(--text-primary))]">{formatTime(duration)}</span>
                     </div>
                     <div className="w-px h-4 bg-[rgb(var(--border-subtle))]" />

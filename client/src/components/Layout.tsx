@@ -4,11 +4,11 @@ import { Mic, LogOut, LayoutDashboard, Target, BookOpen, Building2, Users, Shiel
 import ThemeToggle from './ThemeToggle';
 
 export default function Layout() {
-    const { logout, isAdmin, isManager } = useAuth();
+    const { signOut, isAdmin, isManager } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        logout();
+        signOut();
         navigate('/login');
     };
 

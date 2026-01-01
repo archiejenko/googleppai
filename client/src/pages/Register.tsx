@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { Sparkles, UserPlus } from 'lucide-react';
@@ -10,7 +10,7 @@ export default function Register() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setError('');
         try {

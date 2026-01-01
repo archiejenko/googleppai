@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
     LayoutDashboard,
     Mic,
-    BarChart3,
+    ChartBar,
     Users,
     Settings,
     LogOut,
@@ -27,7 +26,7 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
         { icon: Mic, label: 'Practice', path: '/training' },
-        { icon: BarChart3, label: 'Analysis', path: '/pitch/latest' }, // Placeholder path
+        { icon: ChartBar, label: 'Analysis', path: '/pitch/latest' }, // Placeholder path
         { icon: GraduationCap, label: 'Drills', path: '/learning-path' },
         { icon: Users, label: 'Team', path: '/team' },
         { icon: Settings, label: 'Settings', path: '/profile' },
@@ -65,22 +64,26 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
                             }
                         `}
                     >
-                        <item.icon className={`w-5 h-5 flex-shrink-0 ${collapsed ? 'mx-auto' : ''}`} />
+                        {({ isActive }) => (
+                            <>
+                                <item.icon className={`w-5 h-5 flex-shrink-0 ${collapsed ? 'mx-auto' : ''}`} />
 
-                        <span className={`ml-3 overflow-hidden whitespace-nowrap transition-all duration-300 ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-                            {item.label}
-                        </span>
+                                <span className={`ml-3 overflow-hidden whitespace-nowrap transition-all duration-300 ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                                    {item.label}
+                                </span>
 
-                        {/* Hover Tooltip for Collapsed State */}
-                        {collapsed && (
-                            <div className="absolute left-full ml-4 px-2 py-1 bg-bg-raised border border-border text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                                {item.label}
-                            </div>
-                        )}
+                                {/* Hover Tooltip for Collapsed State */}
+                                {collapsed && (
+                                    <div className="absolute left-full ml-4 px-2 py-1 bg-bg-raised border border-border text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                                        {item.label}
+                                    </div>
+                                )}
 
-                        {/* Active Indicator Strip */}
-                        {({ isActive }: { isActive: boolean }) => isActive && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-accent rounded-r-full" />
+                                {/* Active Indicator Strip */}
+                                {isActive && (
+                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-accent rounded-r-full" />
+                                )}
+                            </>
                         )}
                     </NavLink>
                 ))}

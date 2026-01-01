@@ -1,7 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { Mic, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -9,7 +9,7 @@ export default function Login() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setError('');
         try {
