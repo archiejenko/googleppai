@@ -13,8 +13,14 @@ export default function Login() {
         e.preventDefault();
         setError('');
         try {
+            // Handle username login (admin)
+            let signInEmail = email;
+            if (!email.includes('@')) {
+                signInEmail = `${email}@admin.pitchperfect.ai`;
+            }
+
             const { error } = await supabase.auth.signInWithPassword({
-                email,
+                email: signInEmail,
                 password,
             });
 
@@ -70,13 +76,13 @@ export default function Login() {
                             <input
                                 id="email"
                                 name="email"
-                                type="email"
-                                autoComplete="email"
+                                type="text"
+                                autoComplete="username"
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="input-os"
-                                placeholder="you@example.com"
+                                placeholder="Username or Email"
                             />
                         </div>
 
