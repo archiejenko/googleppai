@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase';
-import { Search, Filter, MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, UserPlus, X, Save } from 'lucide-react'; // Added icons
 
 interface TeamMember {
     id: string;
@@ -17,6 +18,14 @@ interface TeamMember {
 export default function Team() {
     const [members, setMembers] = useState<TeamMember[]>([]);
     const [loading, setLoading] = useState(true);
+    const [teamId, setTeamId] = useState<string | null>(null);
+
+    // Add Member State
+    const [showAddMember, setShowAddMember] = useState(false);
+    const [newMemberName, setNewMemberName] = useState('');
+    const [newMemberEmail, setNewMemberEmail] = useState('');
+    const [newMemberPassword, setNewMemberPassword] = useState('');
+    const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
         const fetchTeamData = async () => {
@@ -27,19 +36,23 @@ export default function Team() {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) return;
                 const { data: userProfile } = await supabase.from('profiles').select('team_id').eq('id', user.id).single();
-                if (!userProfile?.team_id) { setLoading(false); return; }
+                if (userProfile?.team_id) {
+                    setTeamId(userProfile.team_id);
 
-                const { data: teamData } = await supabase
-                    .from('teams')
-                    .select(`members:profiles(id, name, email, role, total_xp, skills:user_skills(level, skill:skills(name, category)))`)
-                    .eq('id', userProfile.team_id)
-                    .single();
+                    const { data: teamData } = await supabase
+                        .from('teams')
+                        .select(`members:profiles(id, name, email, role, total_xp, skills:user_skills(level, skill:skills(name, category)))`)
+                        .eq('id', userProfile.team_id)
+                        .single();
 
-                if (teamData) {
-                    setMembers(teamData.members.map((m: any) => ({
-                        id: m.id, name: m.name, email: m.email, role: m.role, totalXP: m.total_xp,
-                        skills: m.skills.map((s: any) => ({ level: s.level, skill: s.skill }))
-                    })));
+                    if (teamData) {
+                        setMembers(teamData.members.map((m: any) => ({
+                            id: m.id, name: m.name, email: m.email, role: m.role, totalXP: m.total_xp,
+                            skills: m.skills.map((s: any) => ({ level: s.level, skill: s.skill }))
+                        })));
+                    }
+                } else {
+                    setLoading(false);
                 }
             } catch (e) {
                 console.error(e);
@@ -49,6 +62,52 @@ export default function Team() {
         };
         fetchTeamData();
     }, []);
+
+    const handleAddMember = async () => {
+        if (!newMemberEmail || !newMemberPassword || !newMemberName || !teamId) {
+            alert('Please fill in all fields');
+            return;
+        }
+
+        setIsCreating(true);
+        try {
+            const tempSupabase = createClient(
+                import.meta.env.VITE_SUPABASE_URL,
+                import.meta.env.VITE_SUPABASE_ANON_KEY,
+                { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+            );
+
+            const { data, error } = await tempSupabase.auth.signUp({
+                email: newMemberEmail,
+                password: newMemberPassword,
+                options: {
+                    data: {
+                        name: newMemberName,
+                        role: 'user',
+                    }
+                }
+            });
+
+            if (error) throw error;
+
+            if (data.user) {
+                // Assign to team immediately
+                await supabase.from('profiles').update({ team_id: teamId }).eq('id', data.user.id);
+
+                alert('Member added successfully!');
+                setShowAddMember(false);
+                setNewMemberName('');
+                setNewMemberEmail('');
+                setNewMemberPassword('');
+                // Refresh list logic would go here, simplified by reloading page or re-fetching?
+                window.location.reload();
+            }
+        } catch (error: any) {
+            alert('Failed to add member: ' + error.message);
+        } finally {
+            setIsCreating(false);
+        }
+    };
 
     if (loading) return <div className="h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-[rgb(var(--accent-primary))] rounded-full border-t-transparent"></div></div>;
 
@@ -60,19 +119,67 @@ export default function Team() {
                     <h1 className="font-display font-bold text-2xl text-[rgb(var(--text-primary))]">Team Roster</h1>
                     <p className="text-[rgb(var(--text-muted))] text-sm">Manage your team's performance and training.</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgb(var(--text-muted))]" />
-                        <input type="text" placeholder="Search members..." className="pl-9 pr-4 py-2 bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] rounded-lg text-sm focus:outline-none focus:border-[rgb(var(--accent-primary))]" />
-                    </div>
-                    <button className="btn-ghost border border-[rgb(var(--border-default))] text-sm flex items-center gap-2">
-                        <Filter className="w-4 h-4" /> Filter
-                    </button>
-                    <button className="btn-primary text-sm flex items-center gap-2">
-                        + Add Member
-                    </button>
-                </div>
             </div>
+            <div className="flex items-center gap-3">
+                <button
+                    onClick={() => setShowAddMember(!showAddMember)}
+                    className={`btn-primary text-sm flex items-center gap-2 ${showAddMember ? 'bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-primary))] border border-[rgb(var(--border-default))]' : ''}`}
+                >
+                    {showAddMember ? <X className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                    {showAddMember ? 'Cancel' : 'Add Member'}
+                </button>
+            </div>
+
+            {/* Add Member Form */}
+            {
+                showAddMember && (
+                    <div className="mb-6 card-os p-6 animate-in-up">
+                        <h3 className="font-bold text-[rgb(var(--text-primary))] mb-4">Add New Team Member</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-[rgb(var(--text-secondary))] mb-1">Name</label>
+                                <input
+                                    type="text"
+                                    value={newMemberName}
+                                    onChange={(e) => setNewMemberName(e.target.value)}
+                                    className="w-full input-os"
+                                    placeholder="Full Name"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-[rgb(var(--text-secondary))] mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    value={newMemberEmail}
+                                    onChange={(e) => setNewMemberEmail(e.target.value)}
+                                    className="w-full input-os"
+                                    placeholder="Email Address"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-[rgb(var(--text-secondary))] mb-1">Temp Password</label>
+                                <input
+                                    type="password"
+                                    value={newMemberPassword}
+                                    onChange={(e) => setNewMemberPassword(e.target.value)}
+                                    className="w-full input-os"
+                                    placeholder="Password"
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                            <button
+                                onClick={handleAddMember}
+                                disabled={isCreating}
+                                className="btn-primary flex items-center gap-2"
+                            >
+                                <Save className="w-4 h-4" />
+                                {isCreating ? 'Creating...' : 'Create Member'}
+                            </button>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* Dense Table */}
             <div className="flex-1 overflow-hidden rounded-[var(--radius-md)] border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface))] flex flex-col">
@@ -155,5 +262,7 @@ export default function Team() {
                 </div>
             </div>
         </div>
+
     );
 }
+

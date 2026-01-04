@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import UpdatePassword from './pages/UpdatePassword';
 import Dashboard from './pages/Dashboard';
 import PitchRecorder from './pages/PitchRecorder';
 import PitchAnalysis from './pages/PitchAnalysis';
@@ -26,6 +27,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/update-password" element={<UpdatePassword />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route element={<AppShell />}>
 
@@ -40,11 +42,7 @@ function App() {
                 <Team />
               </ProtectedRoute>
             } />
-            <Route path="/admin" element={
-              <ProtectedRoute roles={['admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/active-training" element={<ActiveTraining />} />
             <Route path="/profile" element={<Profile />} />
           </Route>

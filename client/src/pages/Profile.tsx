@@ -124,6 +124,7 @@ export default function Profile() {
 
             if (error) throw error;
 
+            window.alert('Password successfully changed');
             setMessage({ text: 'Password changed successfully', type: 'success' });
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
         } catch (error: any) {

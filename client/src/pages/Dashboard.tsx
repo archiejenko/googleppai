@@ -3,6 +3,7 @@ import { supabase } from '../utils/supabase';
 import { Target, Phone, CheckCircle, Award } from 'lucide-react';
 
 // Components
+import { useAuth } from '../context/AuthContext';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import MetricTile from '../components/dashboard/MetricTile';
 import RepsAtRiskTable from '../components/dashboard/RepsAtRiskTable';
@@ -19,6 +20,7 @@ interface Pitch {
 }
 
 export default function Dashboard() {
+    const { user } = useAuth();
     const [pitches, setPitches] = useState<Pitch[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -66,7 +68,7 @@ export default function Dashboard() {
 
     return (
         <div className="pb-12">
-            <DashboardHeader userName="Archie" />
+            <DashboardHeader userName={user?.name || user?.email?.split('@')[0] || 'User'} />
 
             {/* Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-in-up" style={{ animationDelay: '0.1s' }}>

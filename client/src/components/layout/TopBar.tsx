@@ -1,12 +1,16 @@
 import { Search, Bell, Menu } from 'lucide-react';
 import ThemeToggle from '../ThemeToggle';
 
+import { useAuth } from '../../context/AuthContext';
+
 interface TopBarProps {
     collapsed: boolean;
     setCollapsed: (collapsed: boolean) => void;
 }
 
 export default function TopBar({ collapsed, setCollapsed }: TopBarProps) {
+    const { user, signOut } = useAuth();
+
     return (
         <header
             className={`fixed top-0 right-0 h-16 bg-bg-surface/80 backdrop-blur-md border-b border-border z-40 transition-all duration-300 flex items-center justify-between px-6
@@ -51,16 +55,19 @@ export default function TopBar({ collapsed, setCollapsed }: TopBarProps) {
                     <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-accent to-blue-500 p-[1px]">
                         <div className="w-full h-full rounded-full bg-bg-surface p-0.5">
                             <img
-                                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Archie"
+                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`}
                                 alt="User"
                                 className="w-full h-full rounded-full bg-bg-canvas"
                             />
                         </div>
                     </div>
                     <div className="hidden md:block text-sm">
-                        <p className="font-medium text-text-primary leading-none">Archie Jenko</p>
-                        <p className="text-text-muted text-xs">Admin</p>
+                        <p className="font-medium text-text-primary leading-none">{user?.name || user?.email?.split('@')[0] || 'User'}</p>
+                        <p className="text-text-muted text-xs capitalize">{user?.role || 'User'}</p>
                     </div>
+                    <button onClick={signOut} className="ml-2 text-xs text-text-muted hover:text-status-danger underline">
+                        Sign Out
+                    </button>
                 </div>
             </div>
         </header>

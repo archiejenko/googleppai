@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js'; // For temp client
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../utils/supabase';
 import { Users, Building2, TrendingUp, Award, Trash2, Shield } from 'lucide-react';
@@ -43,6 +44,12 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'teams'>('overview');
     const [newTeamName, setNewTeamName] = useState('');
+
+    // New User State
+    const [newUserEmail, setNewUserEmail] = useState('');
+    const [newUserName, setNewUserName] = useState('');
+    const [newUserPassword, setNewUserPassword] = useState('');
+    const [newUserTeamId, setNewUserTeamId] = useState('');
 
     useEffect(() => {
         fetchData();
@@ -162,6 +169,64 @@ export default function AdminDashboard() {
         }
     };
 
+    const createUser = async () => {
+        if (!newUserEmail || !newUserPassword || !newUserName) {
+            alert('Please fill in all fields (Email, Name, Password)');
+            return;
+        }
+
+        try {
+            // Use a temporary client to avoid logging out the admin
+            const tempSupabase = createClient(
+                import.meta.env.VITE_SUPABASE_URL,
+                import.meta.env.VITE_SUPABASE_ANON_KEY,
+                {
+                    auth: {
+                        persistSession: false,
+                        autoRefreshToken: false,
+                        detectSessionInUrl: false
+                    }
+                }
+            );
+
+            const { data, error } = await tempSupabase.auth.signUp({
+                email: newUserEmail,
+                password: newUserPassword,
+                options: {
+                    data: {
+                        name: newUserName,
+                        role: 'user', // Default, admin can change later
+                    }
+                }
+            });
+
+            if (error) throw error;
+
+            if (data.user) {
+                // Manually insert profile/team if not triggered (redundancy)
+                // Also update team if provided
+                if (newUserTeamId) {
+                    // We need to update the profile that was just likely created by trigger
+                    // Or wait a sec? Triggers are fast.
+                    // But we can just use our admin client to update it.
+                    // We need the ID.
+                    await supabase.from('profiles').update({ team_id: newUserTeamId }).eq('id', data.user.id);
+                }
+
+                alert(`User created successfully! ID: ${data.user.id}`);
+                fetchData(); // Refresh list
+                setNewUserEmail('');
+                setNewUserName('');
+                setNewUserPassword('');
+                setNewUserTeamId('');
+            }
+
+        } catch (error: any) {
+            console.error('Failed to create user', error);
+            alert('Failed to create user: ' + error.message);
+        }
+    };
+
     const assignUserToTeam = async (userId: string, teamId: string | null) => {
         try {
             const { error } = await supabase
@@ -176,17 +241,7 @@ export default function AdminDashboard() {
         }
     };
 
-    if (!isAdmin) {
-        return (
-            <div className="layout-shell flex justify-center items-center">
-                <div className="card-os p-8 text-center max-w-md">
-                    <Shield className="h-16 w-16 text-status-danger mx-auto mb-4" />
-                    <h3 className="text-xl font-display font-bold text-[rgb(var(--text-primary))] mb-2">Access Denied</h3>
-                    <p className="text-[rgb(var(--text-secondary))]">You need admin privileges to access this page.</p>
-                </div>
-            </div>
-        );
-    }
+
 
     if (loading) {
         return (
@@ -327,64 +382,122 @@ export default function AdminDashboard() {
 
                 {/* Users Tab */}
                 {activeTab === 'users' && (
-                    <div className="card-os p-0 overflow-hidden animate-in-up" style={{ animationDelay: '0.2s' }}>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] font-medium border-b border-[rgb(var(--border-default))]">
-                                    <tr>
-                                        <th className="p-4">User</th>
-                                        <th className="p-4">Role</th>
-                                        <th className="p-4">Team</th>
-                                        <th className="p-4">XP</th>
-                                        <th className="p-4 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-[rgb(var(--border-subtle))]">
-                                    {users.map(user => (
-                                        <tr key={user.id} className="hover:bg-[rgb(var(--bg-surface-raised))] transition-colors">
-                                            <td className="p-4">
-                                                <div>
-                                                    <p className="text-[rgb(var(--text-primary))] font-medium">{user.name || 'Unnamed'}</p>
-                                                    <p className="text-[rgb(var(--text-muted))] text-xs">{user.email}</p>
-                                                </div>
-                                            </td>
-                                            <td className="p-4">
-                                                <select
-                                                    value={user.role}
-                                                    onChange={(e) => updateUserRole(user.id, e.target.value)}
-                                                    className="bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded px-2 py-1 text-[rgb(var(--text-secondary))] text-xs focus:border-[rgb(var(--accent-primary))] focus:outline-none"
-                                                >
-                                                    <option value="user">Employee</option>
-                                                    <option value="team_lead">Manager</option>
-                                                    <option value="admin">Admin</option>
-                                                </select>
-                                            </td>
-                                            <td className="p-4">
-                                                <select
-                                                    value={user.teamId || ''}
-                                                    onChange={(e) => assignUserToTeam(user.id, e.target.value || null)}
-                                                    className="bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded px-2 py-1 text-[rgb(var(--text-secondary))] text-xs focus:border-[rgb(var(--accent-primary))] focus:outline-none"
-                                                >
-                                                    <option value="">No Team</option>
-                                                    {teams.map(team => (
-                                                        <option key={team.id} value={team.id}>{team.name}</option>
-                                                    ))}
-                                                </select>
-                                            </td>
-                                            <td className="p-4 text-[rgb(var(--text-primary))] font-mono">{user.totalXP}</td>
-                                            <td className="p-4 text-right">
-                                                <button
-                                                    onClick={() => deleteUser(user.id)}
-                                                    className="p-2 text-status-danger hover:bg-status-danger/10 rounded-lg transition-colors"
-                                                    title="Delete User"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            </td>
+                    <div className="space-y-6 animate-in-up" style={{ animationDelay: '0.2s' }}>
+                        {/* Create User Form */}
+                        <div className="card-os p-6">
+                            <h3 className="text-lg font-display font-bold text-[rgb(var(--text-primary))] mb-4">Create New User</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                                <div className="lg:col-span-1">
+                                    <label className="block text-xs font-semibold text-[rgb(var(--text-secondary))] mb-1">Name</label>
+                                    <input
+                                        type="text"
+                                        value={newUserName}
+                                        onChange={(e) => setNewUserName(e.target.value)}
+                                        placeholder="Full Name"
+                                        className="w-full input-os"
+                                    />
+                                </div>
+                                <div className="lg:col-span-1">
+                                    <label className="block text-xs font-semibold text-[rgb(var(--text-secondary))] mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        value={newUserEmail}
+                                        onChange={(e) => setNewUserEmail(e.target.value)}
+                                        placeholder="user@company.com"
+                                        className="w-full input-os"
+                                    />
+                                </div>
+                                <div className="lg:col-span-1">
+                                    <label className="block text-xs font-semibold text-[rgb(var(--text-secondary))] mb-1">Password</label>
+                                    <input
+                                        type="password"
+                                        value={newUserPassword}
+                                        onChange={(e) => setNewUserPassword(e.target.value)}
+                                        placeholder="Temp Password"
+                                        className="w-full input-os"
+                                    />
+                                </div>
+                                <div className="lg:col-span-1">
+                                    <label className="block text-xs font-semibold text-[rgb(var(--text-secondary))] mb-1">Team (Optional)</label>
+                                    <select
+                                        value={newUserTeamId}
+                                        onChange={(e) => setNewUserTeamId(e.target.value)}
+                                        className="w-full input-os"
+                                    >
+                                        <option value="">No Team</option>
+                                        {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="lg:col-span-1">
+                                    <button
+                                        onClick={createUser}
+                                        className="w-full btn-primary h-[42px] flex items-center justify-center"
+                                    >
+                                        Create User
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card-os p-0 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] font-medium border-b border-[rgb(var(--border-default))]">
+                                        <tr>
+                                            <th className="p-4">User</th>
+                                            <th className="p-4">Role</th>
+                                            <th className="p-4">Team</th>
+                                            <th className="p-4">XP</th>
+                                            <th className="p-4 text-right">Actions</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-[rgb(var(--border-subtle))]">
+                                        {users.map(user => (
+                                            <tr key={user.id} className="hover:bg-[rgb(var(--bg-surface-raised))] transition-colors">
+                                                <td className="p-4">
+                                                    <div>
+                                                        <p className="text-[rgb(var(--text-primary))] font-medium">{user.name || 'Unnamed'}</p>
+                                                        <p className="text-[rgb(var(--text-muted))] text-xs">{user.email}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <select
+                                                        value={user.role}
+                                                        onChange={(e) => updateUserRole(user.id, e.target.value)}
+                                                        className="bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded px-2 py-1 text-[rgb(var(--text-secondary))] text-xs focus:border-[rgb(var(--accent-primary))] focus:outline-none"
+                                                    >
+                                                        <option value="user">Employee</option>
+                                                        <option value="team_lead">Manager</option>
+                                                        <option value="admin">Admin</option>
+                                                    </select>
+                                                </td>
+                                                <td className="p-4">
+                                                    <select
+                                                        value={user.teamId || ''}
+                                                        onChange={(e) => assignUserToTeam(user.id, e.target.value || null)}
+                                                        className="bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded px-2 py-1 text-[rgb(var(--text-secondary))] text-xs focus:border-[rgb(var(--accent-primary))] focus:outline-none"
+                                                    >
+                                                        <option value="">No Team</option>
+                                                        {teams.map(team => (
+                                                            <option key={team.id} value={team.id}>{team.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </td>
+                                                <td className="p-4 text-[rgb(var(--text-primary))] font-mono">{user.totalXP}</td>
+                                                <td className="p-4 text-right">
+                                                    <button
+                                                        onClick={() => deleteUser(user.id)}
+                                                        className="p-2 text-status-danger hover:bg-status-danger/10 rounded-lg transition-colors"
+                                                        title="Delete User"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 )}
