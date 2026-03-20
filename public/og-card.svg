@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <!-- Navy background gradient with subtle depth -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0f1e"/>
+      <stop offset="100%" stop-color="#0f1629"/>
+    </linearGradient>
+    <!-- Coral accent glow -->
+    <radialGradient id="coralGlow" cx="30%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#FF6B6B" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#FF6B6B" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Noise texture pattern -->
+    <pattern id="noise" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="0.5" fill="white" opacity="0.025"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  <!-- Noise overlay -->
+  <rect width="1200" height="630" fill="url(#noise)"/>
+  <!-- Coral radial glow -->
+  <rect width="1200" height="630" fill="url(#coralGlow)"/>
+
+  <!-- Left border accent strip -->
+  <rect x="0" y="0" width="4" height="630" fill="#FF6B6B"/>
+
+  <!-- Top edge line -->
+  <line x1="0" y1="0" x2="1200" y2="0" stroke="#1e2d5a" stroke-width="1"/>
+  <!-- Bottom edge line -->
+  <line x1="0" y1="629" x2="1200" y2="629" stroke="#1e2d5a" stroke-width="1"/>
+
+  <!-- Grid decorative lines (subtle) -->
+  <line x1="60" y1="0" x2="60" y2="630" stroke="#1e2d5a" stroke-width="0.5" opacity="0.4"/>
+  <line x1="1140" y1="0" x2="1140" y2="630" stroke="#1e2d5a" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- OAST wordmark — large display -->
+  <text
+    x="80"
+    y="220"
+    font-family="'Oswald', 'Impact', 'Arial Black', sans-serif"
+    font-weight="700"
+    font-size="120"
+    letter-spacing="-2"
+    fill="white"
+  >OAST</text>
+  <!-- Coral period -->
+  <text
+    x="468"
+    y="220"
+    font-family="'Oswald', 'Impact', 'Arial Black', sans-serif"
+    font-weight="700"
+    font-size="120"
+    fill="#FF6B6B"
+  >.</text>
+
+  <!-- Descriptor line -->
+  <text
+    x="80"
+    y="270"
+    font-family="'DM Sans', 'Helvetica Neue', Arial, sans-serif"
+    font-weight="400"
+    font-size="20"
+    fill="#8899BB"
+    letter-spacing="3"
+  >AI-NATIVE REVENUE OPERATING SYSTEM</text>
+
+  <!-- Divider -->
+  <line x1="80" y1="310" x2="420" y2="310" stroke="#1e2d5a" stroke-width="1"/>
+
+  <!-- Headline — two lines -->
+  <text
+    x="80"
+    y="380"
+    font-family="'Oswald', 'Impact', 'Arial Black', sans-serif"
+    font-weight="700"
+    font-size="42"
+    fill="white"
+    letter-spacing="-0.5"
+  >The Revenue Operating System</text>
+  <text
+    x="80"
+    y="432"
+    font-family="'Oswald', 'Impact', 'Arial Black', sans-serif"
+    font-weight="700"
+    font-size="42"
+    fill="white"
+    letter-spacing="-0.5"
+  >Your Pipeline Has Been <tspan fill="#FF6B6B">Missing</tspan></text>
+
+  <!-- Subheadline -->
+  <text
+    x="80"
+    y="490"
+    font-family="'DM Sans', 'Helvetica Neue', Arial, sans-serif"
+    font-weight="400"
+    font-size="19"
+    fill="#8899BB"
+  >Measures the gap between training performance and live call results.</text>
+
+  <!-- Price badges — right column -->
+  <!-- Performance Infrastructure -->
+  <rect x="860" y="120" width="280" height="110" fill="#0f1629" rx="0"/>
+  <rect x="860" y="120" width="280" height="110" fill="none" stroke="#1e2d5a" stroke-width="1"/>
+  <text x="880" y="152" font-family="'DM Sans', Arial, sans-serif" font-size="11" fill="#566A90" letter-spacing="2">PERFORMANCE INFRASTRUCTURE</text>
+  <text x="880" y="192" font-family="'Oswald', Impact, sans-serif" font-weight="700" font-size="44" fill="white">£65</text>
+  <text x="938" y="192" font-family="'DM Sans', Arial, sans-serif" font-size="14" fill="#566A90"> / user / mo</text>
+  <text x="880" y="216" font-family="'DM Sans', Arial, sans-serif" font-size="11" fill="#3d5080">+ £2,000 Strategic Deployment Fee</text>
+
+  <!-- Revenue Intelligence Layer -->
+  <rect x="860" y="248" width="280" height="110" fill="#0f1629" rx="0"/>
+  <rect x="860" y="248" width="280" height="110" fill="none" stroke="#FF6B6B" stroke-width="1"/>
+  <!-- MOST POPULAR tag -->
+  <rect x="860" y="238" width="280" height="10" fill="rgba(255,107,107,0.13)" rx="0"/>
+  <text x="1000" y="247" font-family="'DM Sans', Arial, sans-serif" font-size="9" fill="#FF6B6B" letter-spacing="2" text-anchor="middle">MOST POPULAR</text>
+  <text x="880" y="280" font-family="'DM Sans', Arial, sans-serif" font-size="11" fill="#566A90" letter-spacing="2">REVENUE INTELLIGENCE LAYER</text>
+  <text x="880" y="320" font-family="'Oswald', Impact, sans-serif" font-weight="700" font-size="44" fill="white">£185</text>
+  <text x="952" y="320" font-family="'DM Sans', Arial, sans-serif" font-size="14" fill="#566A90"> / user / mo</text>
+  <text x="880" y="344" font-family="'DM Sans', Arial, sans-serif" font-size="11" fill="#3d5080">+ £2,000 Strategic Deployment Fee</text>
+
+  <!-- Revenue Readiness -->
+  <rect x="860" y="376" width="280" height="90" fill="#0f1629" rx="0"/>
+  <rect x="860" y="376" width="280" height="90" fill="none" stroke="#1e2d5a" stroke-width="1"/>
+  <text x="880" y="408" font-family="'DM Sans', Arial, sans-serif" font-size="11" fill="#566A90" letter-spacing="2">REVENUE READINESS</text>
+  <text x="880" y="448" font-family="'Oswald', Impact, sans-serif" font-weight="700" font-size="44" fill="white">Custom</text>
+
+  <!-- Transfer Gap callout box -->
+  <rect x="80" y="530" width="680" height="60" fill="#0f1629" rx="0"/>
+  <rect x="80" y="530" width="680" height="60" fill="none" stroke="#1e2d5a" stroke-width="1"/>
+  <rect x="80" y="530" width="3" height="60" fill="#FF6B6B"/>
+  <text x="102" y="556" font-family="'DM Sans', Arial, sans-serif" font-size="11" fill="#FF6B6B" letter-spacing="2">TRANSFER GAP</text>
+  <text x="102" y="576" font-family="'DM Sans', Arial, sans-serif" font-size="13" fill="#8899BB">Training Score 87% → Live Score 61% → Gap −26pts — closed automatically.</text>
+
+  <!-- oast.app URL bottom right -->
+  <text
+    x="1140"
+    y="610"
+    font-family="'DM Sans', Arial, sans-serif"
+    font-size="14"
+    fill="#566A90"
+    text-anchor="end"
+  >oast.app</text>
+</svg>

@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api
+Disallow: /auth
+Disallow: /onboarding
+Disallow: /profile
+Disallow: /settings/
+Disallow: /sessions/
+Disallow: /active-training
+
+Sitemap: https://oast.app/sitemap.xml

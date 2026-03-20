@@ -1,0 +1,4 @@
+﻿src/features/daily-drill/DailyDrillWidget.tsx(13,23): error TS6133: 'userId' is declared but its value is never read.
+src/features/daily-drill/DailyDrillWidget.tsx(275,65): error TS2367: This comparison appears to be unintentional because the types '"active"' and '"submitting"' have no overlap.
+src/features/daily-drill/DailyDrillWidget.tsx(278,34): error TS2367: This comparison appears to be unintentional because the types '"active"' and '"submitting"' have no overlap.
+src/features/manager-coaching/ManagerDashboard.tsx(4,1): error TS6192: All imports in import declaration are unused.

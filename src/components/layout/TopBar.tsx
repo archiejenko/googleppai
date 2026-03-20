@@ -1,0 +1,94 @@
+import { useState } from 'react';
+import { Search, Bell, Menu } from 'lucide-react';
+
+import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../hooks/useNotifications';
+import NotificationsDropdown from '../../features/notifications/NotificationsDropdown';
+
+interface TopBarProps {
+    collapsed: boolean;
+    setCollapsed: (collapsed: boolean) => void;
+}
+
+export default function TopBar({ collapsed, setCollapsed }: TopBarProps) {
+    const { user, signOut } = useAuth();
+    const [notifOpen, setNotifOpen] = useState(false);
+    const { data: notifications = [], markRead, markAllRead } = useNotifications(user?.id);
+
+    const unreadCount = notifications.filter(n => n.unread).length;
+
+    return (
+        <header
+            className={`fixed top-0 right-0 h-16 bg-bg-surface/80 backdrop-blur-md border-b border-border z-40 transition-all duration-300 flex items-center justify-between px-6
+            ${collapsed ? 'left-20' : 'left-64'}`}
+        >
+            {/* Left: Mobile Toggle & Search */}
+            <div className="flex items-center gap-6">
+                <button
+                    className="md:hidden p-2 text-text-muted hover:text-text-primary"
+                    onClick={() => setCollapsed(!collapsed)}
+                >
+                    <Menu className="w-5 h-5" />
+                </button>
+
+                {/* Command Palette Trigger */}
+                <div className="relative hidden sm:block">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                    <input
+                        type="text"
+                        placeholder="Search or type command..."
+                        className="w-64 pl-10 pr-4 py-2 bg-bg-canvas border border-border rounded-lg text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
+                        <kbd className="px-1.5 py-0.5 text-xs text-text-muted bg-bg-surface border border-border rounded">Ctrl</kbd>
+                        <kbd className="px-1.5 py-0.5 text-xs text-text-muted bg-bg-surface border border-border rounded">K</kbd>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-4">
+                {/* Notifications Bell */}
+                <div className="relative">
+                    <button
+                        onClick={() => setNotifOpen(o => !o)}
+                        className="relative p-2 text-text-muted hover:text-text-primary hover:bg-bg-raised transition-colors"
+                    >
+                        <Bell className="w-5 h-5" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] flex items-center justify-center text-[9px] font-black bg-accent text-white px-0.5 leading-none">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
+                    </button>
+                    <NotificationsDropdown
+                        open={notifOpen}
+                        onClose={() => setNotifOpen(false)}
+                        notifications={notifications}
+                        onMarkAllRead={markAllRead}
+                        onMarkRead={markRead}
+                    />
+                </div>
+
+                <div className="flex items-center gap-3 ml-2 pl-2 border-l border-border/50">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-accent to-blue-500 p-[1px]">
+                        <div className="w-full h-full rounded-full bg-bg-surface p-0.5">
+                            <img
+                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`}
+                                alt="User"
+                                className="w-full h-full rounded-full bg-bg-canvas"
+                            />
+                        </div>
+                    </div>
+                    <div className="hidden md:block text-sm">
+                        <p className="font-medium text-text-primary leading-none">{user?.name || user?.email?.split('@')[0] || 'User'}</p>
+                        <p className="text-text-muted text-xs capitalize">{user?.role || 'User'}</p>
+                    </div>
+                    <button onClick={signOut} className="ml-2 text-xs text-text-muted hover:text-status-danger underline">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </header>
+    );
+}

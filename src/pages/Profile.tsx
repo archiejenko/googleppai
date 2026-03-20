@@ -1,0 +1,473 @@
+import { useState, useEffect, useCallback, useRef, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../utils/supabase';
+import { User, Shield, Briefcase, Key, Save, Eye, EyeOff, Camera, Clock, ExternalLink } from 'lucide-react';
+import Notification from '../components/Notification';
+
+interface Stats {
+    totalXP: number;
+    averageScore: number;
+    completedSessions: number;
+    experienceLevel: string;
+}
+
+interface RecentPitch {
+    id: string;
+    score: number;
+    created_at: string;
+    scenario: string;
+}
+
+export default function Profile() {
+    const navigate = useNavigate();
+    const { user, updateUser, simulateRole } = useAuth();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [recentPitches, setRecentPitches] = useState<RecentPitch[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Profile State
+    const [formData, setFormData] = useState({
+        name: '',
+        industry: '',
+        experienceLevel: 'beginner',
+    });
+
+    // Password State
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+    });
+    const [showPassword, setShowPassword] = useState(false);
+
+    // Stats State
+    const [stats, setStats] = useState<Stats | null>(null);
+
+    const fetchProfileData = useCallback(async () => {
+        if (!user) return;
+        try {
+            const [{ data: profileData, error: profileError }, { data: pitchesData, error: pitchesError }, { data: recentData }] = await Promise.all([
+                supabase.from('profiles').select('*').eq('id', user.id).single(),
+                supabase.from('pitches').select('score').eq('user_id', user.id),
+                supabase.from('pitches').select('id, score, created_at, scenario').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
+            ]);
+
+            if (profileError) throw profileError;
+            if (pitchesError) throw pitchesError;
+
+            if (profileData.avatar_url) setAvatarUrl(profileData.avatar_url);
+            if (recentData) setRecentPitches(recentData as RecentPitch[]);
+
+            const totalSessions = pitchesData?.length ?? 0;
+            const avgScore = totalSessions > 0
+                ? Math.round(pitchesData!.reduce((acc, p) => acc + p.score, 0) / totalSessions)
+                : 0;
+
+            setFormData({
+                name: profileData.name || '',
+                industry: profileData.industry || '',
+                experienceLevel: profileData.experience_level || 'beginner',
+            });
+            setStats({
+                totalXP: profileData.total_xp || 0,
+                averageScore: avgScore,
+                completedSessions: totalSessions,
+                experienceLevel: profileData.experience_level || 'beginner',
+            });
+        } catch (error) {
+            console.error('Failed to fetch profile', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchProfileData();
+    }, [fetchProfileData]);
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user) return;
+        setIsUploadingAvatar(true);
+        try {
+            const ext = file.name.split('.').pop();
+            const path = `avatars/${user.id}.${ext}`;
+            const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+            if (uploadError) throw uploadError;
+            const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+            await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+            setAvatarUrl(publicUrl);
+            setMessage({ text: 'Avatar updated', type: 'success' });
+        } catch (err: unknown) {
+            setMessage({ text: err instanceof Error ? err.message : 'Upload failed', type: 'error' });
+        } finally {
+            setIsUploadingAvatar(false);
+        }
+    };
+
+    const handleProfileUpdate = async (e: FormEvent) => {
+        e.preventDefault();
+        if (!user) return;
+
+        setIsSaving(true);
+        setMessage(null);
+        try {
+            const updates = {
+                name: formData.name,
+                industry: formData.industry,
+                experience_level: formData.experienceLevel, // map to snake_case
+                updated_at: new Date().toISOString(),
+            };
+
+            const { error, data } = await supabase
+                .from('profiles')
+                .update(updates)
+                .eq('id', user.id)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            updateUser({ ...user, ...data }); // Assuming data returns profile fields
+            setMessage({ text: 'Profile updated successfully', type: 'success' });
+        } catch {
+            setMessage({ text: 'Failed to update profile', type: 'error' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handlePasswordChange = async (e: FormEvent) => {
+        e.preventDefault();
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            setMessage({ text: 'New passwords do not match', type: 'error' });
+            return;
+        }
+
+        setIsSaving(true);
+        setMessage(null);
+        try {
+            const { error } = await supabase.auth.updateUser({
+                password: passwordData.newPassword
+            });
+
+            if (error) throw error;
+
+            setMessage({ text: 'Password changed successfully!', type: 'success' });
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (err: unknown) {
+            setMessage({ text: err instanceof Error ? err.message : 'Failed to change password', type: 'error' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (isLoading) {
+        return <div className="layout-shell flex items-center justify-center text-[rgb(var(--text-primary))]">Loading profile...</div>;
+    }
+
+    return (
+        <div className="layout-shell p-6 md:p-8">
+            <h1 className="text-3xl font-display font-bold text-[rgb(var(--text-primary))] mb-8">Account Settings</h1>
+
+            {message && (
+                <Notification
+                    message={message.text}
+                    type={message.type}
+                    onClose={() => setMessage(null)}
+                />
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column: Profile & Stats */}
+                <div className="space-y-8 lg:col-span-2">
+                    {/* User Stats Card */}
+                    <div className="card-hero p-8 relative overflow-hidden">
+                        <div className="relative z-10 flex items-center space-x-6 mb-8">
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploadingAvatar}
+                                className="relative h-20 w-20 flex-shrink-0 group"
+                                title="Change avatar"
+                            >
+                                {avatarUrl ? (
+                                    <img src={avatarUrl} alt="Avatar" className="h-20 w-20 rounded-full object-cover shadow-[0_0_20px_rgb(var(--accent-glow)/0.5)]" />
+                                ) : (
+                                    <div className="h-20 w-20 rounded-full bg-[rgb(var(--accent-primary))] flex items-center justify-center text-3xl font-bold text-white shadow-[0_0_20px_rgb(var(--accent-glow)/0.5)]">
+                                        {user?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {isUploadingAvatar ? (
+                                        <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <Camera className="h-6 w-6 text-white" />
+                                    )}
+                                </div>
+                            </button>
+                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                            <div>
+                                <h2 className="text-2xl font-display font-bold text-[rgb(var(--text-primary))]">{user?.name}</h2>
+                                <p className="text-[rgb(var(--text-secondary))]">{user?.email}</p>
+                                <div className="flex items-center mt-3 space-x-2">
+                                    <span className="px-2.5 py-1 rounded-full bg-[rgb(var(--bg-canvas))] text-[rgb(var(--text-muted))] text-xs font-semibold border border-[rgb(var(--border-subtle))] uppercase tracking-wide">
+                                        {user?.role === 'admin' ? 'Administrator' : user?.role === 'team_lead' ? 'Team Lead' : 'User'}
+                                    </span>
+                                    {stats && (
+                                        <span className="px-2.5 py-1 rounded-full bg-[rgb(var(--accent-primary)/0.1)] text-[rgb(var(--accent-primary))] text-xs font-semibold border border-[rgb(var(--accent-primary)/0.2)]">
+                                            Lvl {Math.floor(stats.totalXP / 1000) + 1}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-6 pt-8 border-t border-[rgb(var(--border-subtle))]">
+                            <div className="text-center">
+                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Total XP</p>
+                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">{stats?.totalXP || 0}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Avg Score</p>
+                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">{stats?.averageScore || 0}%</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Sessions</p>
+                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">{stats?.completedSessions || 0}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Level</p>
+                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))] capitalize">{stats?.experienceLevel}</p>
+                            </div>
+                        </div>
+
+                        {/* Background Accent */}
+                        <div className="absolute -top-24 -right-24 w-64 h-64 bg-[rgb(var(--accent-primary)/0.1)] rounded-full blur-3xl pointer-events-none"></div>
+                    </div>
+
+                    {/* Edit Profile Form */}
+                    <div className="card-os p-8">
+                        <div className="flex items-center mb-6">
+                            <User className="h-5 w-5 text-[rgb(var(--accent-primary))] mr-2" />
+                            <h3 className="text-lg font-bold text-[rgb(var(--text-primary))]">Edit Profile</h3>
+                        </div>
+                        <form onSubmit={handleProfileUpdate} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Full Name</label>
+                                    <input
+                                        type="text"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        className="input-os"
+                                        placeholder="Your Name"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Industry</label>
+                                    <input
+                                        type="text"
+                                        value={formData.industry}
+                                        onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                                        className="input-os"
+                                        placeholder="e.g. SaaS, Real Estate"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Experience Level</label>
+                                <select
+                                    value={formData.experienceLevel}
+                                    onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value })}
+                                    className="input-os"
+                                >
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="advanced">Advanced</option>
+                                </select>
+                            </div>
+                            <div className="flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={isSaving}
+                                    className="btn-primary flex items-center px-6 py-2.5 text-sm"
+                                >
+                                    <Save className="h-4 w-4 mr-2" />
+                                    {isSaving ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {/* Recent Sessions */}
+                    {recentPitches.length > 0 && (
+                        <div className="card-os p-8">
+                            <div className="flex items-center mb-6">
+                                <Clock className="h-5 w-5 text-[rgb(var(--accent-primary))] mr-2" />
+                                <h3 className="text-lg font-bold text-[rgb(var(--text-primary))]">Recent Sessions</h3>
+                            </div>
+                            <div className="space-y-3">
+                                {recentPitches.map((pitch) => (
+                                    <button
+                                        key={pitch.id}
+                                        onClick={() => navigate(`/pitch/${pitch.id}`)}
+                                        className="w-full flex items-center justify-between p-3 bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-subtle))] hover:border-[rgb(var(--accent-primary))] transition-colors text-left"
+                                    >
+                                        <div>
+                                            <p className="text-sm font-semibold text-[rgb(var(--text-primary))] capitalize">
+                                                {pitch.scenario?.replace(/_/g, ' ') || 'Sales Call'}
+                                            </p>
+                                            <p className="text-xs text-[rgb(var(--text-muted))] mt-0.5">
+                                                {new Date(pitch.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className={`text-lg font-bold ${pitch.score >= 70 ? 'text-[rgb(var(--accent-primary))]' : 'text-[rgb(var(--text-muted))]'}`}>
+                                                {pitch.score}%
+                                            </span>
+                                            <ExternalLink className="h-4 w-4 text-[rgb(var(--text-muted))]" />
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Right Column: Security & Admin Ops */}
+                <div className="space-y-8">
+                    {/* Security Settings */}
+                    <div className="card-os p-8">
+                        <div className="flex items-center mb-6">
+                            <Shield className="h-5 w-5 text-[rgb(var(--accent-primary))] mr-2" />
+                            <h3 className="text-lg font-bold text-[rgb(var(--text-primary))]">Security</h3>
+                        </div>
+                        <form onSubmit={handlePasswordChange} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Current Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={passwordData.currentPassword}
+                                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                        className="input-os pr-10"
+                                        placeholder="••••••••"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-3 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]"
+                                    >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">New Password</label>
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={passwordData.newPassword}
+                                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                    className="input-os"
+                                    placeholder="Min 8 chars"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Confirm New Password</label>
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={passwordData.confirmPassword}
+                                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                    className="input-os"
+                                    placeholder="Min 8 chars"
+                                />
+                            </div>
+                            <div className="flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={isSaving}
+                                    className="px-4 py-2 rounded-[var(--radius-md)] bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] text-[rgb(var(--text-primary))] hover:bg-[rgb(var(--bg-canvas))] text-sm font-semibold transition-colors flex items-center"
+                                >
+                                    <Key className="h-4 w-4 mr-2" />
+                                    Update Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Admin Role Switcher - Only visible to actual admins */}
+                    {user?.role === 'admin' && (
+                        <div className="card-os p-6 border-status-warning/30 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+                            <div className="flex items-center mb-4 text-status-warning">
+                                <Briefcase className="h-5 w-5 mr-2" />
+                                <h3 className="text-lg font-bold">Admin Tools</h3>
+                            </div>
+                            <p className="text-sm text-[rgb(var(--text-muted))] mb-4">
+                                Temporarily view the platform as a different role to test permissions and layout.
+                            </p>
+                            <div className="space-y-2">
+                                <button
+                                    onClick={() => simulateRole(null)}
+                                    className={`w-full text-left px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors ${!user.simulatedRole ? 'bg-[rgb(var(--accent-primary))] text-white' : 'bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--bg-canvas))]'}`}
+                                >
+                                    Admin (Default)
+                                </button>
+                                <button
+                                    onClick={() => simulateRole('team_lead')}
+                                    className={`w-full text-left px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors ${user.simulatedRole === 'team_lead' ? 'bg-[rgb(var(--accent-primary))] text-white' : 'bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--bg-canvas))]'}`}
+                                >
+                                    View as Team Lead
+                                </button>
+                                <button
+                                    onClick={() => simulateRole('user')}
+                                    className={`w-full text-left px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors ${user.simulatedRole === 'user' ? 'bg-[rgb(var(--accent-primary))] text-white' : 'bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--bg-canvas))]'}`}
+                                >
+                                    View as User
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* ── Danger Zone ─────────────────────────────────────────────
+                    TODO: GDPR Art. 17 — right to erasure.
+                    Self-service account deletion requires a user-scoped Supabase
+                    edge function (the existing admin-delete-user function is
+                    admin-only). Do NOT implement without user confirmation.
+                    Once the edge function is ready, wire it up here.
+                ────────────────────────────────────────────────────────────── */}
+                <div className="mt-8 pt-6 border-t border-red-900/30">
+                    <h3 className="text-sm uppercase tracking-widest text-red-400 mb-3"
+                        style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 600 }}>
+                        Danger Zone
+                    </h3>
+                    <p className="text-xs text-text-muted mb-4"
+                       style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                        Permanently delete your account and all associated data. This action cannot be undone.
+                    </p>
+                    <button
+                        disabled
+                        title="Account deletion is coming soon. Email hello@oast.app to request deletion."
+                        className="border border-red-900/50 text-red-400/50 px-5 py-2 text-xs tracking-widest cursor-not-allowed opacity-50"
+                        style={{ borderRadius: 0, fontFamily: 'Oswald, sans-serif', fontWeight: 600 }}
+                    >
+                        DELETE ACCOUNT
+                    </button>
+                    <p className="text-xs text-text-muted mt-2"
+                       style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                        To request immediate deletion, email{' '}
+                        <a href="mailto:hello@oast.app" className="text-accent underline underline-offset-2">
+                            hello@oast.app
+                        </a>
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    );
+}

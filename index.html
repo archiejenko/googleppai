@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>OAST — AI-Native Revenue Operating System</title>
+  <meta name="description" content="OAST gives B2B sales teams real-time coaching, meeting intelligence, and pipeline analytics in one platform." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="OAST — The Revenue Operating System Your Pipeline Has Been Missing" />
+  <meta property="og:description" content="OAST measures the gap between training performance and live call results — and closes it automatically." />
+  <meta property="og:url" content="https://oast.app/" />
+  <meta property="og:image" content="https://oast.app/og-card.png" />
+  <meta property="og:type" content="website" />
+  <!-- og-card.svg is in /public as a source. To generate og-card.png (required by Twitter/X + Facebook):
+       Open /public/og-card.svg in Chrome → DevTools → Capture screenshot at 1200x630, or run:
+       npx playwright screenshot -\-viewport-size 1200,630 https://oast.app/og-card.svg og-card.png -->
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="OAST — The Revenue Operating System Your Pipeline Has Been Missing" />
+  <meta name="twitter:description" content="OAST measures the gap between training performance and live call results — and closes it automatically." />
+  <meta name="twitter:image" content="https://oast.app/og-card.png" />
+
+  <!-- Favicon — SVG lettermark takes priority; JPEG fallback for older browsers -->
+  <!-- MANUAL ACTION: Replace favicon.svg with a proper branded asset before launch -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/jpeg" href="/logo.jpg" />
+
+  <!-- Google Search Console verification — uncomment and paste your code when ready -->
+  <!-- <meta name="google-site-verification" content="PASTE_YOUR_GSC_CODE_HERE" /> -->
+
+  <!-- IndexNow — uncomment after generating a key at bing.com/indexnow -->
+  <!-- <meta name="indexnow-verification" content="PASTE_YOUR_INDEXNOW_KEY_HERE" /> -->
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    /* Oswald for display/UI — DM Sans for body copy */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Oswald', sans-serif !important;
+      font-weight: 700 !important;
+    }
+    button, nav, th, label,
+    input, select, textarea,
+    .label-os, .tag-os {
+      font-family: 'Oswald', sans-serif !important;
+      font-weight: 600 !important;
+    }
+    /* DM Sans for body copy — applied via class .font-body on prose elements */
+    .font-body {
+      font-family: 'DM Sans', sans-serif !important;
+      font-weight: 400 !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>
