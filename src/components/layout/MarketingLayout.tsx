@@ -30,6 +30,7 @@ export default function MarketingLayout() {
   };
 
   const nonFeaturesNavLinks = [
+    { name: 'Home', path: '/' },
     { name: 'Industries', path: '/industries' },
     { name: 'Pricing', path: '/pricing' },
     { name: 'Insights', path: '/insights' },

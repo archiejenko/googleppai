@@ -164,7 +164,7 @@ export default function IndustriesMarketing() {
                 className="text-sm transition-opacity hover:opacity-70"
                 style={{ color: 'var(--mkt-accent)', fontFamily: 'DM Sans, sans-serif', fontWeight: 500 }}
               >
-                See how OAST works →
+                See how OAST works for {industry.name} →
               </Link>
             </motion.div>
           ))}

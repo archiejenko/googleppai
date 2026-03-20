@@ -101,14 +101,13 @@ export default function PlanCard({
                     boxShadow: '4px 4px 0px rgba(0,0,0,0.55)',
                 }}
                 animate={{
-                    borderColor: ['#f59e0b', '#fbbf24', '#f59e0b'],
+                    borderColor: ['#f59e0b', '#fbbf24'],
                     boxShadow: [
                         '4px 4px 0px rgba(0,0,0,0.55), 0 0 0 0 rgba(245,158,11,0)',
                         '4px 4px 0px rgba(0,0,0,0.55), 0 0 18px 4px rgba(245,158,11,0.3)',
-                        '4px 4px 0px rgba(0,0,0,0.55), 0 0 0 0 rgba(245,158,11,0)',
                     ],
                 }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                transition={{ duration: 2.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
             >
                 {/* Badge / Founding Badge */}
                 <FoundingBadge spotsRemaining={plan.foundingSpots ?? 0} />
