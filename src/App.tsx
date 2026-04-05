@@ -37,7 +37,6 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Lazy-loaded feature modules
-const AnalyticsPage = lazy(() => import('./features/analytics/AnalyticsPage'));
 const GoalsPage = lazy(() => import('./features/goals/GoalsPage'));
 const LibraryPage = lazy(() => import('./features/library/LibraryPage'));
 const LeaderboardPage = lazy(() => import('./features/leaderboard/LeaderboardPage'));
@@ -45,7 +44,7 @@ const SchedulePage = lazy(() => import('./features/schedule/SchedulePage'));
 const InboxPage = lazy(() => import('./features/inbox/InboxPage'));
 const RecordingsPage = lazy(() => import('./features/recordings/RecordingsPage'));
 const NotificationsPage = lazy(() => import('./features/notifications/NotificationsPage'));
-const RevenueIntelligencePage = lazy(() => import('./features/revenue-intelligence/RevenueIntelligencePage'));
+
 const MissedOpportunitiesPage = lazy(() => import('./features/revenue-intelligence/MissedOpportunitiesPage'));
 const PipelineHealthPage = lazy(() => import('./features/revenue-intelligence/PipelineHealthPage'));
 const CompetitivePage = lazy(() => import('./features/revenue-intelligence/CompetitivePage'));
