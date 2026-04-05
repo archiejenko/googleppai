@@ -53,7 +53,7 @@ export default function Sidebar({ collapsed, setCollapsed, onOpenPrep }: Sidebar
         { icon: Mic, label: 'Practice', path: '/training' },
         { icon: Zap, label: 'Journey', path: '/learning-path' },
         { icon: ChartBar, label: 'Drills', path: '/drills' },
-        { icon: BarChart2, label: 'Analytics', path: '/analytics' },
+        { icon: BarChart2, label: 'Analytics', path: '/dashboard/training' },
         { icon: BookOpen, label: 'Library', path: '/library' },
         { icon: Users, label: 'Team', path: '/team' },
     ];
@@ -70,8 +70,9 @@ export default function Sidebar({ collapsed, setCollapsed, onOpenPrep }: Sidebar
     ];
 
     const intelNavItems: { icon: typeof Bell; label: string; path: string; tierLocked?: boolean }[] = [
-        { icon: TrendingUp, label: 'Revenue Intel', path: '/revenue-intel', tierLocked: !isRevIntel },
-        { icon: PhoneCall, label: 'Live Scores', path: '/live-scores', tierLocked: !isRevIntel },
+        { icon: TrendingUp, label: 'Revenue Intel', path: '/dashboard/revenue', tierLocked: !isRevIntel },
+        { icon: PhoneCall, label: 'Live Scores', path: '/dashboard/calls', tierLocked: !isRevIntel },
+        { icon: MessageSquare, label: 'Insights', path: '/dashboard/insights', tierLocked: !isRevIntel },
         { icon: GitCompareArrows, label: 'Transfer Gap', path: '/transfer-gap', tierLocked: !isRevIntel },
         { icon: CreditCard, label: 'Billing', path: '/settings/billing', tierLocked: false },
     ];

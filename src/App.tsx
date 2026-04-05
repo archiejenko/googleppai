@@ -166,7 +166,7 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
 
                 {/* Lazy-loaded feature routes */}
-                <Route path="/analytics" element={<LazyRoute><AnalyticsPage /></LazyRoute>} />
+                <Route path="/analytics" element={<Navigate to="/dashboard/training" replace />} />
                 <Route path="/goals" element={<LazyRoute><GoalsPage /></LazyRoute>} />
                 <Route path="/library" element={<LazyRoute><LibraryPage /></LazyRoute>} />
                 <Route path="/leaderboard" element={<LazyRoute><LeaderboardPage /></LazyRoute>} />
@@ -174,7 +174,7 @@ function App() {
                 <Route path="/inbox" element={<LazyRoute><InboxPage /></LazyRoute>} />
                 <Route path="/recordings" element={<LazyRoute><RecordingsPage /></LazyRoute>} />
                 <Route path="/notifications" element={<LazyRoute><NotificationsPage /></LazyRoute>} />
-                <Route path="/revenue-intel" element={<LazyRoute><RevenueIntelligencePage /></LazyRoute>} />
+                <Route path="/revenue-intel" element={<Navigate to="/dashboard/revenue" replace />} />
                 <Route path="/revenue-intel/missed" element={<LazyRoute><MissedOpportunitiesPage /></LazyRoute>} />
                 <Route path="/revenue-intel/pipeline" element={<LazyRoute><PipelineHealthPage /></LazyRoute>} />
                 <Route path="/revenue-intel/competitive" element={<LazyRoute><CompetitivePage /></LazyRoute>} />
