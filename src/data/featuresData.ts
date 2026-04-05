@@ -94,7 +94,7 @@ export const featureSections: FeatureSectionData[] = [
       { number: '3.2x', label: 'Objection win rate' },
       { number: '89%', label: 'Rep completion rate' },
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1400&auto=format&fit=crop&q=80',
+    imageUrl: '/assets/screenshots/training_config.png',
     deepDiveBullets: [
       'Rehearse every objection before it costs a deal.',
       'Simulate procurement, legal, and finance blockers.',
@@ -155,7 +155,7 @@ export const featureSections: FeatureSectionData[] = [
       { number: '61%', label: 'Fewer lost calls' },
       { number: '100%', label: 'Call coverage' },
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1553484771-371a605b060b?w=1400&auto=format&fit=crop&q=80',
+    imageUrl: '/assets/screenshots/simulation_new.png',
     deepDiveBullets: [
       'Real-time nudges keep every call on track.',
       'Engagement scoring flags when you lose the room.',
@@ -216,7 +216,7 @@ export const featureSections: FeatureSectionData[] = [
       { number: '40%', label: 'Forecast accuracy lift' },
       { number: '100%', label: 'MEDDIC coverage' },
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1400&auto=format&fit=crop&q=80',
+    imageUrl: '/assets/screenshots/hero_dashboard.png',
     deepDiveBullets: [
       'Surface stalled deals before they close as lost.',
       'Automated prospect profiles built from call signals.',
@@ -277,7 +277,7 @@ export const featureSections: FeatureSectionData[] = [
       { number: '6 min', label: 'Avg review time' },
       { number: '0', label: 'Missed commitments' },
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=1400&auto=format&fit=crop&q=80',
+    imageUrl: '/assets/screenshots/dashboard_new.png',
     deepDiveBullets: [
       'Every meeting recorded and transcribed automatically.',
       'Instant summaries highlight objections and next steps.',
@@ -334,7 +334,7 @@ export const featureSections: FeatureSectionData[] = [
       { number: 'Daily', label: 'Goal attainment tracked' },
       { number: 'Weekly', label: 'Team gaps surfaced' },
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=900&auto=format&fit=crop&q=80',
+    imageUrl: '/assets/screenshots/analytics_new.png',
     deepDiveBullets: [
       'Live rep rankings updated with every training session.',
       'Identify plateaus and regressions before quota misses.',
@@ -391,7 +391,7 @@ export const featureSections: FeatureSectionData[] = [
       { number: '0', label: 'Sessions missed' },
       { number: '3hr', label: 'Manager time saved/week' },
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&auto=format&fit=crop&q=80',
+    imageUrl: '/assets/screenshots/learning_path.png',
     deepDiveBullets: [
       'Automated weekly digest for every rep, every week.',
       'Your sales framework baked into every recommendation.',
@@ -448,7 +448,7 @@ export const featureSections: FeatureSectionData[] = [
       { number: '0', label: 'Manual CRM updates' },
       { number: '2', label: 'CRMs supported' },
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=900&auto=format&fit=crop&q=80',
+    imageUrl: '/assets/screenshots/team_overview.png',
     deepDiveBullets: [
       'Two-way HubSpot and Salesforce sync, zero rep effort.',
       'Call data and training scores pushed to opportunity records.',

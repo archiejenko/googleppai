@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import RevenueReadinessModal from '../pricing/RevenueReadinessModal';
+import DemoEnquiryModal from '../pricing/DemoEnquiryModal';
 
 interface Props {
   onDemoClick?: () => void;
@@ -34,7 +34,7 @@ export default function FinalCTA({ onDemoClick }: Props) {
       </section>
 
       {!onDemoClick && (
-        <RevenueReadinessModal open={localOpen} onClose={() => setLocalOpen(false)} />
+        <DemoEnquiryModal open={localOpen} onClose={() => setLocalOpen(false)} />
       )}
     </>
   );

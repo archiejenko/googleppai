@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { featureSections } from '../data/featuresData';
-import RevenueReadinessModal from '../components/pricing/RevenueReadinessModal';
+import DemoEnquiryModal from '../components/pricing/DemoEnquiryModal';
 import FeaturesHero from './features/FeaturesHero';
 import FeatureGrid from './features/FeatureGrid';
 import FeatureDeepDive from './features/FeatureDeepDive';
@@ -59,7 +59,7 @@ export default function Features() {
         </div>
       </div>
 
-      <RevenueReadinessModal open={enquiryOpen} onClose={() => setEnquiryOpen(false)} />
+      <DemoEnquiryModal open={enquiryOpen} onClose={() => setEnquiryOpen(false)} />
     </div>
   );
 }

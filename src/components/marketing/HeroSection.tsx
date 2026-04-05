@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import RevenueReadinessModal from '../pricing/RevenueReadinessModal';
+import { useNavigate } from 'react-router-dom';
 
 export default function HeroSection() {
-  const [enquiryOpen, setEnquiryOpen] = useState(false);
+  const navigate = useNavigate();
 
   const scrollToDemoVideo = () => {
     const el = document.getElementById('demo-video');
@@ -59,7 +58,7 @@ export default function HeroSection() {
             className="text-[10px] font-mono font-bold uppercase tracking-[0.2em]"
             style={{ color: 'var(--mkt-text-accent)' }}
           >
-            Revenue Operating System
+            AI Sales Coaching Platform
           </span>
         </motion.div>
 
@@ -71,8 +70,8 @@ export default function HeroSection() {
           className="relative z-10 text-[2.5rem] md:text-[4.5rem] uppercase leading-[0.9] tracking-tighter text-white max-w-5xl mx-auto mb-8"
           style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 700 }}
         >
-          The Revenue Operating System{' '}
-          <span style={{ color: 'var(--mkt-accent)' }}>Your Pipeline Has Been Missing</span>
+          Your Reps Train Well. They Sell Differently.{' '}
+          <span style={{ color: 'var(--mkt-accent)' }}>OAST Closes That Gap.</span>
         </motion.h1>
 
         {/* Subheadline */}
@@ -87,8 +86,8 @@ export default function HeroSection() {
             fontWeight: 400,
           }}
         >
-          OAST measures the gap between training performance and live call results — and closes it
-          automatically.
+          AI-powered simulation, scoring, and coaching — built to measure and close the Transfer Gap
+          between training performance and live call results.
         </motion.p>
 
         {/* CTAs */}
@@ -99,7 +98,7 @@ export default function HeroSection() {
           className="relative z-10 flex flex-col sm:flex-row items-center gap-4"
         >
           <button
-            onClick={() => setEnquiryOpen(true)}
+            onClick={() => navigate('/design-partner')}
             className="text-white font-semibold text-sm tracking-wide transition-opacity hover:opacity-90"
             style={{
               background: 'var(--mkt-accent)',
@@ -111,7 +110,7 @@ export default function HeroSection() {
               padding: '0 2rem',
             }}
           >
-            Request Early Access
+            Apply as a Design Partner
           </button>
           <button
             onClick={scrollToDemoVideo}
@@ -126,12 +125,11 @@ export default function HeroSection() {
               padding: '0 2rem',
             }}
           >
-            See How It Works
+            Watch a Demo
           </button>
         </motion.div>
       </section>
 
-      <RevenueReadinessModal open={enquiryOpen} onClose={() => setEnquiryOpen(false)} />
     </>
   );
 }

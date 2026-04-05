@@ -162,26 +162,13 @@ export default function PricingTeaser() {
           </Link>
         </div>
 
-        {/* Card 2 — Revenue Intelligence Layer (featured) */}
+        {/* Card 2 — Revenue Intelligence Layer */}
         <div className="flex flex-col">
-          {/* MOST POPULAR badge above card */}
-          <div
-            className="text-center py-2 text-[10px] uppercase tracking-widest label-os"
-            style={{
-              color: 'var(--mkt-accent)',
-              background: 'var(--mkt-accent-tint)',
-              border: '1px solid var(--mkt-border-accent)',
-              borderBottom: 'none',
-              borderRadius: 0,
-            }}
-          >
-            Most Popular
-          </div>
           <div
             className="p-8 flex flex-col flex-1"
             style={{
               background: 'var(--mkt-bg-surface)',
-              border: '1px solid var(--mkt-border-accent)',
+              border: '1px solid var(--mkt-border)',
               borderRadius: 0,
             }}
           >
@@ -266,30 +253,28 @@ export default function PricingTeaser() {
               Custom
             </span>
           </div>
-          {/* Spacer to align with price rows on other cards */}
-          <div className="mb-6 mt-1">
-            <span
-              className="text-xs"
-              style={{ color: 'var(--mkt-text-muted)', fontFamily: 'DM Sans, sans-serif' }}
-            >
-              &nbsp;
-            </span>
-          </div>
+          <p
+            className="text-xs mb-6"
+            style={{ color: 'var(--mkt-text-muted)', fontFamily: 'DM Sans, sans-serif' }}
+          >
+            &nbsp;
+          </p>
           <p
             className="text-sm mb-8"
             style={{ color: 'var(--mkt-text-secondary)', fontFamily: 'DM Sans, sans-serif' }}
           >
-            For enterprise revenue organisations
+            For enterprise teams building a readiness culture across the full revenue organisation.
           </p>
 
           <ul className="space-y-3 mb-10 flex-1">
-            <FeatureItem>Full platform</FeatureItem>
-            <FeatureItem>Dedicated success manager</FeatureItem>
-            <FeatureItem>Custom integrations</FeatureItem>
+            <FeatureItem>Everything in Revenue Intelligence</FeatureItem>
+            <FeatureItem>Enterprise-wide readiness programmes</FeatureItem>
+            <FeatureItem>Custom deployment & success support</FeatureItem>
+            <FeatureItem>Dedicated revenue readiness partner</FeatureItem>
           </ul>
 
-          <a
-            href="mailto:hello@oast.app"
+          <Link
+            to="/design-partner"
             className="w-full text-center py-3 text-sm tracking-wide transition-colors hover:border-white/50"
             style={{
               border: '1px solid var(--mkt-border-hover)',
@@ -299,8 +284,8 @@ export default function PricingTeaser() {
               display: 'block',
             }}
           >
-            Request Executive Briefing →
-          </a>
+            Talk to Us →
+          </Link>
         </div>
 
       </div>

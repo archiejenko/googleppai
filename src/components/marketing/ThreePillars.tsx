@@ -1,21 +1,21 @@
 import { motion } from 'framer-motion';
-import { BrainCircuit, TrendingUp, Mic2 } from 'lucide-react';
+import { Play, Star, ArrowRightLeft } from 'lucide-react';
 
 const pillars = [
   {
-    Icon: BrainCircuit,
-    title: 'Real-Time Coaching',
-    description: 'AI feedback delivered during live calls, not after.',
+    Icon: Play,
+    title: 'Simulate',
+    description: 'Reps practise against AI-powered objection scenarios before they ever face a live prospect. Structured repetition at scale.',
   },
   {
-    Icon: TrendingUp,
-    title: 'Pipeline Intelligence',
-    description: 'Predictive deal health scoring across your entire pipeline.',
+    Icon: Star,
+    title: 'Score',
+    description: 'Every simulation is scored across technique, messaging adherence, and objection handling. Objective, consistent, instant.',
   },
   {
-    Icon: Mic2,
-    title: 'Meeting Intelligence',
-    description: 'Automatic capture, transcription, and analysis of every revenue conversation.',
+    Icon: ArrowRightLeft,
+    title: 'Measure Transfer',
+    description: "OAST's Transfer Gap metric maps simulation scores to live call outcomes — showing exactly where training translates and where it doesn't.",
   },
 ];
 
@@ -27,13 +27,13 @@ export default function ThreePillars() {
           className="text-[10px] uppercase tracking-[0.2em] mb-4 label-os"
           style={{ color: 'var(--mkt-accent)' }}
         >
-          Why OAST
+          The Coaching Loop
         </p>
         <h2
           className="text-3xl md:text-5xl uppercase leading-tight text-white max-w-2xl mx-auto"
           style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 700 }}
         >
-          Three capabilities. One revenue engine.
+          Three steps. One closed loop.
         </h2>
       </div>
 

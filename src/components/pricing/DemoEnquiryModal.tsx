@@ -2,12 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
 
-interface RevenueReadinessModalProps {
+interface DemoEnquiryModalProps {
     open: boolean;
     onClose: () => void;
 }
 
-export default function RevenueReadinessModal({ open, onClose }: RevenueReadinessModalProps) {
+export default function DemoEnquiryModal({ open, onClose }: DemoEnquiryModalProps) {
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -48,7 +48,7 @@ export default function RevenueReadinessModal({ open, onClose }: RevenueReadines
                     company: form.company,
                     team_size: parseInt(form.teamSize, 10) || 0,
                     message: form.message,
-                    request_type: 'revenue_readiness',
+                    request_type: 'demo_request',
                 },
             });
             if (error) throw error;
@@ -99,7 +99,7 @@ export default function RevenueReadinessModal({ open, onClose }: RevenueReadines
                 ) : (
                     <>
                         <h2 className="text-xl tracking-wide text-[rgb(var(--text-primary))] mb-2">
-                            Request a Briefing
+                            Request a Demo
                         </h2>
                         <p className="text-sm text-[rgb(var(--text-muted))] mb-8">
                             Tell us about your organisation and we'll prepare a tailored proposal.

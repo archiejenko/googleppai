@@ -90,12 +90,16 @@ const NavigationMenuViewport = React.forwardRef<
   <div className={cn('absolute left-0 top-full flex justify-center')}>
     <NavigationMenuPrimitive.Viewport
       className={cn(
-        // OAST viewport: dark surface, white/10 border, 0px radius (enforced), no shadow
+        // OAST viewport: slightly lifted bg, softened border, rounded panel, soft shadow
         'origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden',
-        'bg-[rgb(var(--bg-surface))] border border-white/10',
-        // Animations
+        'bg-[#1e1e20] border border-white/[0.07]',
+        'rounded-xl',
+        'shadow-[0_8px_32px_rgba(0,0,0,0.45)]',
+        // Animations: fade + subtle slide-down
         'data-[state=open]:animate-in data-[state=closed]:animate-out',
-        'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90',
+        'data-[state=closed]:fade-out data-[state=open]:fade-in',
+        'data-[state=open]:slide-in-from-top-2 data-[state=closed]:slide-out-to-top-1',
+        'duration-200',
         'md:w-[var(--radix-navigation-menu-viewport-width)]',
         className
       )}

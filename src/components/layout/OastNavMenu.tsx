@@ -43,7 +43,7 @@ export default function OastNavMenu() {
                 <li key={section.id}>
                   <button
                     onClick={() => handleFeatureItemClick(section.id)}
-                    className="block w-full text-left select-none p-4 leading-none no-underline outline-none transition-colors hover:bg-[var(--mkt-bg-elevated)] focus:bg-[var(--mkt-bg-elevated)]"
+                    className="block w-full text-left select-none p-4 leading-none no-underline outline-none transition-colors hover:bg-[rgba(255,107,107,0.06)] focus:bg-[rgba(255,107,107,0.06)]"
                     style={{ borderRadius: 0 }}
                   >
                     <div

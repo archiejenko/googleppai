@@ -19,7 +19,7 @@ export function useRepDNA(userId?: string) {
                 .from('rep_profiles')
                 .select('*')
                 .eq('user_id', userId)
-                .single()
+                .maybeSingle()
             if (error) {
                 if (error.code === 'PGRST116') return null // no profile yet
                 throw error

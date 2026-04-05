@@ -8,6 +8,8 @@ import { useTier } from '../context/TierContext';
 import { useUserPerformance } from '../hooks/useUserPerformance';
 import { useTransferGapEfficacy } from '../hooks/useTransferGap';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
+import RepNudgeBanner from '../features/rep-coaching/RepNudgeBanner';
+import AssignedPlaybookCard from '../features/insights/AssignedPlaybookCard';
 import MetricTile from '../components/dashboard/MetricTile';
 import RepsAtRiskTable from '../components/dashboard/RepsAtRiskTable';
 import GrowthHeatmap from '../components/dashboard/GrowthHeatmap';
@@ -19,6 +21,7 @@ import ErrorMessage from '../components/common/ErrorMessage';
 import RepDNACard from '../features/rep-dna/RepDNACard';
 import DailyDrillWidget from '../features/daily-drill/DailyDrillWidget';
 import DealPrepModal from '../features/deal-prep/DealPrepModal';
+import PeerBenchmarkingCard from '../features/peer-benchmarking/PeerBenchmarkingCard';
 
 function TransferGapWidget() {
     const navigate = useNavigate();
@@ -174,6 +177,8 @@ export default function Dashboard() {
     return (
         <div className="pb-12 space-y-10">
             <DashboardHeader userName={user?.name || user?.email?.split('@')[0] || 'User'} />
+            <AssignedPlaybookCard />
+            <RepNudgeBanner />
 
             {/* Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -237,6 +242,9 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Col 1: Momentum & Coach Notes */}
                 <div className="lg:col-span-1 space-y-8">
+                    {!isManager && (
+                        <PeerBenchmarkingCard userId={user?.id} />
+                    )}
                     {momentum && (
                         <PerformanceMomentum data={momentum} delay={0.4} />
                     )}

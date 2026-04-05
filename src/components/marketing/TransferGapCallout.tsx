@@ -47,13 +47,23 @@ export default function TransferGapCallout() {
             </p>
 
             <h2
-              className="text-[2rem] md:text-[3rem] uppercase leading-[0.95] mb-8 text-white"
+              className="text-[2rem] md:text-[3rem] uppercase leading-[0.95] mb-6 text-white"
               style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 700 }}
             >
               Your reps train well.{' '}
-              <span style={{ color: 'var(--mkt-accent)' }}>They sell differently.</span>{' '}
-              OAST closes that gap.
+              <span style={{ color: 'var(--mkt-accent)' }}>They sell differently.</span>
             </h2>
+
+            <p
+              className="text-base font-semibold mb-8"
+              style={{
+                color: 'var(--mkt-text-primary)',
+                fontFamily: 'DM Sans, sans-serif',
+                maxWidth: '520px',
+              }}
+            >
+              The gap between your training room and your pipeline is costing you deals.
+            </p>
 
             <p
               className="text-base leading-relaxed mb-10"
@@ -64,9 +74,9 @@ export default function TransferGapCallout() {
                 maxWidth: '520px',
               }}
             >
-              Most revenue teams have no way to correlate training performance with live call
-              outcomes. OAST's Transfer Gap metric is the first system to measure, visualise, and
-              act on that disconnect — automatically.
+              89% of sales training fails to transfer to live calls within 90 days. Most teams have
+              no way to measure it. OAST's Transfer Gap metric is the first system purpose-built to
+              quantify, visualise, and close that disconnect.
             </p>
 
             <a
@@ -78,7 +88,7 @@ export default function TransferGapCallout() {
                 textDecoration: 'none',
               }}
             >
-              See Transfer Gap Analysis →
+              See How We Measure It →
             </a>
           </div>
 

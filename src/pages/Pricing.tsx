@@ -5,7 +5,7 @@ import { supabase } from '../utils/supabase';
 import { PRICING } from '../constants/pricing';
 import BillingToggle from '../components/pricing/BillingToggle';
 import PlanCard, { type PlanConfig } from '../components/pricing/PlanCard';
-import RevenueReadinessModal from '../components/pricing/RevenueReadinessModal';
+
 
 const ANNUAL_DISCOUNT = PRICING.ANNUAL_DISCOUNT;
 
@@ -29,17 +29,14 @@ const REV_INTEL_FEATURES: string[] = [
     'AI Revenue Coaching',
 ];
 
-const ENTERPRISE_FEATURES: string[] = [
-    'Full platform',
-    'Dedicated success manager',
-    'Custom integrations',
-];
 
-const FOUNDING_FEATURES: string[] = [
-    '£2,000 Strategic Deployment Fee waived',
-    'Applicable on any tier',
-    'Priority onboarding & dedicated success contact',
-    'First 3 seats only',
+
+const REVENUE_READINESS_FEATURES: string[] = [
+    'Custom simulation library built to your methodology',
+    'Multi-team Transfer Gap benchmarking',
+    'Dedicated AI agent fleet',
+    'Enterprise SSO + audit logs',
+    'SLA + dedicated success team',
 ];
 
 const PLANS: PlanConfig[] = [
@@ -63,8 +60,8 @@ const PLANS: PlanConfig[] = [
     },
     {
         id: 'revenue_intel',
-        badge: 'MOST POPULAR',
-        badgeVariant: 'coral',
+        badge: 'PREMIUM UPGRADE',
+        badgeVariant: 'muted',
         name: 'Revenue Intelligence Layer',
         description: 'Live call scoring, missed revenue detection, and prospect intelligence for revenue-critical teams.',
         pricePerUser: PRICING.REVENUE_INTELLIGENCE.pricePerUserMonthly,
@@ -80,48 +77,28 @@ const PLANS: PlanConfig[] = [
         isFoundingMember: false,
     },
     {
-        id: 'enterprise',
-        badge: 'ENTERPRISE',
+        id: 'revenue_readiness',
+        badge: 'REVENUE READINESS',
         badgeVariant: 'muted',
         name: 'Revenue Readiness',
-        description: 'End-to-end revenue readiness infrastructure for global sales organisations.',
-        pricePerUser: null,
-        deploymentFeeLabel: 'DEPLOYMENT',
-        deploymentFee: 'Included in contract',
-        deploymentFeeHighlight: false,
-        tier: null,
-        enterprise: true,
-        features: ENTERPRISE_FEATURES,
-        cta: 'REQUEST EXECUTIVE BRIEFING',
-        ctaVariant: 'ghost',
-        includesDeploymentFee: false,
-        isFoundingMember: false,
-    },
-    {
-        id: 'founding',
-        badge: 'FOUNDING MEMBER',
-        badgeVariant: 'coral',
-        name: 'Founding Member',
-        description: 'Qualifying founding members receive a waived £2,000 Strategic Deployment Fee on any tier.',
+        description: 'For enterprise teams building a readiness culture across the full revenue organisation.',
         pricePerUser: null,
         deploymentFeeLabel: 'STRATEGIC DEPLOYMENT FEE',
-        deploymentFee: 'WAIVED — £2,000 saving',
-        deploymentFeeHighlight: true,
+        deploymentFee: 'Custom',
+        deploymentFeeHighlight: false,
         tier: null,
-        founding: true,
-        foundingSpots: 3,
-        features: FOUNDING_FEATURES,
-        cta: 'CLAIM FOUNDING SEAT',
+        founding: false,
+        features: REVENUE_READINESS_FEATURES,
+        cta: 'TALK TO US',
         ctaVariant: 'ghost',
-        enterprise: false,
+        enterprise: true,
         includesDeploymentFee: false,
-        isFoundingMember: true,
+        isFoundingMember: false,
     },
 ];
 
 export default function Pricing() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
-    const [enquiryOpen, setEnquiryOpen] = useState(false);
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
@@ -170,14 +147,14 @@ export default function Pricing() {
                     Infrastructure Pricing. No Surprises.
                 </h1>
                 <p className="text-lg text-[rgb(var(--text-muted))] mb-12 max-w-lg mx-auto">
-                    Three tiers and a founding member offer designed for teams at different stages of revenue maturity.
+                    Two tiers and a founding member offer designed for teams at different stages of revenue maturity.
                 </p>
                 <BillingToggle value={billingCycle} onChange={setBillingCycle} />
             </section>
 
             {/* Pricing grid */}
             <section className="px-4 md:px-8 max-w-screen-xl mx-auto pb-8 pt-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
                     {PLANS.map(plan => (
                         <PlanCard
                             key={plan.id}
@@ -185,7 +162,6 @@ export default function Pricing() {
                             billingCycle={billingCycle}
                             annualDiscount={ANNUAL_DISCOUNT}
                             onCTAClick={handleCheckout}
-                            onEnquiry={() => setEnquiryOpen(true)}
                         />
                     ))}
                 </div>
@@ -198,7 +174,6 @@ export default function Pricing() {
                 </p>
             </section>
 
-            <RevenueReadinessModal open={enquiryOpen} onClose={() => setEnquiryOpen(false)} />
         </div>
     );
 }

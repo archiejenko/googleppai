@@ -249,7 +249,7 @@ export default function MarketingLayout() {
                 className="text-sm"
                 style={{ color: 'var(--mkt-text-muted)', fontFamily: 'DM Sans, sans-serif' }}
               >
-                AI-Native Revenue Operating System
+                AI-Powered Sales Coaching & Simulation Platform
               </span>
             </div>
 

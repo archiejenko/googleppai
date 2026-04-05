@@ -59,8 +59,14 @@ const SessionReviewPage = lazy(() => import('./features/meetings/SessionReviewPa
 const IntegrationsPage = lazy(() => import('./features/settings/IntegrationsPage'));
 const TransferGapPage = lazy(() => import('./pages/TransferGap'));
 const ManagerDashboard = lazy(() => import('./features/manager-coaching/ManagerDashboard'));
+const TrainingDashboard = lazy(() => import('./features/training-analytics/TrainingDashboard'));
 const ObjectionLibrary = lazy(() => import('./features/objection-library/ObjectionLibrary'));
 const WinLossPage = lazy(() => import('./features/win-loss/WinLossLogger'));
+const CallReviewPage = lazy(() => import('./features/call-review/CallReviewPage'));
+const CallsDashboard = lazy(() => import('./features/calls-dashboard/CallsDashboard'));
+const RevenueDashboard = lazy(() => import('./features/revenue-dashboard/RevenueDashboard'));
+const DealView = lazy(() => import('./features/deal-view/DealView'));
+const InsightsDashboard = lazy(() => import('./features/insights/InsightsDashboard'));
 // Legal pages — lazy-loaded, large text components
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
@@ -186,8 +192,26 @@ function App() {
                     <LazyRoute><ManagerDashboard /></LazyRoute>
                   </ProtectedRoute>
                 } />
+                <Route path="/dashboard/training" element={
+                  <ProtectedRoute roles={['admin', 'team_lead']}>
+                    <LazyRoute><TrainingDashboard /></LazyRoute>
+                  </ProtectedRoute>
+                } />
                 <Route path="/objection-library" element={<LazyRoute><ObjectionLibrary /></LazyRoute>} />
                 <Route path="/win-loss" element={<LazyRoute><WinLossPage /></LazyRoute>} />
+                <Route path="/calls/:id" element={<LazyRoute><CallReviewPage /></LazyRoute>} />
+                <Route path="/dashboard/calls" element={<LazyRoute><CallsDashboard /></LazyRoute>} />
+                <Route path="/dashboard/revenue" element={
+                  <ProtectedRoute roles={['admin', 'team_lead']}>
+                    <LazyRoute><RevenueDashboard /></LazyRoute>
+                  </ProtectedRoute>
+                } />
+                <Route path="/deals/:id" element={<LazyRoute><DealView /></LazyRoute>} />
+                <Route path="/dashboard/insights" element={
+                  <ProtectedRoute roles={['admin', 'team_lead']}>
+                    <LazyRoute><InsightsDashboard /></LazyRoute>
+                  </ProtectedRoute>
+                } />
               </Route>
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
