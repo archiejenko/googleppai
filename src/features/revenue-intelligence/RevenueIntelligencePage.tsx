@@ -3,8 +3,40 @@ import { useNavigate } from 'react-router-dom';
 import { TrendingUp, AlertCircle, BarChart3, Target, Layers, Zap, ArrowRight, RefreshCw } from 'lucide-react';
 import TierGate from '../../components/shared/TierGate';
 import { useAuth } from '../../context/AuthContext';
+import { SUPABASE_FUNCTIONS_URL } from '../../utils/supabase';
 
-const SUPABASE_FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+
+
+interface OpportunityItem {
+    id: string;
+    company_name?: string | null;
+    deal_value_gbp?: number | null;
+    recovery_score?: number | null;
+    lost_reason_category?: string | null;
+}
+
+interface CompetitorItem {
+    competitor_name: string;
+    mention_count: number;
+    win_rate?: number | null;
+}
+
+interface SynergyItem {
+    account_a: string;
+    account_b: string;
+    opportunity_type: string;
+}
+
+interface PipelineSummary {
+    open_deals_count?: number;
+}
+
+interface Summary {
+    opps?: OpportunityItem[];
+    pipeline?: PipelineSummary;
+    competitive?: CompetitorItem[];
+    synergies?: SynergyItem[];
+}
 
 interface ModuleCard {
     key: string;
@@ -53,7 +85,7 @@ function MetricCard({ card, onAction }: { card: ModuleCard; onAction: (key: stri
 function RevenueIntelDashboard() {
     const { session } = useAuth();
     const navigate = useNavigate();
-    const [summary, setSummary] = useState<Record<string, any>>({});
+    const [summary, setSummary] = useState<Summary>({});
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [detailKey, setDetailKey] = useState<string | null>(null);
@@ -78,13 +110,13 @@ function RevenueIntelDashboard() {
         }
     };
 
-    useEffect(() => { fetchSummary(); }, []);
+    useEffect(() => { fetchSummary(); }, [authHeader]);
 
     const totalAtRisk = (summary.opps ?? [])
-        .reduce((sum: number, o: any) => sum + (o.deal_value_gbp || 0), 0);
+        .reduce((sum, o) => sum + (o.deal_value_gbp || 0), 0);
 
     const topCompetitor = [...(summary.competitive ?? [])]
-        .sort((a: any, b: any) => b.mention_count - a.mention_count)[0];
+        .sort((a, b) => b.mention_count - a.mention_count)[0];
 
     const cards: ModuleCard[] = [
         {
@@ -200,7 +232,7 @@ function RevenueIntelDashboard() {
                         <div className="space-y-2">
                             {(summary.competitive ?? []).length === 0
                                 ? <p className="text-sm text-text-muted">No competitive data yet. Complete sessions mentioning competitors.</p>
-                                : (summary.competitive ?? []).map((c: any, i: number) => (
+                                : (summary.competitive ?? []).map((c, i) => (
                                     <div key={i} className="flex items-center justify-between text-sm border-b border-border pb-2">
                                         <span className="text-text-primary">{c.competitor_name}</span>
                                         <span className="text-text-muted">{c.mention_count} mentions · {c.win_rate ?? '—'}% win rate</span>
@@ -214,7 +246,7 @@ function RevenueIntelDashboard() {
                         <div className="space-y-2">
                             {(summary.synergies ?? []).length === 0
                                 ? <p className="text-sm text-text-muted">No synergies detected yet.</p>
-                                : (summary.synergies ?? []).map((s: any, i: number) => (
+                                : (summary.synergies ?? []).map((s, i) => (
                                     <div key={i} className="flex items-center justify-between text-sm border-b border-border pb-2">
                                         <span className="text-text-primary">{s.account_a} ↔ {s.account_b}</span>
                                         <span className="text-accent text-xs">{s.opportunity_type}</span>
@@ -249,7 +281,7 @@ function RevenueIntelDashboard() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {(summary.opps ?? []).slice(0, 8).map((opp: any) => (
+                                {(summary.opps ?? []).slice(0, 8).map((opp) => (
                                     <tr key={opp.id} className="hover:bg-bg-raised transition-colors">
                                         <td className="px-5 py-3 text-text-primary">{opp.company_name || '—'}</td>
                                         <td className="px-5 py-3 text-right text-accent font-mono">

@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FeatureSectionData } from '../../data/featuresData';
+import type { CapabilitySectionData } from '../../data/capabilitiesData';
 
 interface Props {
-  sections: FeatureSectionData[];
+  sections: CapabilitySectionData[];
 }
 
-export default function FeatureProgressIndicator({ sections }: Props) {
+export default function CapabilityProgressIndicator({ sections }: Props) {
   const [activeId, setActiveId] = useState<string>(sections[0]?.id ?? '');
   const [tooltip, setTooltip] = useState<string | null>(null);
   const observersRef = useRef<IntersectionObserver[]>([]);

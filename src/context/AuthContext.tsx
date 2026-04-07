@@ -68,7 +68,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // 1. Get initial session
         const initAuth = async () => {
             try {
-                console.log('[Auth] Initializing auth...');
                 const { data: { session: initialSession } } = await supabase.auth.getSession();
 
                 // === JWT INTEGRITY CHECK ===
@@ -107,19 +106,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         initAuth();
 
         // 2. Listen for changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-            // ... existing auth state change logic ...
-            console.log('Auth state changed:', event, newSession?.user?.id);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
             setSession(newSession);
-
-            if (event === 'TOKEN_REFRESHED') {
-                console.log('[Auth] Token refreshed successfully.');
-            }
 
             if (newSession?.user) {
                 await fetchProfile(newSession.user);
             } else {
-                console.log('No user in session, clearing state. Event:', event);
                 setUser(null);
                 setIsLoading(false);
             }
@@ -132,12 +124,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchProfile = async (authUser: { id: string; email?: string; email_confirmed_at?: string; user_metadata?: { name?: string } }) => {
         if (fetchingProfileFor.current === authUser.id) {
-            console.log('[Auth] Profile fetch already in progress for:', authUser.id);
             return;
         }
         fetchingProfileFor.current = authUser.id;
         try {
-            console.log('[Auth] Fetching profile for:', authUser.id);
             // Fetch public profile for role/name with timeout
             const profilePromise = supabase
                 .from('profiles')
@@ -155,8 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const { data: profile, error } = result;
 
             if (error && error.code !== 'PGRST116') {
-                console.error('Error fetching profile:', error);
-                // Non-blocking error logging
+                console.error('[Auth] Profile fetch error:', error);
             }
 
             // Construct unified user object.

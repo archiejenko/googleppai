@@ -32,7 +32,6 @@ interface ThreadMessage {
 interface Thread {
   id: string;
   sender: string;
-  avatarSeed: string;
   type: string;
   preview: string;
   timestamp: string;
@@ -80,7 +79,6 @@ function groupIntoThreads(messages: DbMessage[], userId: string): Thread[] {
     return {
       id: threadId,
       sender: otherName,
-      avatarSeed: otherUserId || threadId,
       type,
       preview: lastMsg.message.slice(0, 80),
       timestamp: formatTime(lastMsg.created_at),
@@ -283,8 +281,10 @@ export default function InboxPage() {
                     className={`px-4 py-3 cursor-pointer border-b border-[rgb(var(--border-default)/0.5)] transition-colors flex items-start gap-3
                       ${isActive ? 'bg-[rgb(var(--accent-primary)/0.08)] border-l-2 border-l-[rgb(var(--accent-primary))]' : 'hover:bg-[rgb(var(--bg-raised))]'}`}
                   >
-                    <div className="flex-shrink-0 w-8 h-8 border border-[rgb(var(--border-default))] overflow-hidden">
-                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${thread.avatarSeed}`} alt={thread.sender} className="w-full h-full" />
+                    <div className="flex-shrink-0 w-8 h-8 border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-raised))] flex items-center justify-center">
+                      <span className="text-xs font-black text-[rgb(var(--text-muted))] uppercase leading-none">
+                        {thread.sender.slice(0, 2)}
+                      </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
@@ -313,8 +313,10 @@ export default function InboxPage() {
               {/* Thread header */}
               <div className="px-6 py-4 border-b border-[rgb(var(--border-default))] flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border border-[rgb(var(--border-default))] overflow-hidden">
-                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedThread.avatarSeed}`} alt={selectedThread.sender} className="w-full h-full" />
+                  <div className="w-8 h-8 border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-raised))] flex items-center justify-center">
+                    <span className="text-xs font-black text-[rgb(var(--text-muted))] uppercase leading-none">
+                      {selectedThread.sender.slice(0, 2)}
+                    </span>
                   </div>
                   <div>
                     <p className="text-sm font-black text-[rgb(var(--text-primary))]">{selectedThread.sender}</p>

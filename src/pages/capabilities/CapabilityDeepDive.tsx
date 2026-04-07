@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
-import type { FeatureSectionData } from '../../data/featuresData';
+import type { CapabilitySectionData } from '../../data/capabilitiesData';
 
 interface Props {
-  section: FeatureSectionData;
+  section: CapabilitySectionData;
   index: number;
 }
 
-export default function FeatureDeepDive({ section, index }: Props) {
+export default function CapabilityDeepDive({ section, index }: Props) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const isEven = index % 2 === 0;
 

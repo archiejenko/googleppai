@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react';
-import type { FeatureSectionData } from '../../data/featuresData';
+import type { CapabilitySectionData } from '../../data/capabilitiesData';
 
 interface Props {
-  sections: Pick<FeatureSectionData, 'id' | 'navLabel'>[];
+  sections: Pick<CapabilitySectionData, 'id' | 'navLabel'>[];
   activeId: string;
   onSectionChange: (id: string) => void;
 }
 
-export default function FeaturesSectionNav({ sections, activeId, onSectionChange }: Props) {
+export default function CapabilitiesSectionNav({ sections, activeId, onSectionChange }: Props) {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {

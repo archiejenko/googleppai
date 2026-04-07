@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
 import AvatarChip from '../../components/shared/AvatarChip';
@@ -37,6 +38,7 @@ function AnimatedNumber({ target, delay = 0 }: { target: number; delay?: number 
 
 export default function LeaderboardPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [period, setPeriod] = useState<'weekly' | 'monthly' | 'alltime'>('weekly');
 
   const days = period === 'weekly' ? 7 : period === 'monthly' ? 30 : 3650;
@@ -76,7 +78,7 @@ export default function LeaderboardPage() {
           icon={<Users className="w-8 h-8" />}
           title="No leaderboard data yet"
           description="Complete practice sessions to appear on the leaderboard. Join a team to compete with peers."
-          action={{ label: 'Start Training', onClick: () => window.location.href = '/training' }}
+          action={{ label: 'Start Training', onClick: () => navigate('/training') }}
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -94,12 +96,10 @@ export default function LeaderboardPage() {
                     return (
                       <div key={entry.userId} className="flex flex-col items-center gap-3">
                         <div className="relative">
-                          <div className="w-16 h-16 border-2 overflow-hidden" style={{ borderColor: medalColor }}>
-                            <img
-                              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${entry.email}`}
-                              alt={entry.name}
-                              className="w-full h-full object-cover"
-                            />
+                          <div className="w-16 h-16 border-2 flex items-center justify-center" style={{ borderColor: medalColor, background: `${medalColor}18` }}>
+                            <span className="text-xl font-black uppercase" style={{ color: medalColor }}>
+                              {(entry.name || entry.email || '?').slice(0, 2)}
+                            </span>
                           </div>
                           <span className="absolute -top-3 -right-3 text-xl">{MEDAL_LABELS[position]}</span>
                           {entry.isCurrentUser && (
@@ -219,14 +219,28 @@ export default function LeaderboardPage() {
               );
             })()}
 
-            <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-4">
-              <p className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-3">Achievements</p>
-              <div className="space-y-2 text-xs text-[rgb(var(--text-muted))]">
-                <div className="flex gap-2"><span>🏆</span><span>Ranked #1 in period</span></div>
-                <div className="flex gap-2"><span>🎯</span><span>Hit quota target</span></div>
-                <div className="flex gap-2"><span>🔥</span><span>10+ day streak</span></div>
-              </div>
-            </div>
+            {(() => {
+              const me = board.find(e => e.isCurrentUser);
+              if (!me) return null;
+              const achievements = [
+                { emoji: '🏆', label: 'Ranked #1', earned: me.rank === 1 },
+                { emoji: '🎯', label: 'Pass rate ≥ 80%', earned: me.winRate >= 80 },
+                { emoji: '🔥', label: '10+ sessions', earned: me.calls >= 10 },
+              ];
+              return (
+                <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-4">
+                  <p className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-3">Achievements</p>
+                  <div className="space-y-2">
+                    {achievements.map(a => (
+                      <div key={a.label} className={`flex gap-2 text-xs ${a.earned ? 'text-[rgb(var(--text-primary))]' : 'text-[rgb(var(--text-muted))] opacity-40'}`}>
+                        <span>{a.emoji}</span>
+                        <span>{a.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

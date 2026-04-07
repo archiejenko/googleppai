@@ -143,7 +143,7 @@ export default function Sidebar({ collapsed, setCollapsed, onOpenPrep }: Sidebar
                 </div>
                 {!collapsed && (
                     <p className="px-3 py-1 text-[10px] font-black uppercase tracking-[0.15em] text-text-muted opacity-50">
-                        Features
+                        Capabilities
                     </p>
                 )}
 

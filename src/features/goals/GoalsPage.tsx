@@ -116,7 +116,7 @@ function GoalModal({ goal, onClose, onDelete, onUpdate }: {
     const newVal = parseFloat(progressInput);
     if (isNaN(newVal) || newVal < 0) return;
     setSaving(true);
-    onUpdate?.(newVal);
+    await onUpdate?.(newVal);
     setSaving(false);
     onClose();
   };
@@ -124,7 +124,7 @@ function GoalModal({ goal, onClose, onDelete, onUpdate }: {
   const handleDelete = async () => {
     if (!confirm(`Delete "${goal.name}"? This cannot be undone.`)) return;
     setDeleting(true);
-    onDelete?.();
+    await onDelete?.();
     setDeleting(false);
     onClose();
   };
@@ -259,7 +259,7 @@ interface AddGoalPanelProps {
 
 function AddGoalPanel({ onClose, onGoalAdded, userId }: AddGoalPanelProps) {
   const { createGoal } = useGoals(userId);
-  const [form, setForm] = useState({ name: '', category: 'Quota', target: '', unit: '$', dueDate: '' });
+  const [form, setForm] = useState({ name: '', category: 'Quota', target: '', unit: '£', dueDate: '' });
   const [saving, setSaving] = useState(false);
 
   const handleCreate = async () => {

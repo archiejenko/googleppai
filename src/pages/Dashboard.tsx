@@ -15,7 +15,6 @@ import RepsAtRiskTable from '../components/dashboard/RepsAtRiskTable';
 import GrowthHeatmap from '../components/dashboard/GrowthHeatmap';
 import CoachNotes from '../components/dashboard/CoachNotes';
 import PerformanceMomentum from '../components/dashboard/PerformanceMomentum';
-import KineticCard from '../components/kinetic/KineticCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorMessage from '../components/common/ErrorMessage';
 import RepDNACard from '../features/rep-dna/RepDNACard';
@@ -118,7 +117,7 @@ export default function Dashboard() {
     if (isZeroData) {
         return (
             <div className="pb-12 space-y-10">
-                <DashboardHeader userName={user?.name || user?.email?.split('@')[0] || 'User'} />
+                <DashboardHeader userName={user?.name || user?.email?.split('@')[0] || 'User'} streakCount={momentum?.streak_count} />
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <DailyDrillWidget userId={user?.id} delay={0} />
                     <RepDNACard userId={user?.id} delay={0.05} />
@@ -176,7 +175,7 @@ export default function Dashboard() {
 
     return (
         <div className="pb-12 space-y-10">
-            <DashboardHeader userName={user?.name || user?.email?.split('@')[0] || 'User'} />
+            <DashboardHeader userName={user?.name || user?.email?.split('@')[0] || 'User'} streakCount={momentum?.streak_count} />
             <AssignedPlaybookCard />
             <RepNudgeBanner />
 
@@ -186,7 +185,7 @@ export default function Dashboard() {
                     label="Quota Attainment"
                     value={`${Math.min(quotaAttainment, 100)}%`}
                     icon={Target}
-                    trend={quotaAttainment - 50}
+                    trend={quotaAttainment - 100}
                     trendLabel="vs target"
                     delay={0}
                 />
@@ -194,8 +193,9 @@ export default function Dashboard() {
                     label="Weekly Calls"
                     value={weeklyCalls.toString()}
                     icon={Phone}
-                    trend={weeklyCalls - 5}
-                    isPositive={weeklyCalls >= 5}
+                    trend={weeklyCalls - weeklyTarget}
+                    trendUnit=""
+                    isPositive={weeklyCalls >= weeklyTarget}
                     trendLabel={`vs target (${weeklyTarget})`}
                     delay={0.1}
                 />
@@ -252,21 +252,14 @@ export default function Dashboard() {
                 </div>
 
                 {/* Col 2: Reps Table (Span 2) */}
-                <KineticCard delay={0.6} className="lg:col-span-2 min-h-[400px]">
-                    <div className="p-1 h-full">
-                        <RepsAtRiskTable />
-                    </div>
-                </KineticCard>
+                <div className="card-os lg:col-span-2 min-h-[400px]">
+                    <RepsAtRiskTable />
+                </div>
             </div>
 
-            {/* Row 2: Analytics Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Col 1: Growth Heatmap (Span 2) */}
-                <KineticCard delay={0.7} className="lg:col-span-2 min-h-[350px]">
-                    <div className="p-1 h-full">
-                        <GrowthHeatmap />
-                    </div>
-                </KineticCard>
+            {/* Row 2: Growth Heatmap — full width */}
+            <div className="card-os min-h-[350px]">
+                <GrowthHeatmap />
             </div>
 
             {/* Transfer Gap widget — managers/admins only */}

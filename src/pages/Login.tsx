@@ -1,11 +1,8 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { AlertCircle, ArrowRight } from 'lucide-react';
 import { useState, useEffect, type FormEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
-import KineticCard from '../components/kinetic/KineticCard';
-import KineticButton from '../components/kinetic/KineticButton';
-import NyroTextReveal from '../components/kinetic/NyroTextReveal';
 import { motion } from 'framer-motion';
 
 export default function Login() {
@@ -31,9 +28,9 @@ export default function Login() {
         setError('');
         setLoading(true);
         try {
-            let signInEmail = email;
-            if (!email.includes('@')) {
-                signInEmail = `${email}@oast.ai`;
+            let signInEmail = email.trim();
+            if (!signInEmail.includes('@')) {
+                signInEmail = `${signInEmail}@oast.ai`;
             }
 
             const { data, error } = await supabase.auth.signInWithPassword({
@@ -61,101 +58,111 @@ export default function Login() {
                 navigate('/dashboard');
             }
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Login failed');
+            setError(err instanceof Error ? err.message : 'Login failed. Check your credentials and try again.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-bg-canvas flex items-center justify-center p-6 relative overflow-hidden">
-            <div className="w-full max-w-[450px] relative z-10">
+        <div className="min-h-screen bg-bg-canvas flex items-center justify-center p-6">
+            <div className="w-full max-w-[440px]">
                 <motion.div
-                    initial={{ opacity: 0, y: -20 }}
+                    initial={{ opacity: 0, y: -16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-center mb-12"
+                    transition={{ duration: 0.35 }}
+                    className="flex justify-center mb-10"
                 >
                     <span className="font-display font-black text-6xl tracking-tighter text-text-primary">
                         OAST<span className="text-accent">.</span>
                     </span>
                 </motion.div>
 
-                <NyroTextReveal
-                    text="Welcome Back"
-                    className="text-4xl font-bold text-center mb-4 justify-center"
-                />
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="text-text-secondary text-center mb-10 font-light"
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: 0.1 }}
                 >
-                    Re-enter the chamber. Practice until perfectly polished.
-                </motion.p>
+                    <h1 className="text-3xl text-text-primary text-center mb-2">Welcome back</h1>
+                    <p className="text-sm text-text-muted text-center mb-8">
+                        Re-enter the chamber. Practice until perfectly polished.
+                    </p>
 
-                <KineticCard className="p-10 border border-border-default/50">
-                    <form className="space-y-8" onSubmit={handleSubmit}>
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="bg-accent/10 border border-accent/20 text-accent px-4 py-3 rounded-xl text-sm flex items-center gap-3"
-                            >
-                                <Sparkles className="h-4 w-4" />
-                                {error}
-                            </motion.div>
-                        )}
-
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-muted ml-1">
-                                Credentials
-                            </label>
-                            <input
-                                type="text"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-bg-canvas border border-border-default px-5 py-4 rounded-xl text-text-primary placeholder:text-text-muted focus:ring-2 focus:ring-accent/50 outline-none transition-all font-light"
-                                placeholder="Email or Username"
-                            />
-                            <input
-                                type="password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-bg-canvas border border-border-default px-5 py-4 rounded-xl text-text-primary placeholder:text-text-muted focus:ring-2 focus:ring-accent/50 outline-none transition-all font-light"
-                                placeholder="••••••••"
-                            />
-                        </div>
-
-                        <KineticButton
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-4 text-sm font-bold tracking-wide"
-                        >
-                            {loading ? (
-                                <motion.div
-                                    animate={{ rotate: 360 }}
-                                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                                    className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                                />
-                            ) : (
-                                <span className="flex items-center gap-2">
-                                    Authenticate <ArrowRight className="w-4 h-4" />
-                                </span>
+                    <div className="card-os p-8">
+                        <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+                            {error && (
+                                <div className="bg-status-danger/10 border-2 border-status-danger/40 text-status-danger px-4 py-3 text-sm flex items-center gap-3">
+                                    <AlertCircle className="h-4 w-4 shrink-0" />
+                                    <span>{error}</span>
+                                </div>
                             )}
-                        </KineticButton>
-                    </form>
-                </KineticCard>
 
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 }}
-                    className="mt-8 text-center text-xs text-text-muted font-light"
-                >
-                    Secured by OAST Cognitive Intelligence Systems
-                </motion.p>
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-text-muted mb-1.5">
+                                    Email or Username
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    autoComplete="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="input-os"
+                                    placeholder="jane@acmecorp.com"
+                                    disabled={loading}
+                                />
+                            </div>
+
+                            <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted">
+                                        Password
+                                    </label>
+                                    <Link
+                                        to="/forgot-password"
+                                        className="text-xs text-text-muted hover:text-accent transition-colors"
+                                    >
+                                        Forgot password?
+                                    </Link>
+                                </div>
+                                <input
+                                    type="password"
+                                    required
+                                    autoComplete="current-password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="input-os"
+                                    placeholder="••••••••"
+                                    disabled={loading}
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="btn-primary w-full flex items-center justify-center gap-2 py-3 mt-2"
+                            >
+                                {loading ? (
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Authenticating…
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center gap-2">
+                                        Sign In <ArrowRight className="w-4 h-4" />
+                                    </span>
+                                )}
+                            </button>
+                        </form>
+                    </div>
+
+                    <p className="mt-6 text-sm text-text-muted text-center">
+                        No account?{' '}
+                        <Link to="/register" className="text-accent hover:underline">
+                            Create one
+                        </Link>
+                    </p>
+                </motion.div>
             </div>
         </div>
     );

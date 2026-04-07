@@ -88,10 +88,11 @@ export function useAnalytics(userId: string | undefined, days: number) {
         totalCalls: total,
         avgScore,
         winRate,
-        sessions: total,
+        won,
         prevTotalCalls: prevTotal,
         prevAvgScore,
         prevWinRate,
+        prevWon,
       };
 
       const s90 = pitches.filter(p => p.score >= 90).length;

@@ -5,7 +5,7 @@
  * R2: Risk column + at-risk alert panel + risk factor expansion.
  */
 
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import { TrendingUp, ChevronUp, ChevronDown, ChevronsUpDown, AlertTriangle, ChevronRight } from 'lucide-react'
 import { useDeals, type DealStage } from '../../hooks/useDeals'
@@ -219,9 +219,8 @@ export default function RevenueDashboard() {
                     const risk = riskByDeal[deal.id] ?? null
                     const expanded = expandedDealId === deal.id
                     return (
-                      <>
+                      <Fragment key={deal.id}>
                         <tr
-                          key={deal.id}
                           className="border-b border-[#2a2a2e] hover:bg-[#1c1c1f] transition-colors cursor-pointer"
                           data-testid="pipeline-row"
                           onClick={() => setExpandedDealId(expanded ? null : deal.id)}
@@ -268,13 +267,13 @@ export default function RevenueDashboard() {
                           </td>
                         </tr>
                         {expanded && risk && (
-                          <tr key={`${deal.id}-expanded`} className="border-b border-[#2a2a2e]">
+                          <tr className="border-b border-[#2a2a2e]">
                             <td colSpan={6} className="p-0">
                               <RiskFactorPanel risk={risk} />
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     )
                   })}
                 </tbody>

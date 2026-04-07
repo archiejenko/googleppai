@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { showError } from '../utils/toast';
+import { useAuth } from '../context/AuthContext';
 
 interface FormState {
     fullName: string;
@@ -46,6 +47,13 @@ function validate(form: FormState): FieldErrors {
 export default function Register() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+    useEffect(() => {
+        if (!authLoading && isAuthenticated) {
+            navigate('/dashboard');
+        }
+    }, [isAuthenticated, authLoading, navigate]);
     const planParam = searchParams.get('plan');
     const billingParam = searchParams.get('billing');
     const [form, setForm] = useState<FormState>({
@@ -102,8 +110,8 @@ export default function Register() {
                 ? `/onboarding?plan=${planParam}&billing=${billingParam ?? 'monthly'}`
                 : '/onboarding';
             navigate(onboardingPath);
-        } catch (err: any) {
-            const msg = err?.message || 'Registration failed. Please try again.';
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Registration failed. Please try again.';
             if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
                 setErrors({ email: 'An account with this email already exists' });
             } else {
@@ -130,7 +138,7 @@ export default function Register() {
                         >
                             <ArrowLeft className="w-3 h-3" /> Back to login
                         </Link>
-                        <h1 className="text-3xl text-text-primary mb-2">Create your account</h1>
+                        <h1 className="text-3xl font-display text-text-primary mb-2">Create your account</h1>
                         <p className="text-sm text-text-muted">
                             Request access to the OAST platform.
                         </p>
@@ -229,15 +237,25 @@ export default function Register() {
                             <label className="block text-xs font-bold uppercase tracking-widest text-text-muted mb-1.5">
                                 Confirm Password
                             </label>
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                autoComplete="new-password"
-                                value={form.confirmPassword}
-                                onChange={set('confirmPassword')}
-                                className={`input-os ${errors.confirmPassword ? 'border-status-danger' : ''}`}
-                                placeholder="Repeat your password"
-                                disabled={submitting}
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    autoComplete="new-password"
+                                    value={form.confirmPassword}
+                                    onChange={set('confirmPassword')}
+                                    className={`input-os pr-10 ${errors.confirmPassword ? 'border-status-danger' : ''}`}
+                                    placeholder="Repeat your password"
+                                    disabled={submitting}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(v => !v)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                                    tabIndex={-1}
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
                             {errors.confirmPassword && (
                                 <p className="mt-1 text-xs text-status-danger">{errors.confirmPassword}</p>
                             )}
@@ -256,7 +274,10 @@ export default function Register() {
                         </button>
 
                         <p className="text-xs text-text-muted text-center">
-                            By creating an account you agree to our Terms of Service and Privacy Policy.
+                            By creating an account you agree to our{' '}
+                            <Link to="/terms-of-service" className="text-accent hover:underline">Terms of Service</Link>
+                            {' '}and{' '}
+                            <Link to="/privacy-policy" className="text-accent hover:underline">Privacy Policy</Link>.
                         </p>
                     </form>
 

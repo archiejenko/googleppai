@@ -1,17 +1,16 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { supabase } from '../utils/supabase';
-import { Lock, Check } from 'lucide-react';
-
+import { CheckCircle } from 'lucide-react';
 
 export default function UpdatePassword() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
     const navigate = useNavigate();
-
-    const [showSuccess, setShowSuccess] = useState(false);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -22,118 +21,121 @@ export default function UpdatePassword() {
             return;
         }
 
-        if (password.length < 6) {
-            setError('Password must be at least 6 characters');
+        if (password.length < 8) {
+            setError('Password must be at least 8 characters');
             return;
         }
 
         setLoading(true);
         try {
-            const { error } = await supabase.auth.updateUser({
-                password: password
-            });
-
+            const { error } = await supabase.auth.updateUser({ password });
             if (error) throw error;
-
-            setShowSuccess(true);
-            setTimeout(() => {
-                navigate('/dashboard');
-            }, 2000);
+            setSuccess(true);
+            setTimeout(() => navigate('/dashboard'), 2000);
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Failed to update password';
-            setError(message);
+            setError(err instanceof Error ? err.message : 'Failed to update password');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="layout-shell flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden h-screen">
-            {/* Success Popup */}
-            {showSuccess && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-                        <div className="w-16 h-16 bg-status-success/10 rounded-full flex items-center justify-center mb-4">
-                            <Check className="w-8 h-8 text-status-success" />
-                        </div>
-                        <h3 className="text-xl font-bold text-[rgb(var(--text-primary))] mb-2">Password Updated!</h3>
-                        <p className="text-[rgb(var(--text-secondary))] mb-6">Your password has been successfully changed. Redirecting...</p>
-                        <button onClick={() => navigate('/dashboard')} className="btn-primary w-full">
-                            Go to Dashboard
-                        </button>
-                    </div>
-                </div>
-            )}
+        <div className="min-h-screen bg-bg-canvas flex items-center justify-center p-6">
+            <div className="w-full max-w-[440px]">
+                <motion.div
+                    initial={{ opacity: 0, y: -16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35 }}
+                    className="flex justify-center mb-10"
+                >
+                    <span className="font-display font-black text-6xl tracking-tighter text-text-primary">
+                        OAST<span className="text-accent">.</span>
+                    </span>
+                </motion.div>
 
-            {/* Animated Background Elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[rgb(var(--accent-primary)/0.1)] rounded-full blur-3xl animate-pulse"></div>
-            </div>
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: 0.1 }}
+                >
+                    <h1 className="text-3xl text-text-primary text-center mb-2">Set new password</h1>
+                    <p className="text-sm text-text-muted text-center mb-8">
+                        Choose a strong password for your account.
+                    </p>
 
-            <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-                <div className="flex justify-center animate-in-up">
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-[rgb(var(--accent-primary))] rounded-2xl blur-xl opacity-20 animate-pulse"></div>
-                        <div className="relative bg-[rgb(var(--accent-primary))] p-4 rounded-2xl">
-                            <Lock className="h-12 w-12 text-white" />
-                        </div>
-                    </div>
-                </div>
-                <h2 className="mt-8 text-center text-3xl font-display font-bold text-[rgb(var(--text-primary))] animate-in-up">
-                    Set New Password
-                </h2>
-            </div>
-
-            <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-in-up" style={{ animationDelay: '0.1s' }}>
-                <div className="card-hero py-10 px-6 sm:px-10">
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        {error && (
-                            <div className="bg-status-danger/10 border border-status-danger/20 text-status-danger px-4 py-3 rounded-[var(--radius-md)] text-sm">
-                                {error}
+                    <div className="card-os p-8">
+                        {success ? (
+                            <div className="flex flex-col items-center gap-4 text-center py-4">
+                                <CheckCircle className="w-10 h-10 text-status-success" />
+                                <p className="text-text-primary font-bold">Password updated</p>
+                                <p className="text-sm text-text-muted">Redirecting to dashboard…</p>
                             </div>
+                        ) : (
+                            <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+                                {error && (
+                                    <div className="bg-status-danger/10 border-2 border-status-danger/40 text-status-danger px-4 py-3 text-sm">
+                                        {error}
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-text-muted mb-1.5">
+                                        New Password
+                                    </label>
+                                    <input
+                                        id="password"
+                                        type="password"
+                                        required
+                                        autoComplete="new-password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="input-os"
+                                        placeholder="Min 8 characters"
+                                        disabled={loading}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-text-muted mb-1.5">
+                                        Confirm Password
+                                    </label>
+                                    <input
+                                        id="confirmPassword"
+                                        type="password"
+                                        required
+                                        autoComplete="new-password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="input-os"
+                                        placeholder="Repeat your password"
+                                        disabled={loading}
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="btn-primary w-full flex items-center justify-center gap-2 py-3 mt-2"
+                                >
+                                    {loading ? (
+                                        <span className="flex items-center gap-2">
+                                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Updating…
+                                        </span>
+                                    ) : (
+                                        'Update Password'
+                                    )}
+                                </button>
+                            </form>
                         )}
+                    </div>
 
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-semibold text-[rgb(var(--text-secondary))] mb-2">
-                                New Password
-                            </label>
-                            <input
-                                id="password"
-                                type="password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="input-os"
-                                placeholder="Min 6 characters"
-                            />
-                        </div>
-
-                        <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-[rgb(var(--text-secondary))] mb-2">
-                                Confirm Password
-                            </label>
-                            <input
-                                id="confirmPassword"
-                                type="password"
-                                required
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="input-os"
-                                placeholder="Retype password"
-                            />
-                        </div>
-
-                        <div>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full btn-primary"
-                            >
-                                {loading ? 'Updating...' : 'Update Password'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <p className="mt-6 text-sm text-text-muted text-center">
+                        <Link to="/login" className="text-accent hover:underline">
+                            Back to login
+                        </Link>
+                    </p>
+                </motion.div>
             </div>
         </div>
     );

@@ -1,27 +1,30 @@
 import { type LucideIcon, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import KineticCard from '../kinetic/KineticCard';
 
 interface MetricTileProps {
     label: string;
     value: string | number;
     icon: LucideIcon;
     trend?: number;
+    trendUnit?: string;
     trendLabel?: string;
     isPositive?: boolean;
     delay?: number;
 }
 
-export default function MetricTile({ label, value, icon: Icon, trend, trendLabel, isPositive = true, delay = 0 }: MetricTileProps) {
+export default function MetricTile({ label, value, icon: Icon, trend, trendUnit = '%', trendLabel, isPositive = true }: MetricTileProps) {
+    const showTrend = trend !== undefined && trend !== null;
+    const positive = isPositive && (trend ?? 0) >= 0;
+
     return (
-        <KineticCard delay={delay} className="p-6 flex flex-col justify-between h-full">
+        <div className="card-os p-6 flex flex-col justify-between h-full">
             <div className="flex items-start justify-between mb-4">
-                <div className="p-2.5 rounded-lg bg-bg-canvas text-text-secondary group-hover:text-accent transition-colors duration-300">
+                <div className="p-2.5 border border-border-default bg-bg-canvas text-text-secondary">
                     <Icon className="w-5 h-5" />
                 </div>
-                {trend && (
-                    <div className={`flex items-center text-xs font-bold tracking-tight ${isPositive ? 'text-status-success' : 'text-status-danger'}`}>
-                        {isPositive ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
-                        {trend}%
+                {showTrend && (
+                    <div className={`flex items-center text-xs font-bold tracking-tight ${positive ? 'text-status-success' : 'text-status-danger'}`}>
+                        {positive ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
+                        {Math.abs(trend!)}{trendUnit}
                     </div>
                 )}
             </div>
@@ -35,6 +38,6 @@ export default function MetricTile({ label, value, icon: Icon, trend, trendLabel
                     {trendLabel && <span className="opacity-60">{trendLabel}</span>}
                 </div>
             </div>
-        </KineticCard>
+        </div>
     );
 }

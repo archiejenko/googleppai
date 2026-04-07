@@ -120,7 +120,7 @@ function CustomTooltip({ active, payload }: {
       {flag && (
         <div className="flex items-center gap-1.5">
           <span
-            className="w-2 h-2 rounded-full inline-block"
+            className="w-2 h-2-full inline-block"
             style={{ backgroundColor: FLAG_COLOR[flag] }}
           />
           <span className="text-[rgb(var(--text-secondary))]">{FLAG_LABEL[flag]}</span>
@@ -135,8 +135,8 @@ function CustomTooltip({ active, payload }: {
 function Skeleton() {
   return (
     <div className="animate-pulse space-y-3">
-      <div className="h-4 w-40 bg-[rgb(var(--border-default))] rounded" />
-      <div className="h-48 bg-[rgb(var(--border-default))] rounded" />
+      <div className="h-4 w-40 bg-[rgb(var(--border-default))]" />
+      <div className="h-48 bg-[rgb(var(--border-default))]" />
     </div>
   );
 }
@@ -154,7 +154,7 @@ function Legend() {
     <div className="flex flex-wrap gap-x-4 gap-y-1">
       {items.map(({ color, label }) => (
         <div key={label} className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full inline-block shrink-0" style={{ backgroundColor: color }} />
+          <span className="w-2.5 h-2.5-full inline-block shrink-0" style={{ backgroundColor: color }} />
           <span className="text-[10px] text-[rgb(var(--text-muted))]">{label}</span>
         </div>
       ))}

@@ -118,7 +118,9 @@ export default function OnboardingAccelerationPanel({ repId }: Props) {
             {isManager ? 'ONBOARDING ACCELERATION' : 'YOUR ONBOARDING PROGRESS'}
           </h2>
           <p className="text-xs text-[#6b7280] mt-0.5">
-            Tracking trajectory to {isManager ? 'new rep' : ''} 80% of team average call score
+            {isManager
+              ? 'Tracking new rep trajectories to 80% of team average call score'
+              : 'Tracking your trajectory to 80% of team average call score'}
           </p>
         </div>
       </div>

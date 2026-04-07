@@ -8,6 +8,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
     console.error('Missing Supabase Environment Variables');
 }
 
+export const SUPABASE_FUNCTIONS_URL = `${supabaseUrl}/functions/v1`;
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
         detectSessionInUrl: true,

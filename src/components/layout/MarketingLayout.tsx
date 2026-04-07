@@ -2,14 +2,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Outlet } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
-import { featureSections } from '../../data/featuresData';
+import { capabilitySections } from '../../data/capabilitiesData';
 import OastNavMenu from './OastNavMenu';
 
 export default function MarketingLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [mobileFeaturesOpen, setMobileFeaturesOpen] = useState(false);
+  const [mobileCapabilitiesOpen, setMobileCapabilitiesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   // Scroll to top on route change
@@ -26,20 +26,21 @@ export default function MarketingLayout() {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
-    setMobileFeaturesOpen(false);
+    setMobileCapabilitiesOpen(false);
   };
 
-  const nonFeaturesNavLinks = [
+  const nonCapabilitiesNavLinks = [
     { name: 'Home', path: '/' },
     { name: 'Industries', path: '/industries' },
+    { name: 'User Journey', path: '/user-journey' },
     { name: 'Pricing', path: '/pricing' },
     { name: 'Insights', path: '/insights' },
     { name: 'About', path: '/about-us' },
   ];
 
-  const handleMobileFeatureItemClick = (sectionId: string) => {
+  const handleMobileCapabilityItemClick = (sectionId: string) => {
     closeMobileMenu();
-    navigate('/features#' + sectionId);
+    navigate('/capabilities#' + sectionId);
     setTimeout(() => {
       const el = document.getElementById(sectionId);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -120,32 +121,32 @@ export default function MarketingLayout() {
               borderBottom: '1px solid var(--mkt-border)',
             }}
           >
-            {/* Features accordion */}
+            {/* Capabilities accordion */}
             <div>
               <button
                 className="text-lg font-medium flex justify-between items-center w-full transition-colors"
                 style={{ color: 'var(--mkt-text-secondary)', fontFamily: 'DM Sans, sans-serif' }}
-                onClick={() => setMobileFeaturesOpen((v) => !v)}
+                onClick={() => setMobileCapabilitiesOpen((v) => !v)}
               >
-                Features
+                Capabilities
                 <ChevronDown
                   size={16}
                   className={[
                     'transition-transform duration-150',
-                    mobileFeaturesOpen ? 'rotate-180' : '',
+                    mobileCapabilitiesOpen ? 'rotate-180' : '',
                   ].join(' ')}
                 />
               </button>
 
-              {mobileFeaturesOpen && (
+              {mobileCapabilitiesOpen && (
                 <div
                   className="mt-3 pl-4 flex flex-col gap-3 border-l-2"
                   style={{ borderColor: 'rgba(255,107,107,0.3)' }}
                 >
-                  {featureSections.map((s) => (
+                  {capabilitySections.map((s) => (
                     <button
                       key={s.id}
-                      onClick={() => handleMobileFeatureItemClick(s.id)}
+                      onClick={() => handleMobileCapabilityItemClick(s.id)}
                       className="text-left py-1"
                     >
                       <div className="text-sm text-white label-os uppercase tracking-[0.06em]">
@@ -162,19 +163,19 @@ export default function MarketingLayout() {
                   <button
                     onClick={() => {
                       closeMobileMenu();
-                      navigate('/features');
+                      navigate('/capabilities');
                     }}
                     className="text-sm uppercase tracking-[0.08em] mt-1 text-left label-os"
                     style={{ color: 'var(--mkt-accent)' }}
                   >
-                    View All Features →
+                    View All Capabilities →
                   </button>
                 </div>
               )}
             </div>
 
             {/* Other nav links */}
-            {nonFeaturesNavLinks.map((link) => (
+            {nonCapabilitiesNavLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
@@ -256,8 +257,9 @@ export default function MarketingLayout() {
             {/* Centre — nav links */}
             <div className="flex flex-wrap gap-x-8 gap-y-3 items-center">
               {[
-                { name: 'Features', path: '/features' },
+                { name: 'Capabilities', path: '/capabilities' },
                 { name: 'Industries', path: '/industries' },
+                { name: 'User Journey', path: '/user-journey' },
                 { name: 'Pricing', path: '/pricing' },
                 { name: 'About', path: '/about-us' },
                 { name: 'Insights', path: '/insights' },

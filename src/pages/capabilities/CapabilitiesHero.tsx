@@ -4,7 +4,7 @@ interface Props {
   firstSectionId: string;
 }
 
-export default function FeaturesHero({ firstSectionId }: Props) {
+export default function CapabilitiesHero({ firstSectionId }: Props) {
   const scrollToFirst = () => {
     const el = document.getElementById(firstSectionId);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -13,7 +13,7 @@ export default function FeaturesHero({ firstSectionId }: Props) {
   return (
     <section className="relative z-10 pt-16 pb-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-white/[0.06]">
       <p className="text-[10px] uppercase tracking-[0.2em] text-accent label-os mb-6">
-        OAST — Platform Features
+        OAST — Platform Capabilities
       </p>
 
       <h1 className="text-5xl md:text-7xl lg:text-8xl uppercase leading-[0.9] tracking-tighter text-text-primary mb-6 max-w-5xl">
@@ -32,7 +32,7 @@ export default function FeaturesHero({ firstSectionId }: Props) {
           onClick={scrollToFirst}
           className="px-8 py-3 text-[12px] uppercase tracking-[0.12em] border border-white/20 text-text-secondary hover:border-white/40 hover:text-text-primary transition-colors duration-150"
         >
-          Explore Features ↓
+          Explore Capabilities ↓
         </button>
         <Link
           to="/register"

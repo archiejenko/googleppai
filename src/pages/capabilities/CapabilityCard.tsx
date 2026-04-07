@@ -1,8 +1,8 @@
-import type { FeatureCardData } from '../../data/featuresData';
+import type { CapabilityCardData } from '../../data/capabilitiesData';
 
-type Props = FeatureCardData;
+type Props = CapabilityCardData;
 
-export default function FeatureCard({ icon: Icon, title, description, hoverValue, tierBadge }: Props) {
+export default function CapabilityCard({ icon: Icon, title, description, hoverValue, tierBadge }: Props) {
   return (
     <div className="group relative bg-bg-surface p-6 border-t-2 border-transparent hover:border-[#FF6B6B] hover:bg-bg-raised transition-colors duration-150 cursor-default">
       {/* Tier badge — top-right corner tag */}

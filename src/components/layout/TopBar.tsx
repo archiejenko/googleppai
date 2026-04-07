@@ -36,13 +36,9 @@ export default function TopBar({ collapsed, setCollapsed }: TopBarProps) {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                     <input
                         type="text"
-                        placeholder="Search or type command..."
+                        placeholder="Search..."
                         className="w-64 pl-10 pr-4 py-2 bg-bg-canvas border border-border rounded-lg text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
-                        <kbd className="px-1.5 py-0.5 text-xs text-text-muted bg-bg-surface border border-border rounded">Ctrl</kbd>
-                        <kbd className="px-1.5 py-0.5 text-xs text-text-muted bg-bg-surface border border-border rounded">K</kbd>
-                    </div>
                 </div>
             </div>
 
@@ -71,14 +67,10 @@ export default function TopBar({ collapsed, setCollapsed }: TopBarProps) {
                 </div>
 
                 <div className="flex items-center gap-3 ml-2 pl-2 border-l border-border/50">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-accent to-blue-500 p-[1px]">
-                        <div className="w-full h-full rounded-full bg-bg-surface p-0.5">
-                            <img
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`}
-                                alt="User"
-                                className="w-full h-full rounded-full bg-bg-canvas"
-                            />
-                        </div>
+                    <div className="w-8 h-8 bg-accent/20 border border-accent/40 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-black text-accent uppercase leading-none">
+                            {(user?.name || user?.email || 'U').slice(0, 2)}
+                        </span>
                     </div>
                     <div className="hidden md:block text-sm">
                         <p className="font-medium text-text-primary leading-none">{user?.name || user?.email?.split('@')[0] || 'User'}</p>

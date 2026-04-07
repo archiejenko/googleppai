@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useTier } from '../../context/TierContext';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../utils/supabase';
+import { supabase, SUPABASE_FUNCTIONS_URL } from '../../utils/supabase';
 import TierGate from '../../components/shared/TierGate';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -187,7 +187,7 @@ function ToggleRow({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-const SUPABASE_FN = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+const SUPABASE_FN = SUPABASE_FUNCTIONS_URL;
 const APP_URL     = window.location.origin;
 
 const CRM_OAUTH_URLS: Record<string, string | null> = {

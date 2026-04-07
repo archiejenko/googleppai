@@ -9,7 +9,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-export interface FeatureCardData {
+export interface CapabilityCardData {
   icon: LucideIcon;
   title: string;
   description: string;
@@ -22,7 +22,7 @@ export interface StatData {
   label: string;
 }
 
-export interface FeatureSectionData {
+export interface CapabilitySectionData {
   id: string;
   index: string;
   navLabel: string;
@@ -37,13 +37,13 @@ export interface FeatureSectionData {
     manager: string;
     leader: string;
   };
-  cards: FeatureCardData[];
+  cards: CapabilityCardData[];
   stats: StatData[];
   imageUrl: string;
   deepDiveBullets: string[]; // max 3 items, each under 10 words
 }
 
-export const featureSections: FeatureSectionData[] = [
+export const capabilitySections: CapabilitySectionData[] = [
   {
     id: 'call-training',
     index: '01',

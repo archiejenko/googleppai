@@ -39,7 +39,7 @@ export default function AnalyticsPage() {
   const chartData  = data?.chartData  ?? [];
   const skillRadar = data?.skillRadar ?? [];
   const funnel     = data?.funnel     ?? [];
-  const kpis       = data?.kpis       ?? { totalCalls: 0, avgScore: 0, winRate: 0, sessions: 0, prevTotalCalls: 0, prevAvgScore: 0, prevWinRate: 0 };
+  const kpis       = data?.kpis       ?? { totalCalls: 0, avgScore: 0, winRate: 0, won: 0, prevTotalCalls: 0, prevAvgScore: 0, prevWinRate: 0, prevWon: 0 };
 
   return (
     <div className="pb-12 space-y-8">
@@ -58,10 +58,10 @@ export default function AnalyticsPage() {
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Sessions"   value={kpis.totalCalls}        icon={Phone}      delta={kpis.totalCalls - kpis.prevTotalCalls} deltaLabel="vs prev period" delay={0}    />
-        <StatCard label="Avg Score"  value={`${kpis.avgScore}/100`} icon={Award}      delta={kpis.avgScore - kpis.prevAvgScore}     deltaLabel="vs prev period" delay={0.05} />
-        <StatCard label="Pass Rate"  value={`${kpis.winRate}%`}     icon={TrendingUp} delta={kpis.winRate - kpis.prevWinRate}       deltaLabel="score ≥ 70"     delay={0.1}  />
-        <StatCard label="Completed"  value={`${kpis.sessions}`}     icon={Clock}      delta={kpis.sessions - kpis.prevTotalCalls}  deltaLabel="vs prev period"  delay={0.15} />
+        <StatCard label="Sessions"    value={kpis.totalCalls}        icon={Phone}      delta={kpis.totalCalls - kpis.prevTotalCalls} deltaUnit="" deltaLabel="vs prev period" delay={0}    />
+        <StatCard label="Avg Score"   value={`${kpis.avgScore}/100`} icon={Award}      delta={kpis.avgScore - kpis.prevAvgScore}     deltaLabel="vs prev period" delay={0.05} />
+        <StatCard label="Pass Rate"   value={`${kpis.winRate}%`}     icon={TrendingUp} delta={kpis.winRate - kpis.prevWinRate}       deltaLabel="score ≥ 70"     delay={0.1}  />
+        <StatCard label="Passed (≥70)" value={kpis.won}              icon={Clock}      delta={kpis.won - kpis.prevWon}              deltaUnit="" deltaLabel="vs prev period"  delay={0.15} />
       </div>
 
       {/* Call Volume Trend */}
@@ -85,8 +85,8 @@ export default function AnalyticsPage() {
             <LineChart
               data={chartData}
               margin={{ top: 4, right: 8, bottom: 0, left: -10 }}
-              onClick={(e: any) => {
-                const pitchId = e?.activePayload?.[0]?.payload?.lastPitchId;
+              onClick={(e) => {
+                const pitchId = (e as { activePayload?: { payload?: { lastPitchId?: string } }[] })?.activePayload?.[0]?.payload?.lastPitchId;
                 if (pitchId) navigate(`/pitch/${pitchId}`);
               }}
               style={{ cursor: 'pointer' }}

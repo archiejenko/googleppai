@@ -80,7 +80,7 @@ export default function TransferGapCallout() {
             </p>
 
             <a
-              href="/features#transfer-gap"
+              href="/capabilities#transfer-gap"
               className="text-sm font-medium transition-opacity hover:opacity-80 inline-flex items-center gap-1"
               style={{
                 color: 'var(--mkt-accent)',

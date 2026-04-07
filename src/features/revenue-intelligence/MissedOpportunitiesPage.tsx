@@ -4,8 +4,9 @@ import { ArrowLeft, AlertCircle } from 'lucide-react';
 import TierGate from '../../components/shared/TierGate';
 import { useAuth } from '../../context/AuthContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { SUPABASE_FUNCTIONS_URL } from '../../utils/supabase';
 
-const SUPABASE_FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+
 
 interface MissedOpportunity {
   id: string;
@@ -62,14 +63,16 @@ function MissedOpportunitiesDashboard() {
         </div>
       </div>
 
-      {/* Summary banner */}
-      <div className="card-os p-5 border border-[rgb(var(--border-default))]">
-        <p className="text-[10px] uppercase tracking-widest text-[rgb(var(--text-muted))] mb-1">Total ARR at Risk</p>
-        <p className="text-3xl font-black text-[rgb(var(--accent-primary))]">
-          £{Math.round(totalAtRisk / 1000)}k
-        </p>
-        <p className="text-xs text-[rgb(var(--text-muted))] mt-1">{opps.length} open opportunities with recovery potential</p>
-      </div>
+      {/* Summary banner — only shown once data is ready */}
+      {!loading && !error && (
+        <div className="card-os p-5 border border-[rgb(var(--border-default))]">
+          <p className="text-[10px] uppercase tracking-widest text-[rgb(var(--text-muted))] mb-1">Total ARR at Risk</p>
+          <p className="text-3xl font-black text-[rgb(var(--accent-primary))]">
+            £{Math.round(totalAtRisk / 1000)}k
+          </p>
+          <p className="text-xs text-[rgb(var(--text-muted))] mt-1">{opps.length} open opportunities with recovery potential</p>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12">

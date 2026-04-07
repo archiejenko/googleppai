@@ -5,6 +5,7 @@ import CookieConsent from './components/CookieConsent';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import Onboarding from './pages/Onboarding';
 import UpdatePassword from './pages/UpdatePassword';
 import Dashboard from './pages/Dashboard';
@@ -22,7 +23,8 @@ import Profile from './pages/Profile';
 import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './components/ProtectedRoute';
 import ActiveTraining from './pages/ActiveTraining';
-import Features from './pages/Features';
+import Capabilities from './pages/Capabilities';
+import UserJourney from './pages/UserJourney';
 import IndustriesMarketing from './pages/IndustriesMarketing';
 import AboutUs from './pages/AboutUs';
 import Insights from './pages/Insights';
@@ -59,6 +61,8 @@ const IntegrationsPage = lazy(() => import('./features/settings/IntegrationsPage
 const TransferGapPage = lazy(() => import('./pages/TransferGap'));
 const ManagerDashboard = lazy(() => import('./features/manager-coaching/ManagerDashboard'));
 const TrainingDashboard = lazy(() => import('./features/training-analytics/TrainingDashboard'));
+const AnalyticsPage = lazy(() => import('./features/analytics/AnalyticsPage'));
+const RevenueIntelligencePage = lazy(() => import('./features/revenue-intelligence/RevenueIntelligencePage'));
 const ObjectionLibrary = lazy(() => import('./features/objection-library/ObjectionLibrary'));
 const WinLossPage = lazy(() => import('./features/win-loss/WinLossLogger'));
 const CallReviewPage = lazy(() => import('./features/call-review/CallReviewPage'));
@@ -121,7 +125,9 @@ function App() {
               {/* Public Marketing Pages */}
               <Route element={<MarketingLayout />}>
                 <Route path="/" element={<Landing />} />
-                <Route path="/features" element={<Features />} />
+                <Route path="/capabilities" element={<Capabilities />} />
+                <Route path="/features" element={<Navigate to="/capabilities" replace />} />
+                <Route path="/user-journey" element={<UserJourney />} />
                 <Route path="/industries" element={<IndustriesMarketing />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/about-us" element={<AboutUs />} />
@@ -138,6 +144,7 @@ function App() {
               {/* Auth Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/update-password" element={<UpdatePassword />} />
 
@@ -165,7 +172,7 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
 
                 {/* Lazy-loaded feature routes */}
-                <Route path="/analytics" element={<Navigate to="/dashboard/training" replace />} />
+                <Route path="/analytics" element={<LazyRoute><AnalyticsPage /></LazyRoute>} />
                 <Route path="/goals" element={<LazyRoute><GoalsPage /></LazyRoute>} />
                 <Route path="/library" element={<LazyRoute><LibraryPage /></LazyRoute>} />
                 <Route path="/leaderboard" element={<LazyRoute><LeaderboardPage /></LazyRoute>} />
@@ -173,7 +180,7 @@ function App() {
                 <Route path="/inbox" element={<LazyRoute><InboxPage /></LazyRoute>} />
                 <Route path="/recordings" element={<LazyRoute><RecordingsPage /></LazyRoute>} />
                 <Route path="/notifications" element={<LazyRoute><NotificationsPage /></LazyRoute>} />
-                <Route path="/revenue-intel" element={<Navigate to="/dashboard/revenue" replace />} />
+                <Route path="/revenue-intel" element={<LazyRoute><RevenueIntelligencePage /></LazyRoute>} />
                 <Route path="/revenue-intel/missed" element={<LazyRoute><MissedOpportunitiesPage /></LazyRoute>} />
                 <Route path="/revenue-intel/pipeline" element={<LazyRoute><PipelineHealthPage /></LazyRoute>} />
                 <Route path="/revenue-intel/competitive" element={<LazyRoute><CompetitivePage /></LazyRoute>} />

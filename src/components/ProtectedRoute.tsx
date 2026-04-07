@@ -15,20 +15,7 @@ export default function ProtectedRoute({ children, roles }: ProtectedRouteProps)
         return (
             <div className="min-h-screen bg-[rgb(var(--bg-canvas))] flex flex-col items-center justify-center gap-4">
                 <Loader className="w-8 h-8 text-[rgb(var(--accent-primary))] animate-spin" />
-                <p className="text-[rgb(var(--text-secondary))]">Deep Loading...</p>
-                <div className="flex flex-col items-center gap-2">
-                    <button
-                        onClick={() => {
-                            import('../utils/supabase').then(({ supabase }) => {
-                                supabase.auth.signOut().then(() => window.location.reload());
-                            });
-                        }}
-                        className="text-sm text-status-danger underline font-medium hover:text-red-400"
-                    >
-                        Stuck? Click to Force Sign Out
-                    </button>
-                    <p className="text-xs text-[rgb(var(--text-muted))]">If this takes &gt; 5s, the database is locked.</p>
-                </div>
+                <p className="text-[rgb(var(--text-secondary))]">Loading…</p>
             </div>
         );
     }

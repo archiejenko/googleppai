@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Users, RefreshCw, CheckCheck, Loader2, TrendingUp, TrendingDown, Minus, X, ChevronRight } from 'lucide-react'
+import { Users, RefreshCw, CheckCheck, Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 import { useAuth } from '../../context/AuthContext'
 import { useCoachingFlags, useDismissFlag, useRefreshCoachingPrompts } from '../../hooks/useCoachingFlags'
@@ -22,66 +21,13 @@ function TrendBadge({ trend }: { trend: 'improving' | 'declining' | 'flat' | nul
     )
 }
 
-function AssignDrillModal({ repName, onClose }: { repId: string; repName: string; onClose: () => void }) {
-    const [scenario, setScenario] = useState('objection_handling')
-    const [submitting, setSubmitting] = useState(false)
-
-    const handleAssign = async () => {
-        // In practice, this would call a lightweight endpoint or directly insert via supabase
-        setSubmitting(true)
-        try {
-            // For now, toast and close — the edge function pattern would be called here
-            toast.success(`Drill assigned to ${repName}`)
-            onClose()
-        } finally {
-            setSubmitting(false)
-        }
-    }
-
-    return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4"
-            onClick={onClose}>
-            <div
-                className="card-os border border-border w-full max-w-sm p-6 space-y-4"
-                onClick={e => e.stopPropagation()}
-            >
-                <div className="flex items-center justify-between">
-                    <p className="text-sm text-text-primary">Assign Drill to {repName}</p>
-                    <button onClick={onClose} className="w-6 h-6 flex items-center justify-center hover:bg-bg-raised">
-                        <X className="w-3.5 h-3.5 text-text-muted" />
-                    </button>
-                </div>
-                <div>
-                    <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted block mb-1.5">Scenario Type</label>
-                    <select
-                        className="input-os w-full text-sm"
-                        value={scenario}
-                        onChange={e => setScenario(e.target.value)}
-                    >
-                        {['objection_handling', 'cold_call', 'discovery', 'closing', 'negotiation'].map(s => (
-                            <option key={s} value={s}>{s.replace('_', ' ')}</option>
-                        ))}
-                    </select>
-                </div>
-                <button
-                    onClick={handleAssign}
-                    disabled={submitting}
-                    className="btn-primary w-full flex items-center justify-center gap-2"
-                >
-                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
-                    Assign Drill
-                </button>
-            </div>
-        </div>
-    )
-}
 
 export default function ManagerDashboard() {
     const { user, isManager } = useAuth()
     const { data: flags = [], isLoading } = useCoachingFlags(user?.id)
     const dismissFlag = useDismissFlag()
     const refreshPrompts = useRefreshCoachingPrompts()
-    const [assigningRep, setAssigningRep] = useState<{ id: string; name: string } | null>(null)
+
 
     if (!isManager) {
         return (
@@ -103,8 +49,8 @@ export default function ManagerDashboard() {
         try {
             const result = await refreshPrompts.mutateAsync()
             toast.success(`Refreshed coaching prompts for ${result.updated} reps`)
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to refresh prompts')
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Failed to refresh prompts')
         }
     }
 
@@ -210,8 +156,9 @@ export default function ManagerDashboard() {
                                 {/* Actions */}
                                 <div className="flex items-center gap-2 pt-2 border-t border-border/40">
                                     <button
-                                        onClick={() => setAssigningRep({ id: repId, name: repName })}
-                                        className="flex-1 btn-ghost text-xs py-1.5"
+                                        disabled
+                                        title="Drill assignment available in a future release"
+                                        className="flex-1 btn-ghost text-xs py-1.5 opacity-30 cursor-not-allowed"
                                     >
                                         Assign Drill
                                     </button>
@@ -230,13 +177,6 @@ export default function ManagerDashboard() {
                 </div>
             )}
 
-            {assigningRep && (
-                <AssignDrillModal
-                    repId={assigningRep.id}
-                    repName={assigningRep.name}
-                    onClose={() => setAssigningRep(null)}
-                />
-            )}
         </div>
     )
 }

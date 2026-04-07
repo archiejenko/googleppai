@@ -6,8 +6,8 @@ export interface NavItem {
 
 export const productItems: NavItem[] = [
   {
-    title: 'Features',
-    href: '/features',
+    title: 'Capabilities',
+    href: '/capabilities',
     description: 'Everything OAST can do for your team.',
   },
   {
@@ -25,22 +25,22 @@ export const productItems: NavItem[] = [
 export const platformItems: NavItem[] = [
   {
     title: 'Revenue Intelligence',
-    href: '/features#revenue',
+    href: '/capabilities#revenue',
     description: 'Deal health scoring and pipeline signals.',
   },
   {
     title: 'Meeting Intelligence',
-    href: '/features#meetings',
+    href: '/capabilities#meetings',
     description: 'Auto-transcribe, score, and coach every call.',
   },
   {
     title: 'Live Coaching',
-    href: '/features#live-coaching',
+    href: '/capabilities#live-coaching',
     description: 'Real-time AI guidance during active calls.',
   },
   {
     title: 'Pipeline Analytics',
-    href: '/features#analytics',
+    href: '/capabilities#analytics',
     description: 'Forecast risk and conversion trends.',
   },
 ];

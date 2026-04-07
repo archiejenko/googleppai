@@ -79,9 +79,7 @@ export default function PlaybookPanel() {
         const isShowingAssign = showAssign === p.id
 
         const handleAssign = async () => {
-          for (const repId of sel) {
-            await assign.mutateAsync({ playbookId: p.id, repId })
-          }
+          await Promise.all(sel.map(repId => assign.mutateAsync({ playbookId: p.id, repId })))
           setAssigned(prev => ({ ...prev, [p.id]: true }))
           setShowAssign(null)
           setSelectedReps(prev => ({ ...prev, [p.id]: [] }))

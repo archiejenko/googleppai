@@ -48,7 +48,7 @@ const tiles = [
   },
 ];
 
-export default function FeatureGrid() {
+export default function CapabilityGrid() {
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth' });

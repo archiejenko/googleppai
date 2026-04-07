@@ -4,8 +4,9 @@ import { ArrowLeft, BarChart3 } from 'lucide-react';
 import TierGate from '../../components/shared/TierGate';
 import { useAuth } from '../../context/AuthContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { SUPABASE_FUNCTIONS_URL } from '../../utils/supabase';
 
-const SUPABASE_FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+
 
 interface PipelineData {
   open_deals_count: number;

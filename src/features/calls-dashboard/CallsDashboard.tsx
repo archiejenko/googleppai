@@ -42,8 +42,8 @@ function FillerWordSection({ repId }: { repId: string }) {
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-2">
-        <div className="h-3 w-40 bg-[rgb(var(--border-default))] rounded" />
-        <div className="h-44 bg-[rgb(var(--border-default))] rounded" />
+        <div className="h-3 w-40 bg-[rgb(var(--border-default))]" />
+        <div className="h-44 bg-[rgb(var(--border-default))]" />
       </div>
     );
   }
@@ -57,8 +57,8 @@ function QuestionQualitySection({ repId }: { repId: string }) {
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-2">
-        <div className="h-3 w-40 bg-[rgb(var(--border-default))] rounded" />
-        <div className="h-44 bg-[rgb(var(--border-default))] rounded" />
+        <div className="h-3 w-40 bg-[rgb(var(--border-default))]" />
+        <div className="h-44 bg-[rgb(var(--border-default))]" />
       </div>
     );
   }
@@ -72,8 +72,8 @@ function TalkListenSection({ repId }: { repId: string }) {
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-2">
-        <div className="h-3 w-40 bg-[rgb(var(--border-default))] rounded" />
-        <div className="h-44 bg-[rgb(var(--border-default))] rounded" />
+        <div className="h-3 w-40 bg-[rgb(var(--border-default))]" />
+        <div className="h-44 bg-[rgb(var(--border-default))]" />
       </div>
     );
   }
@@ -129,7 +129,6 @@ export default function CallsDashboard() {
       <SectionShell title="Filler Words">
         <FillerWordSection repId={repId} />
       </SectionShell>
-      {/* L4 FillerWordTrend — wired in L4 */}
       {/* L5 Objection Pattern Chart */}
       <SectionShell title="Objection Patterns">
         <ObjectionPatternChart />

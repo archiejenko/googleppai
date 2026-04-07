@@ -1,13 +1,13 @@
-import type { FeatureSectionData } from '../../data/featuresData';
-import FeatureCard from './FeatureCard';
+import type { CapabilitySectionData } from '../../data/capabilitiesData';
+import CapabilityCard from './CapabilityCard';
 import RoleValueStrip from './RoleValueStrip';
 import StatBar from './StatBar';
 
 interface Props {
-  section: FeatureSectionData;
+  section: CapabilitySectionData;
 }
 
-export default function FeatureSection({ section }: Props) {
+export default function CapabilitySection({ section }: Props) {
   return (
     <section
       id={section.id}
@@ -16,7 +16,7 @@ export default function FeatureSection({ section }: Props) {
       {/* Section header row */}
       <div className="flex items-center gap-4 mb-8">
         <span className="font-mono text-[10px] text-white/30 uppercase tracking-widest">
-          FEATURE_{section.index}
+          CAPABILITY_{section.index}
         </span>
         <div className="h-px flex-1 bg-white/10" />
         <span className="text-[11px] uppercase tracking-[0.1em] text-[#FF6B6B] label-os">
@@ -32,10 +32,10 @@ export default function FeatureSection({ section }: Props) {
       {/* Role value strip */}
       <RoleValueStrip {...section.roleValues} />
 
-      {/* Feature card grid — gap-px technique: outer bg = gap colour */}
+      {/* Capability card grid — gap-px technique: outer bg = gap colour */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-bg-canvas border border-white/[0.06]">
         {section.cards.map((card) => (
-          <FeatureCard key={card.title} {...card} />
+          <CapabilityCard key={card.title} {...card} />
         ))}
       </div>
 

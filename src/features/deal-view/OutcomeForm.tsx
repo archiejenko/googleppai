@@ -9,9 +9,7 @@ import {
   useDealOutcomeRecord,
   useRecordOutcome,
 } from '../../hooks/useWinLossPatterns'
-import {
-  WIN_REASONS, LOSS_REASONS,
-} from '../../config/dealOutcomeReasons'
+import { WIN_REASONS, LOSS_REASONS } from '../../config/dealOutcomeReasons'
 import type { Deal } from '../../hooks/useDeals'
 
 interface Props { deal: Deal }
@@ -57,6 +55,7 @@ export default function OutcomeForm({ deal }: Props) {
         ) : (
           <OutcomeRecordForm
             dealId={deal.id}
+            outcome={deal.outcome as 'won' | 'lost'}
             aiSuggested={null}
             onRecorded={() => {}}
           />
@@ -151,19 +150,21 @@ export default function OutcomeForm({ deal }: Props) {
 }
 
 // Standalone form used when outcome exists but no record yet
-function OutcomeRecordForm({ dealId, aiSuggested, onRecorded }: {
+function OutcomeRecordForm({ dealId, outcome, aiSuggested, onRecorded }: {
   dealId: string
+  outcome: 'won' | 'lost'
   aiSuggested: string | null
   onRecorded: () => void
 }) {
   const record = useRecordOutcome(dealId)
+  const reasons = outcome === 'won' ? WIN_REASONS : LOSS_REASONS
   const [primaryReason, setPrimaryReason] = useState(aiSuggested ?? '')
 
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault()
-        await record.mutateAsync({ outcome: 'lost', primary_reason: primaryReason })
+        await record.mutateAsync({ outcome, primary_reason: primaryReason })
         onRecorded()
       }}
       className="space-y-3"
@@ -176,7 +177,8 @@ function OutcomeRecordForm({ dealId, aiSuggested, onRecorded }: {
           className="w-full bg-[#0f0f10] border border-[#2a2a2e] text-[#f9fafb] text-sm px-3 py-2 outline-none"
           required
         >
-          {LOSS_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+          <option value="">Select reason…</option>
+          {reasons.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
       </div>
       <button

@@ -6,12 +6,13 @@ interface StatCardProps {
   value: string | number;
   icon?: LucideIcon;
   delta?: number;
+  deltaUnit?: string;
   deltaLabel?: string;
   delay?: number;
   className?: string;
 }
 
-export default function StatCard({ label, value, icon: Icon, delta, deltaLabel, delay = 0, className = '' }: StatCardProps) {
+export default function StatCard({ label, value, icon: Icon, delta, deltaUnit = '%', deltaLabel, delay = 0, className = '' }: StatCardProps) {
   const isPositive = delta !== undefined && delta > 0;
   const isNeutral  = delta === undefined || delta === 0;
 
@@ -36,7 +37,7 @@ export default function StatCard({ label, value, icon: Icon, delta, deltaLabel, 
           style={{ color: isNeutral ? undefined : isPositive ? '#22c55e' : '#ef4444' }}
         >
           {isNeutral ? <Minus className="w-3 h-3" /> : isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-          {delta !== 0 && `${Math.abs(delta)}%`}
+          {delta !== 0 && `${Math.abs(delta)}${deltaUnit}`}
         </div>
       )}
 

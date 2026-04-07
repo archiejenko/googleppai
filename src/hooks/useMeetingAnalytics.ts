@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../utils/supabase';
 
+interface MeetingScores {
+  eye_contact_pct?: number;
+  posture?: number;
+}
+
 export interface RadarPoint {
   subject: string;
   calls: number;
@@ -13,6 +18,7 @@ export interface KpiTrend {
   /** Positive = improved vs prior period, negative = declined, null = no prior data */
   delta: number | null;
   up: boolean;
+  trendLabel: string;
 }
 
 export interface MeetingAnalytics {
@@ -124,16 +130,16 @@ export function useMeetingAnalytics(userId: string | undefined) {
       // ── Presence KPIs with period-over-period delta ──────────────────────────
       const hasPriorMeetData = mp.length > 0;
 
-      const currEyeContact = avgOf(mc.map(s => ((s.scores as any)?.eye_contact_pct as number) ?? 0));
+      const currEyeContact = avgOf(mc.map(s => ((s.scores as MeetingScores)?.eye_contact_pct) ?? 0));
       const prevEyeContact = hasPriorMeetData
-        ? avgOf(mp.map(s => ((s.scores as any)?.eye_contact_pct as number) ?? 0))
+        ? avgOf(mp.map(s => ((s.scores as MeetingScores)?.eye_contact_pct) ?? 0))
         : null;
       const eyeDelta = prevEyeContact !== null ? currEyeContact - prevEyeContact : null;
       const { label: eyeLabel, up: eyeUp } = formatDelta(eyeDelta);
 
-      const currPosture = avgOf(mc.map(s => ((s.scores as any)?.posture as number) ?? 0));
+      const currPosture = avgOf(mc.map(s => ((s.scores as MeetingScores)?.posture) ?? 0));
       const prevPosture = hasPriorMeetData
-        ? avgOf(mp.map(s => ((s.scores as any)?.posture as number) ?? 0))
+        ? avgOf(mp.map(s => ((s.scores as MeetingScores)?.posture) ?? 0))
         : null;
       const postureDelta = prevPosture !== null ? currPosture - prevPosture : null;
       const { label: postureLabel, up: postureUp } = formatDelta(postureDelta);
@@ -146,14 +152,10 @@ export function useMeetingAnalytics(userId: string | undefined) {
       const { label: presenceLabel, up: presenceUp } = formatDelta(presenceDelta);
 
       const kpiTrends: KpiTrend[] = [
-        { label: 'Eye Contact Avg', value: `${currEyeContact}%`, delta: eyeDelta, up: eyeUp },
-        { label: 'Posture Score',   value: currPosture,          delta: postureDelta, up: postureUp },
-        { label: 'Presence Score',  value: currPresence,         delta: presenceDelta, up: presenceUp },
+        { label: 'Eye Contact Avg', value: `${currEyeContact}%`, delta: eyeDelta, up: eyeUp, trendLabel: eyeLabel },
+        { label: 'Posture Score',   value: currPosture,          delta: postureDelta, up: postureUp, trendLabel: postureLabel },
+        { label: 'Presence Score',  value: currPresence,         delta: presenceDelta, up: presenceUp, trendLabel: presenceLabel },
       ];
-      // Attach formatted label strings as properties for convenient rendering
-      (kpiTrends[0] as any).trendLabel = eyeLabel;
-      (kpiTrends[1] as any).trendLabel = postureLabel;
-      (kpiTrends[2] as any).trendLabel = presenceLabel;
 
       return { radarData, callAvg, meetingAvg, delta, kpiTrends, hasMeetingData, hasCallData };
     },

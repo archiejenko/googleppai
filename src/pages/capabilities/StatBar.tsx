@@ -1,4 +1,4 @@
-import type { StatData } from '../../data/featuresData';
+import type { StatData } from '../../data/capabilitiesData';
 
 interface Props {
   stats: StatData[];

@@ -6,13 +6,13 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from '../ui/navigation-menu';
-import { featureSections } from '../../data/featuresData';
+import { capabilitySections } from '../../data/capabilitiesData';
 
 export default function OastNavMenu() {
   const navigate = useNavigate();
 
-  const handleFeatureItemClick = (sectionId: string) => {
-    navigate('/features#' + sectionId);
+  const handleCapabilityItemClick = (sectionId: string) => {
+    navigate('/capabilities#' + sectionId);
     setTimeout(() => {
       const el = document.getElementById(sectionId);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -34,15 +34,15 @@ export default function OastNavMenu() {
           </Link>
         </NavigationMenuItem>
 
-        {/* Features — dropdown with section anchors */}
+        {/* Capabilities — dropdown with section anchors */}
         <NavigationMenuItem>
-          <NavigationMenuTrigger>Features</NavigationMenuTrigger>
+          <NavigationMenuTrigger>Capabilities</NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid grid-cols-1 w-[320px]">
-              {featureSections.map((section) => (
+              {capabilitySections.map((section) => (
                 <li key={section.id}>
                   <button
-                    onClick={() => handleFeatureItemClick(section.id)}
+                    onClick={() => handleCapabilityItemClick(section.id)}
                     className="block w-full text-left select-none p-4 leading-none no-underline outline-none transition-colors hover:bg-[rgba(255,107,107,0.06)] focus:bg-[rgba(255,107,107,0.06)]"
                     style={{ borderRadius: 0 }}
                   >
@@ -63,11 +63,11 @@ export default function OastNavMenu() {
               ))}
               <li>
                 <Link
-                  to="/features"
+                  to="/capabilities"
                   className="block px-4 py-3 text-sm uppercase tracking-[0.08em] transition-colors hover:opacity-80"
                   style={{ color: 'var(--mkt-accent)', fontFamily: 'DM Sans, sans-serif', borderRadius: 0 }}
                 >
-                  View All Features →
+                  View All Capabilities →
                 </Link>
               </li>
             </ul>
@@ -82,6 +82,17 @@ export default function OastNavMenu() {
             style={{ color: 'var(--mkt-text-secondary)', fontFamily: 'DM Sans, sans-serif' }}
           >
             Industries
+          </Link>
+        </NavigationMenuItem>
+
+        {/* User Journey — direct link */}
+        <NavigationMenuItem>
+          <Link
+            to="/user-journey"
+            className="inline-flex h-10 items-center px-3 py-2 text-sm transition-colors tracking-wide hover:text-white"
+            style={{ color: 'var(--mkt-text-secondary)', fontFamily: 'DM Sans, sans-serif' }}
+          >
+            User Journey
           </Link>
         </NavigationMenuItem>
 

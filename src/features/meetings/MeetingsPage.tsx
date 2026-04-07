@@ -440,7 +440,7 @@ export default function MeetingsPage() {
                             { kpi: kpiTrends[2], icon: MonitorPlay },
                         ].map(({ kpi, icon: Icon }, i) => {
                             if (!kpi) return <div key={i} className="card-os p-5 border border-border h-28 animate-pulse bg-bg-raised" />;
-                            const trendLabel = (kpi as any).trendLabel ?? '—';
+                            const trendLabel = kpi.trendLabel ?? '—';
                             return (
                                 <div key={kpi.label} className="card-os p-5 flex flex-col gap-2">
                                     <div className="flex items-center gap-2 text-text-muted">
@@ -560,8 +560,8 @@ export default function MeetingsPage() {
                             description="Zero-IT capture via Chrome/Edge"
                             status="not_installed"
                             icon={ExternalLink}
-                            actionLabel="Install Extension"
-                            onAction={() => {}}
+                            actionLabel="Learn More"
+                            onAction={() => navigate('/settings/integrations')}
                         />
                     </div>
                 </section>

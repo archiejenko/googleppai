@@ -154,7 +154,7 @@ const MOCK_SESSIONS: Record<string, Session> = {
             { speaker: 'prospect', name: 'Sarah', start_ms: 120000, text: "The 14-day guarantee is compelling. What happens if you miss it?", sentiment: 0.0, moments: [{ type: 'objection', label: 'OBJECTION' }] },
             { speaker: 'rep', name: 'Alex', start_ms: 135000, text: "We extend your first month free — it's written into the MSA. We've never triggered it in 3 years, but it's there for your peace of mind.", sentiment: 0.8, moments: [{ type: 'positive_signal', label: 'SIGNAL' }] },
             { speaker: 'prospect', name: 'James', start_ms: 160000, text: "That actually resolves my biggest concern. Sarah, I think we're close here.", sentiment: 0.9, moments: [{ type: 'prospect_engagement', label: 'PROSPECT' }] },
-            { speaker: 'rep', name: 'Alex', start_ms: 178000, text: "Glad to hear it. To make sure we're aligned — what would need to be true for you to give us the green light by end of month?", sentiment: 0.6, months: [], moments: [{ type: 'meddic_hit', label: 'MEDDIC: Decision' }] } as TranscriptSegment,
+            { speaker: 'rep', name: 'Alex', start_ms: 178000, text: "Glad to hear it. To make sure we're aligned — what would need to be true for you to give us the green light by end of month?", sentiment: 0.6, moments: [{ type: 'meddic_hit', label: 'MEDDIC: Decision' }] },
         ],
         moments: [
             { timestamp_ms: 30000, type: 'meddic_hit', label: 'Implementation timeline', severity: 'positive' },
@@ -471,10 +471,15 @@ export default function SessionReviewPage() {
                         ) : (
                             <Mic className="w-10 h-10 text-text-muted opacity-40" />
                         )}
-                        <p className="text-xs text-text-muted">Recording available · {session.duration}</p>
-                        <button className="btn-primary flex items-center gap-2 text-xs px-5 py-2">
+                        <p className="text-xs text-text-muted">Recording · {session.duration}</p>
+                        <button
+                            disabled
+                            className="btn-primary flex items-center gap-2 text-xs px-5 py-2 opacity-40 cursor-not-allowed"
+                            title="Playback requires a connected meeting integration"
+                        >
                             <Play className="w-3.5 h-3.5" /> Play Session
                         </button>
+                        <p className="text-[10px] text-text-muted">Connect a meeting platform to enable playback</p>
                     </div>
 
                     {/* Timeline scrubber */}

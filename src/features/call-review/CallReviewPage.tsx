@@ -164,10 +164,6 @@ export default function CallReviewPage() {
       <section className="border border-[rgb(var(--border-default))] p-5">
         <PacingAnalysisChart callId={callId} />
       </section>
-      {/* L1–L8 all wired */}
-      {/* L5 ObjectionAnalysisPanel — wired in L5 */}
-      {/* L6 BuyingSignalPanel — wired in L6 */}
-      {/* L8 PacingAnalysisChart — wired in L8 */}
 
     </div>
   );

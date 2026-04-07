@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../utils/supabase';
-import { User, Shield, Briefcase, Key, Save, Eye, EyeOff, Camera, Clock, ExternalLink } from 'lucide-react';
+import { User, Shield, Briefcase, Key, Save, Camera, Clock, ExternalLink } from 'lucide-react';
 import Notification from '../components/Notification';
 
 interface Stats {
@@ -39,11 +39,10 @@ export default function Profile() {
 
     // Password State
     const [passwordData, setPasswordData] = useState({
-        currentPassword: '',
         newPassword: '',
         confirmPassword: '',
     });
-    const [showPassword, setShowPassword] = useState(false);
+    const [showPassword] = useState(false);
 
     // Stats State
     const [stats, setStats] = useState<Stats | null>(null);
@@ -159,7 +158,7 @@ export default function Profile() {
             if (error) throw error;
 
             setMessage({ text: 'Password changed successfully!', type: 'success' });
-            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            setPasswordData({ newPassword: '', confirmPassword: '' });
         } catch (err: unknown) {
             setMessage({ text: err instanceof Error ? err.message : 'Failed to change password', type: 'error' });
         } finally {
@@ -349,25 +348,6 @@ export default function Profile() {
                         </div>
                         <form onSubmit={handlePasswordChange} className="space-y-5">
                             <div>
-                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Current Password</label>
-                                <div className="relative">
-                                    <input
-                                        type={showPassword ? "text" : "password"}
-                                        value={passwordData.currentPassword}
-                                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                        className="input-os pr-10"
-                                        placeholder="••••••••"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-3 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]"
-                                    >
-                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
                                 <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">New Password</label>
                                 <input
                                     type={showPassword ? "text" : "password"}
@@ -441,7 +421,7 @@ export default function Profile() {
                     admin-only). Do NOT implement without user confirmation.
                     Once the edge function is ready, wire it up here.
                 ────────────────────────────────────────────────────────────── */}
-                <div className="mt-8 pt-6 border-t border-red-900/30">
+                <div className="lg:col-span-3 mt-8 pt-6 border-t border-red-900/30">
                     <h3 className="text-sm uppercase tracking-widest text-red-400 mb-3"
                         style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 600 }}>
                         Danger Zone
