@@ -1,4 +1,7 @@
 
+[functions.unified-ai]
+verify_jwt = false
+
 [functions.training-api]
 verify_jwt = false
 

@@ -16,7 +16,7 @@ interface RecentPitch {
     id: string;
     score: number;
     created_at: string;
-    scenario: string;
+    training_sessions: { scenario: string } | null;
 }
 
 export default function Profile() {
@@ -53,7 +53,7 @@ export default function Profile() {
             const [{ data: profileData, error: profileError }, { data: pitchesData, error: pitchesError }, { data: recentData }] = await Promise.all([
                 supabase.from('profiles').select('*').eq('id', user.id).single(),
                 supabase.from('pitches').select('score').eq('user_id', user.id),
-                supabase.from('pitches').select('id, score, created_at, scenario').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
+                supabase.from('pitches').select('id, score, created_at, training_sessions(scenario)').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
             ]);
 
             if (profileError) throw profileError;
@@ -319,7 +319,7 @@ export default function Profile() {
                                     >
                                         <div>
                                             <p className="text-sm font-semibold text-[rgb(var(--text-primary))] capitalize">
-                                                {pitch.scenario?.replace(/_/g, ' ') || 'Sales Call'}
+                                                {pitch.training_sessions?.scenario?.replace(/_/g, ' ') || 'Sales Call'}
                                             </p>
                                             <p className="text-xs text-[rgb(var(--text-muted))] mt-0.5">
                                                 {new Date(pitch.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
