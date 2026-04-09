@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.local
 .vercel
+
+# Supabase CLI cache (contains connection strings — do not commit)
+supabase/.temp/
