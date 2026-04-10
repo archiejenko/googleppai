@@ -158,7 +158,7 @@ const sharedCapabilities = [
     Icon: BrainCircuit,
     name: 'AI Coaching Feedback Loop',
     description:
-      'Automated weekly digests per rep. Coaching recommendations derived from actual call data — not gut feel.',
+      'Automated weekly digests per rep. Coaching recommendations derived from actual call data.',
   },
 ];
 
@@ -341,8 +341,7 @@ export default function UserJourney() {
           className="text-base text-text-secondary max-w-xl mb-14"
           style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 400 }}
         >
-          These are not role-specific tools — they are the connective tissue of the platform.
-          Rep, manager, and leader each get a different view of the same underlying data.
+          OAST operates as a core function across full sales teams, our insight serves everyone within sales, from your BDR to Sales Director.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

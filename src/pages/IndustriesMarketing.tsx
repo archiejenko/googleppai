@@ -111,7 +111,7 @@ export default function IndustriesMarketing() {
           className="text-lg max-w-xl mx-auto leading-relaxed"
           style={{ color: 'var(--mkt-text-secondary)', fontFamily: 'DM Sans, sans-serif', fontWeight: 400 }}
         >
-          OAST is designed for teams where every conversation moves the needle — and where training gaps translate directly into missed revenue.
+          OAST is designed to be sector agnostic, the core of the problem we are trying to solve is true within every industry. Each industry has specific pain-points which we are devoted to solving.
         </motion.p>
       </section>
 

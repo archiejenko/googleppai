@@ -70,8 +70,8 @@ export default function HeroSection() {
           className="relative z-10 text-[2.5rem] md:text-[4.5rem] uppercase leading-[0.9] tracking-tighter text-white max-w-5xl mx-auto mb-8"
           style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 700 }}
         >
-          Your Reps Train Well. They Sell Differently.{' '}
-          <span style={{ color: 'var(--mkt-accent)' }}>OAST Closes That Gap.</span>
+          The leading sales training platform for{' '}
+          <span style={{ color: '#FF6B6B' }}>Over Achieving Sales Teams</span>
         </motion.h1>
 
         {/* Subheadline */}
