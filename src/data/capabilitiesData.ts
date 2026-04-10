@@ -40,6 +40,7 @@ export interface CapabilitySectionData {
   cards: CapabilityCardData[];
   stats: StatData[];
   imageUrl: string;
+  videoUrl?: string;
   deepDiveBullets: string[]; // max 3 items, each under 10 words
 }
 
@@ -392,6 +393,7 @@ export const capabilitySections: CapabilitySectionData[] = [
       { number: '3hr', label: 'Manager time saved/week' },
     ],
     imageUrl: '/assets/screenshots/learning_path.png',
+    videoUrl: '/assets/training-preview.mp4',
     deepDiveBullets: [
       'Automated weekly digest for every rep, every week.',
       'Your sales framework baked into every recommendation.',

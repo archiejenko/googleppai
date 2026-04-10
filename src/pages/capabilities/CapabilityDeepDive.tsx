@@ -24,22 +24,36 @@ export default function CapabilityDeepDive({ section, index }: Props) {
       <div
         className={`flex flex-col ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} gap-12 md:gap-20 items-center`}
       >
-        {/* Image */}
+        {/* Image / Video */}
         <div
           className="flex-1 relative overflow-hidden w-full"
           style={{ borderRadius: '12px' }}
         >
-          {!imgLoaded && (
-            <div className="bg-[#161618] animate-pulse aspect-video w-full" />
+          {section.videoUrl ? (
+            <video
+              src={section.videoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full object-cover"
+              style={{ maxHeight: '400px', display: 'block' }}
+            />
+          ) : (
+            <>
+              {!imgLoaded && (
+                <div className="bg-[#161618] animate-pulse aspect-video w-full" />
+              )}
+              <img
+                src={section.imageUrl}
+                alt={section.navLabel}
+                loading="lazy"
+                onLoad={() => setImgLoaded(true)}
+                className="w-full object-cover"
+                style={{ display: imgLoaded ? 'block' : 'none', maxHeight: '400px' }}
+              />
+            </>
           )}
-          <img
-            src={section.imageUrl}
-            alt={section.navLabel}
-            loading="lazy"
-            onLoad={() => setImgLoaded(true)}
-            className="w-full object-cover"
-            style={{ display: imgLoaded ? 'block' : 'none', maxHeight: '400px' }}
-          />
         </div>
 
         {/* Text */}

@@ -21,16 +21,18 @@ export default function DemoVideoSection() {
         </h2>
       </div>
 
-      <video
-        className="max-w-3xl mx-auto w-full aspect-video object-cover"
-        src="/hero_demo.mp4"
-        poster="/assets/screenshots/hero_dashboard.png"
-        autoPlay
-        muted
-        loop
-        playsInline
-        style={{ display: 'block' }}
-      />
+      <div className="max-w-3xl mx-auto w-full aspect-video overflow-hidden">
+        <video
+          className="w-full h-full object-cover"
+          src="/assets/demo.mp4"
+          poster="/assets/screenshots/hero_dashboard.png"
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{ display: 'block' }}
+        />
+      </div>
     </section>
   );
 }
