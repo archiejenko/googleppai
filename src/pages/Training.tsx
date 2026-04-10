@@ -13,6 +13,7 @@ import MEDDICReadiness, {
 } from '../components/training/briefing/MEDDICReadiness';
 import ObjectionForecast from '../components/training/briefing/ObjectionForecast';
 import ConfidenceRating from '../components/training/briefing/ConfidenceRating';
+import VoiceSelector from '../components/training/VoiceSelector';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -77,6 +78,7 @@ export default function Training() {
         methodology: 'MEDDIC' as 'MEDDIC' | 'BANT',
         personaCategory: 'Executive' as PersonaCategory,
         isMultiPersona: false,
+        voice_id: '5PEXwsADjqmz7GO58o3B',
     });
     const [isEliteUnlocked, setIsEliteUnlocked] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -125,8 +127,9 @@ export default function Training() {
 
                 if (user?.id) {
                     const { data: profile } = await supabase
-                        .from('profiles').select('mastery_level').eq('id', user.id).single();
+                        .from('profiles').select('mastery_level, preferred_voice_id').eq('id', user.id).single();
                     if (profile?.mastery_level === 'Elite') setIsEliteUnlocked(true);
+                    if (profile?.preferred_voice_id) setFormData(prev => ({ ...prev, voice_id: profile.preferred_voice_id }));
                 }
             } catch (error) {
                 console.error('[Training] Failed to fetch data:', error);
@@ -185,7 +188,7 @@ export default function Training() {
             }
             if (!sessionData?.id) throw new Error('Server returned a response without a session ID.');
 
-            navigate(`/active-training?sessionId=${sessionData.id}`);
+            navigate(`/active-training?sessionId=${sessionData.id}&voice_id=${encodeURIComponent(formData.voice_id)}`);
         } catch (error: unknown) {
             const err = error as { message?: string; context?: { json?: () => Promise<{ details?: string; error?: string; message?: string }> } };
             let detailedMsg = err.message || 'Unknown error';
@@ -452,7 +455,16 @@ export default function Training() {
                         </div>
                     </div>
 
-                    {/* ── Row 5: Confidence + CTA ───────────────────────────── */}
+                    {/* ── Row 5: Prospect Voice ────────────────────────────── */}
+                    <div className="bg-bg-surface border border-[#2a2a2e] p-5">
+                        <VoiceSelector
+                            label="Prospect Voice"
+                            value={formData.voice_id}
+                            onChange={(id) => setFormData(prev => ({ ...prev, voice_id: id }))}
+                        />
+                    </div>
+
+                    {/* ── Row 6: Confidence + CTA ───────────────────────────── */}
                     <div className="border-t border-[#2a2a2e] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <ConfidenceRating value={confidenceRating} onChange={setConfidenceRating} />
 

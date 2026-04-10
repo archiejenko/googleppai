@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../utils/supabase';
 import { User, Shield, Briefcase, Key, Save, Camera, Clock, ExternalLink } from 'lucide-react';
 import Notification from '../components/Notification';
+import VoiceSelector from '../components/training/VoiceSelector';
 
 interface Stats {
     totalXP: number;
@@ -35,6 +36,7 @@ export default function Profile() {
         name: '',
         industry: '',
         experienceLevel: 'beginner',
+        preferred_voice_id: '5PEXwsADjqmz7GO58o3B',
     });
 
     // Password State
@@ -71,6 +73,7 @@ export default function Profile() {
                 name: profileData.name || '',
                 industry: profileData.industry || '',
                 experienceLevel: profileData.experience_level || 'beginner',
+                preferred_voice_id: profileData.preferred_voice_id || '5PEXwsADjqmz7GO58o3B',
             });
             setStats({
                 totalXP: profileData.total_xp || 0,
@@ -119,7 +122,8 @@ export default function Profile() {
             const updates = {
                 name: formData.name,
                 industry: formData.industry,
-                experience_level: formData.experienceLevel, // map to snake_case
+                experience_level: formData.experienceLevel,
+                preferred_voice_id: formData.preferred_voice_id,
                 updated_at: new Date().toISOString(),
             };
 
@@ -290,6 +294,13 @@ export default function Profile() {
                                     <option value="intermediate">Intermediate</option>
                                     <option value="advanced">Advanced</option>
                                 </select>
+                            </div>
+                            <div className="pt-4 border-t border-[rgb(var(--border-subtle))]">
+                                <VoiceSelector
+                                    label="Simulation Voice"
+                                    value={formData.preferred_voice_id}
+                                    onChange={(id) => setFormData(prev => ({ ...prev, preferred_voice_id: id }))}
+                                />
                             </div>
                             <div className="flex justify-end">
                                 <button

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useAudioQueue } from '../hooks/useAudioQueue';
 import { Info } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { supabase } from '../utils/supabase';
@@ -91,6 +92,7 @@ export default function ActiveTraining() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const sessionId = searchParams.get('sessionId');
+    const voiceId   = searchParams.get('voice_id') ?? '5PEXwsADjqmz7GO58o3B';
 
     // ── Session & conversation state (unchanged) ───────────────────────────
     const [sessionData, setSessionData]         = useState<SessionData | null>(null);
@@ -108,7 +110,6 @@ export default function ActiveTraining() {
     const [loading, setLoading]                 = useState(true);
     const [isMuted, setIsMuted]                 = useState(false);
     const [isPaused, setIsPaused]               = useState(false);
-    const [voiceGender, setVoiceGender]         = useState<'male' | 'female'>('male');
     const [liveMetrics, setLiveMetrics]         = useState<LiveMetrics | null>(null);
     const [savedNoteIndices, setSavedNoteIndices] = useState<Set<number>>(new Set());
     const [textInputValue, setTextInputValue]   = useState('');
@@ -140,7 +141,7 @@ export default function ActiveTraining() {
     const silenceProgressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const sessionStartTimeRef   = useRef<number | null>(null);
     const totalUserWordsRef     = useRef(0);
-    const activeTtsRef          = useRef<{ audio: HTMLAudioElement; url: string } | null>(null);
+    const { initContext, enqueue, flush } = useAudioQueue();
 
     // ── Ref syncs (unchanged) ───────────────────────────────────────────────
     useEffect(() => { messagesRef.current = messages; }, [messages]);
@@ -359,7 +360,10 @@ export default function ActiveTraining() {
         }, SILENCE_TIMEOUT_MS);
     };
 
-    const toggleListening = () => isListening ? stopListening() : startListening();
+    const toggleListening = () => {
+        initContext();
+        isListening ? stopListening() : startListening();
+    };
 
     const startListening = () => {
         if (isPaused) setIsPaused(false);
@@ -514,20 +518,16 @@ export default function ActiveTraining() {
         }, STREAM_CHAR_SPEED_MS);
 
         setLiveMetrics(analytics);
-        speakText(text, voiceGender);
+        speakText(text);
     };
 
-    // ── TTS (unchanged) ─────────────────────────────────────────────────────
-    const speakText = async (text: string, gender: 'male' | 'female' = 'male') => {
+    // ── TTS ──────────────────────────────────────────────────────────────────
+    const speakText = async (text: string) => {
         if (isMuted) {
             if (!isPausedRef.current) startListening();
             return;
         }
-        if (activeTtsRef.current) {
-            activeTtsRef.current.audio.pause();
-            URL.revokeObjectURL(activeTtsRef.current.url);
-            activeTtsRef.current = null;
-        }
+        flush();
         setIsSpeaking(true);
         let doneCalled = false;
         const onDone = () => {
@@ -539,18 +539,13 @@ export default function ActiveTraining() {
         setTimeout(onDone, 20000);
         try {
             const { data, error } = await supabase.functions.invoke('tts-generate', {
-                body: { text, voice: gender },
+                body: { text, voice_id: voiceId },
                 headers: { Accept: 'audio/mpeg' },
             });
             if (error) throw error;
             if (!(data instanceof ArrayBuffer) && !(data instanceof Uint8Array)) throw new Error('TTS non-binary');
-            const blob = new Blob([data as BlobPart], { type: 'audio/mpeg' });
-            const url = URL.createObjectURL(blob);
-            const audio = new Audio(url);
-            activeTtsRef.current = { audio, url };
-            audio.onended = () => { URL.revokeObjectURL(url); activeTtsRef.current = null; onDone(); };
-            audio.onerror = () => { URL.revokeObjectURL(url); activeTtsRef.current = null; onDone(); };
-            audio.play().catch(() => onDone());
+            await enqueue(data as ArrayBuffer);
+            onDone();
         } catch {
             if ('speechSynthesis' in window) {
                 const u = new SpeechSynthesisUtterance(text);
@@ -564,11 +559,7 @@ export default function ActiveTraining() {
     const handleEndSession = async () => {
         sessionEndedRef.current = true;
         stopListening();
-        if (activeTtsRef.current) {
-            activeTtsRef.current.audio.pause();
-            URL.revokeObjectURL(activeTtsRef.current.url);
-            activeTtsRef.current = null;
-        }
+        flush();
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         setIsProcessing(true);
 
@@ -775,7 +766,11 @@ export default function ActiveTraining() {
                     {/* Mute TTS */}
                     <button
                         type="button"
-                        onClick={() => setIsMuted(m => !m)}
+                        onClick={() => {
+                            const next = !isMuted;
+                            if (next) flush();
+                            setIsMuted(next);
+                        }}
                         className={`text-[9px] font-black uppercase tracking-[0.2em] px-4 py-2 border transition-colors ${
                             isMuted
                                 ? 'border-[#2a2a2e] text-text-muted/40'
@@ -784,24 +779,6 @@ export default function ActiveTraining() {
                     >
                         {isMuted ? 'Unmute AI' : 'Mute AI'}
                     </button>
-
-                    {/* Voice gender */}
-                    <div className="flex border border-[#2a2a2e]">
-                        {(['male', 'female'] as const).map(g => (
-                            <button
-                                key={g}
-                                type="button"
-                                onClick={() => setVoiceGender(g)}
-                                className={`px-3 py-2 text-[9px] font-black uppercase tracking-wider transition-colors ${
-                                    voiceGender === g
-                                        ? 'bg-accent/20 text-accent'
-                                        : 'text-text-muted hover:text-text-primary'
-                                }`}
-                            >
-                                {g}
-                            </button>
-                        ))}
-                    </div>
                 </div>
             )}
 
