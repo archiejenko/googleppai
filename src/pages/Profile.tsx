@@ -62,7 +62,7 @@ export default function Profile() {
             if (pitchesError) throw pitchesError;
 
             if (profileData.avatar_url) setAvatarUrl(profileData.avatar_url);
-            if (recentData) setRecentPitches(recentData as RecentPitch[]);
+            if (recentData) setRecentPitches(recentData as unknown as RecentPitch[]);
 
             const totalSessions = pitchesData?.length ?? 0;
             const avgScore = totalSessions > 0
