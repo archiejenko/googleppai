@@ -1,22 +1,4 @@
 
-[functions.unified-ai]
-verify_jwt = false
-
-[functions.training-api]
-verify_jwt = false
-
-[functions.chat-ai]
-verify_jwt = false
-
-[functions.pitch-api]
-verify_jwt = false
-
-[functions.drill-generation]
-verify_jwt = false
-
-[functions.correlation-engine]
-verify_jwt = false
-
 [functions.create-admin]
 enabled = true
 verify_jwt = true
