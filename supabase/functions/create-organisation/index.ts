@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -10,14 +10,34 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { userId, companyName } = await req.json();
-    if (!userId || !companyName) {
-      return new Response(JSON.stringify({ error: 'userId and companyName are required' }), {
+    // Verify caller identity — never trust userId from request body
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorised' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const anonClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: { user }, error: authError } = await anonClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorised' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { companyName } = await req.json();
+    if (!companyName) {
+      return new Response(JSON.stringify({ error: 'companyName is required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Use service role to bypass RLS
+    // Use service role to bypass RLS for org creation only
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -40,19 +60,20 @@ serve(async (req) => {
 
     if (orgError) throw orgError;
 
-    // Link profile to org
+    // Link authenticated user's profile to the new org
     const { error: profileError } = await supabase
       .from('profiles')
       .update({ org_id: org.id })
-      .eq('id', userId);
+      .eq('id', user.id); // user.id from verified JWT, never from request body
 
     if (profileError) throw profileError;
 
     return new Response(JSON.stringify({ org_id: org.id }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
+  } catch (error: unknown) {
+    console.error('[create-organisation] unhandled error:', error);
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred.' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
