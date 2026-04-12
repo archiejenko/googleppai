@@ -1,4 +1,9 @@
 
+[functions.deepgram-token]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/deepgram-token/index.ts"
+
 [functions.create-admin]
 enabled = true
 verify_jwt = true
