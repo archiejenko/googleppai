@@ -258,10 +258,16 @@ Return ONLY valid JSON matching this schema exactly:
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
-  } catch (error) {
-    console.error('drill-generation error:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 400,
+  } catch (error: unknown) {
+    console.error('[drill-generation] unhandled error:', error);
+    const status = (error instanceof Error && error.message === 'Unauthorised') ? 401
+                 : (error instanceof Error && error.message === 'Too many requests') ? 429
+                 : 500;
+    const message = status === 401 ? 'Unauthorised'
+                  : status === 429 ? 'Too many requests'
+                  : 'An unexpected error occurred.';
+    return new Response(JSON.stringify({ error: message }), {
+      status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }

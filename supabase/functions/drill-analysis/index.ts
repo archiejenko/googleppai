@@ -99,10 +99,17 @@ Return ONLY the JSON, no markdown, no preamble.`;
       JSON.stringify({ critique: { critique: result.critique, strengths: result.strengths, improvements: result.improvements }, score: result.score }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error('[drill-analysis] unhandled error:', error);
+    const status = (error instanceof Error && error.message === 'Unauthorised') ? 401
+                 : (error instanceof Error && error.message === 'Too many requests') ? 429
+                 : 500;
+    const message = status === 401 ? 'Unauthorised'
+                  : status === 429 ? 'Too many requests'
+                  : 'An unexpected error occurred.';
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ error: message }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

@@ -198,11 +198,17 @@ serve(async (req) => {
             status: 200,
         })
 
-    } catch (error) {
-        console.error("Function error:", error)
-        return new Response(JSON.stringify({ error: error.message }), {
+    } catch (error: unknown) {
+        console.error('[pitch-api] unhandled error:', error);
+        const status = (error instanceof Error && error.message === 'Unauthorised') ? 401
+                     : (error instanceof Error && error.message === 'Too many requests') ? 429
+                     : 500;
+        const message = status === 401 ? 'Unauthorised'
+                      : status === 429 ? 'Too many requests'
+                      : 'An unexpected error occurred.';
+        return new Response(JSON.stringify({ error: message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400, // Or 429 if custom logic
+            status,
         })
     }
 })

@@ -152,8 +152,7 @@ JSON ONLY. No markdown, no explanation.`
         })
 
         if (!res.ok) {
-            const err = await res.text()
-            throw new Error(`OpenAI error: ${err}`)
+            throw new Error('AI service unavailable')
         }
 
         const json = await res.json()
@@ -165,10 +164,17 @@ JSON ONLY. No markdown, no explanation.`
             status: 200,
         })
 
-    } catch (error: any) {
-        return new Response(JSON.stringify({ error: error.message }), {
+    } catch (error: unknown) {
+        console.error('[unified-ai] unhandled error:', error);
+        const status = (error instanceof Error && error.message === 'Unauthorised') ? 401
+                     : (error instanceof Error && error.message === 'Too many requests') ? 429
+                     : 500;
+        const message = status === 401 ? 'Unauthorised'
+                      : status === 429 ? 'Too many requests'
+                      : 'An unexpected error occurred.';
+        return new Response(JSON.stringify({ error: message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
+            status,
         })
     }
 })

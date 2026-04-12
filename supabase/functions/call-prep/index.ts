@@ -178,10 +178,17 @@ Tailor everything to a ${session_type ?? "discovery"} call. Return ONLY the JSON
     }
 
     throw new Error(`Unknown action: ${action}`);
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error('[call-prep] unhandled error:', error);
+    const status = (error instanceof Error && error.message === 'Unauthorised') ? 401
+                 : (error instanceof Error && error.message === 'Too many requests') ? 429
+                 : 500;
+    const message = status === 401 ? 'Unauthorised'
+                  : status === 429 ? 'Too many requests'
+                  : 'An unexpected error occurred.';
     return new Response(
-      JSON.stringify({ ok: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ ok: false, error: message }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
