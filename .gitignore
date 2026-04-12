@@ -23,9 +23,14 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment
+# Environment — never commit any .env variant with real values
 .env
 .env.local
+.env.local.save
+.env.*.local
+.env.production
+.env.production.local
+*.local.save
 .vercel
 
 # Supabase CLI cache (contains connection strings — do not commit)
