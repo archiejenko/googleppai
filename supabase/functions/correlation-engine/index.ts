@@ -19,6 +19,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { getCorsHeaders } from '../_shared/cors.ts'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -30,12 +31,6 @@ const PRESSURE_GAP_DELTA = 5    // training rising but live flat/declining by th
 const READINESS_SESSION_BENCHMARK = 3    // sessions/week target
 const READINESS_GAP_MAX           = 50   // gap at which gap_inverted score hits 0
 const READINESS_TREND_THRESHOLD   = 5    // pts delta between halves to call improving/declining
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Content-Type': 'application/json',
-}
 
 // ── DB client helpers ────────────────────────────────────────────────────────
 
@@ -405,6 +400,7 @@ async function computeRetentionRate(db: SupabaseClient, repId: string): Promise<
 // Called by telephony-webhook after each committed live_score. Service-role only.
 
 async function handleCompute(req: Request): Promise<Response> {
+  const corsHeaders = { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
   // Verify service-role call: must carry service role key or be called internally.
   // We check for the service role key in the Authorization header.
   const authHeader = req.headers.get('Authorization') ?? ''
@@ -519,6 +515,7 @@ async function handleCompute(req: Request): Promise<Response> {
 // Auth: manager (team_lead or admin) only.
 
 async function handleTrainingEfficacy(req: Request): Promise<Response> {
+  const corsHeaders = { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
   const user = await getAuthedUser(req)
   if (!user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
@@ -577,6 +574,7 @@ async function handleTrainingEfficacy(req: Request): Promise<Response> {
 // Auth: the rep themselves, or a manager in the same team.
 
 async function handleRepDetail(req: Request, repId: string): Promise<Response> {
+  const corsHeaders = { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
   const user = await getAuthedUser(req)
   if (!user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
@@ -645,6 +643,7 @@ async function handleRepDetail(req: Request, repId: string): Promise<Response> {
 // ── Router ───────────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
+  const corsHeaders = { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {

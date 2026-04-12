@@ -1,24 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-function ok(data: unknown) {
-  return new Response(
-    JSON.stringify({ data }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-  );
-}
-
-function err(message: string, status = 500) {
-  return new Response(
-    JSON.stringify({ error: message }),
-    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-  );
-}
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 /** Gracefully returns [] if the table doesn't exist yet (error code 42P01). */
 async function safeSelect<T>(
@@ -33,6 +15,22 @@ async function safeSelect<T>(
 }
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
+
+  function ok(data: unknown) {
+    return new Response(
+      JSON.stringify({ data }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  function err(message: string, status = 500) {
+    return new Response(
+      JSON.stringify({ error: message }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
