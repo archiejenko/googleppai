@@ -35,6 +35,12 @@ const DG_PARAMS = new URLSearchParams({
 
 interface UseDeepgramSTTOptions {
     authToken: string | undefined
+    /**
+     * consentConfirmed must be true before start() will open any WebSocket or
+     * request microphone access. Set this only after PreCallConsent has logged
+     * the rep's confirmation that the call participant was informed.
+     */
+    consentConfirmed: boolean
     onInterimTranscript: (text: string) => void
     onFinalTranscript: (text: string) => void
     onError?: (err: Error) => void
@@ -42,6 +48,7 @@ interface UseDeepgramSTTOptions {
 
 export function useDeepgramSTT({
     authToken,
+    consentConfirmed,
     onInterimTranscript,
     onFinalTranscript,
     onError,
@@ -108,11 +115,17 @@ export function useDeepgramSTT({
     }, [onInterimTranscript, onFinalTranscript])
 
     const start = useCallback(async () => {
+        // Consent gate — must be confirmed via PreCallConsent before any audio is captured
+        if (!consentConfirmed) {
+            onError?.(new Error('Prospect consent must be confirmed before recording can start'));
+            return;
+        }
         if (!authToken) { onError?.(new Error('Not authenticated')); return }
         if (wsRef.current?.readyState === WebSocket.OPEN) return // already running
 
         try {
             const token = await fetchToken()
+
             const ws = await openWebSocket(token)
             wsRef.current = ws
 
@@ -162,7 +175,7 @@ export function useDeepgramSTT({
         } catch (err) {
             onError?.(err as Error)
         }
-    }, [authToken, fetchToken, openWebSocket, onError])
+    }, [authToken, consentConfirmed, fetchToken, openWebSocket, onError])
 
     const stop = useCallback(() => {
         if (tokenRefreshRef.current) {
