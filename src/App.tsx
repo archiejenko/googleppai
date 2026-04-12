@@ -20,6 +20,7 @@ import Team from './pages/Team';
 import Pricing from './pages/Pricing';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
+import AccountDeletion from './pages/AccountDeletion';
 import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './components/ProtectedRoute';
 import ActiveTraining from './pages/ActiveTraining';
@@ -170,6 +171,7 @@ function App() {
                 } />
                 <Route path="/active-training" element={<ActiveTraining />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/account/delete" element={<AccountDeletion />} />
 
                 {/* Lazy-loaded feature routes */}
                 <Route path="/analytics" element={<LazyRoute><AnalyticsPage /></LazyRoute>} />

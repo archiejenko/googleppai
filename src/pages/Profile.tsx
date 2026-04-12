@@ -451,20 +451,12 @@ export default function Profile() {
                         Permanently delete your account and all associated data. This action cannot be undone.
                     </p>
                     <button
-                        disabled
-                        title="Account deletion is coming soon. Email hello@oast.app to request deletion."
-                        className="border border-red-900/50 text-red-400/50 px-5 py-2 text-xs tracking-widest cursor-not-allowed opacity-50"
+                        onClick={() => navigate('/account/delete')}
+                        className="border border-red-900/50 text-red-400 px-5 py-2 text-xs tracking-widest hover:bg-red-900/20 transition-colors"
                         style={{ borderRadius: 0, fontFamily: 'Oswald, sans-serif', fontWeight: 600 }}
                     >
                         DELETE ACCOUNT
                     </button>
-                    <p className="text-xs text-text-muted mt-2"
-                       style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                        To request immediate deletion, email{' '}
-                        <a href="mailto:hello@oast.app" className="text-accent underline underline-offset-2">
-                            hello@oast.app
-                        </a>
-                    </p>
                 </div>
 
             </div>
