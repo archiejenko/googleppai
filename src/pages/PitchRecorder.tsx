@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
+import { useAuth } from '../context/AuthContext';
 import { Mic, Square, Upload, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function PitchRecorder() {
@@ -14,6 +15,7 @@ export default function PitchRecorder() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const sessionId = searchParams.get('sessionId');
+    const { user } = useAuth();
 
     const startRecording = async () => {
         try {
@@ -56,22 +58,27 @@ export default function PitchRecorder() {
         setError('');
 
         try {
-            const fileName = `pitch-${Date.now()}.webm`;
+            // Scope path to user ID so Storage RLS policies apply
+            const userId = user?.id ?? (await supabase.auth.getUser()).data.user?.id;
+            if (!userId) throw new Error('Not authenticated');
+            const fileName = `${userId}/pitch-${Date.now()}.webm`;
             const { error: uploadError } = await supabase.storage
                 .from('pitch-recordings')
-                .upload(`${fileName}`, audioBlob);
+                .upload(fileName, audioBlob);
 
             if (uploadError) throw uploadError;
 
-            const { data: { publicUrl } } = supabase.storage
+            // Bucket is private — generate a short-lived signed URL (1 hour)
+            const { data: signedData, error: signErr } = await supabase.storage
                 .from('pitch-recordings')
-                .getPublicUrl(fileName);
+                .createSignedUrl(fileName, 3600);
+            if (signErr || !signedData?.signedUrl) throw new Error('Failed to generate signed URL for recording');
 
             // Call Edge Function to create pitch record
             const { data: analysisData, error: analysisError } = await supabase.functions.invoke('pitch-api', {
                 body: {
                     action: 'create',
-                    audioUrl: publicUrl,
+                    audioUrl: signedData.signedUrl,
                     trainingSessionId: sessionId
                 }
             });

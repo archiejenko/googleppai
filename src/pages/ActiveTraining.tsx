@@ -576,9 +576,11 @@ export default function ActiveTraining() {
                     .from('recordings')
                     .upload(`sessions/${sessionId}.webm`, blob, { upsert: true, contentType: 'audio/webm' });
                 if (uploadData) {
-                    const { data: publicUrl } = supabase.storage
-                        .from('recordings').getPublicUrl(`sessions/${sessionId}.webm`);
-                    audioUrl = publicUrl.publicUrl;
+                    // Bucket is private — generate a short-lived signed URL (1 hour)
+                    const { data: signedData } = await supabase.storage
+                        .from('recordings')
+                        .createSignedUrl(`sessions/${sessionId}.webm`, 3600);
+                    audioUrl = signedData?.signedUrl ?? null;
                 }
             }
         }

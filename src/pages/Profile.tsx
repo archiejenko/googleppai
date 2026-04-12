@@ -61,7 +61,14 @@ export default function Profile() {
             if (profileError) throw profileError;
             if (pitchesError) throw pitchesError;
 
-            if (profileData.avatar_url) setAvatarUrl(profileData.avatar_url);
+            if (profileData.avatar_url) {
+                // avatar_url now stores a storage path (e.g. "avatars/user-id.jpg").
+                // Generate a 1-hour signed URL for display.
+                const { data: signedData } = await supabase.storage
+                    .from('avatars')
+                    .createSignedUrl(profileData.avatar_url, 3600);
+                if (signedData?.signedUrl) setAvatarUrl(signedData.signedUrl);
+            }
             if (recentData) setRecentPitches(recentData as unknown as RecentPitch[]);
 
             const totalSessions = pitchesData?.length ?? 0;
@@ -101,9 +108,11 @@ export default function Profile() {
             const path = `avatars/${user.id}.${ext}`;
             const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
             if (uploadError) throw uploadError;
-            const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-            await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
-            setAvatarUrl(publicUrl);
+            // Store the storage path, not a public URL — bucket is private
+            await supabase.from('profiles').update({ avatar_url: path }).eq('id', user.id);
+            // Generate a short-lived signed URL for immediate display
+            const { data: signedData } = await supabase.storage.from('avatars').createSignedUrl(path, 3600);
+            if (signedData?.signedUrl) setAvatarUrl(signedData.signedUrl);
             setMessage({ text: 'Avatar updated', type: 'success' });
         } catch (err: unknown) {
             setMessage({ text: err instanceof Error ? err.message : 'Upload failed', type: 'error' });
