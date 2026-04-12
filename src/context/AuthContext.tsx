@@ -167,9 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(newUser);
             if (isPostHogEnabled) {
                 posthog.identify(newUser.id, {
-                    email: newUser.email,
-                    name: newUser.name,
-                    role: newUser.role,
+                    role: newUser.role,  // role is not PII; used for cohort analysis
                 });
             }
         } catch (error: unknown) {
