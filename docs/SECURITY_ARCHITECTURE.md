@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Document version** | 0.2 |
+| **Document version** | 0.3 |
 | **Date** | 2026-04-12 |
 | **Status** | Review Ready — Pre-Pilot |
 | **Author** | EJTECH Ltd |
@@ -278,7 +278,7 @@ OAST must maintain a written RoPA as a data controller. The RoPA must document: 
 | Encryption at rest | Implemented | Provided by Supabase/Vercel managed infrastructure |
 | Access control (RLS) | Partial — gap | RLS policies not version-controlled; see Section 9 |
 | Secrets management | Implemented | No secrets in client code; env vars managed via Vercel and Supabase |
-| Rate limiting | Partial | AI endpoints rate-limited; Deepgram token endpoint unconfirmed |
+| Rate limiting | Implemented | AI endpoints rate-limited; `deepgram-token` rate-limited to 20 tokens/user/hour (2026-04-12) |
 | Input validation | Partial | 11 of 19 Edge Functions lack schema validation |
 | Error handling | Partial — gap | Raw error messages currently returned to clients; remediation planned |
 | Audit logging | Not implemented | Planned for post-pilot |
@@ -295,10 +295,10 @@ OAST must maintain a written RoPA as a data controller. The RoPA must document: 
 | **JWT authentication** | All authenticated Edge Functions verify the caller's Supabase JWT | Implemented | Gateway-level JWT verification enabled; `verify_jwt = false` removed from all 6 production functions (2026-04-12) |
 | **Role-based access control** | Three-tier role model (BDM / Sales Director / Admin) enforced in Edge Functions and RLS | Implemented | RLS now authoritative via `auth.user_role()` helper; application-layer checks remain as defence-in-depth |
 | **Secrets management** | API keys stored as Vercel/Supabase environment variables; not present in client code; comprehensive `.env` patterns gitignored | Implemented | `.env.local.save` purged from git history and gitignore hardened (2026-04-12); git history secret scan: clean |
-| **Rate limiting (AI inference)** | Postgres-backed sliding window (`check_rate_limit_hardened()`) on all AI endpoints | Implemented | No org-level aggregate cap; Deepgram token endpoint not confirmed |
+| **Rate limiting (AI inference)** | Postgres-backed sliding window (`check_rate_limit_hardened()`) on all AI endpoints | Implemented | No org-level aggregate cap; `deepgram-token` rate-limited to 20 tokens/user/hour (2026-04-12) |
 | **Input validation** | zod schema validation on 8/19 Edge Functions | Partial | 11 functions accept unvalidated POST bodies; `tts-generate` accepts unbounded text |
 | **Error handling** | Generic errors returned to clients; detailed errors logged server-side | Implemented | All 10 Edge Functions updated (2026-04-12); raw `error.message` no longer exposed to clients |
-| **CORS policy** | Origin restriction on API endpoints | Partial | All 17 Edge Functions use wildcard `*`; `ALLOWED_ORIGIN` env var exists but not applied universally |
+| **CORS policy** | Origin restriction on API endpoints | Implemented | `getCorsHeaders()` in `_shared/cors.ts` reads `ALLOWED_ORIGIN` from env; throws if unset; no wildcard fallback; applied to all 19 Edge Functions (2026-04-12) |
 | **Audit logging** | Record of data access and modification events | Not implemented | Planned post-pilot |
 | **Vulnerability scanning** | Dependency and code scanning | Not implemented | Recommend `npm audit` and Snyk in CI pipeline |
 | **Storage access control** | Audio recordings accessible via authenticated signed URLs only | Implemented | All three Storage buckets private; `createSignedUrl()` with 1-hour expiry in all client paths (2026-04-12) |
@@ -327,8 +327,8 @@ OAST must maintain a written RoPA as a data controller. The RoPA must document: 
 | 11 | Git history secret scan | Scan for committed API keys. | High | **Resolved 2026-04-12** — scan clean (no live keys found in history) |
 | 12 | Add security headers to `vercel.json` | No security headers on frontend. | Medium | **Resolved 2026-04-12** — HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy added |
 | 13 | Fill privacy policy legal placeholders | `PrivacyPolicy.tsx` contains `[COMPANY_LEGAL_NAME]`, `[ICO_REGISTRATION_NUMBER]`, `[DPO_EMAIL]`. | Medium (legal) | **Open — Tom** |
-| 14 | Fix CORS wildcard | All Edge Functions use wildcard `*`; `ALLOWED_ORIGIN` not applied universally. | Medium | **Open — Archie** (set `ALLOWED_ORIGIN` env var to production domain; centralise `corsHeaders` in `_shared/cors.ts`) |
-| 15 | Add `deepgram-token` to version control with rate limiting | `deepgram-token` Edge Function not in `supabase/functions/`. | Medium | **Open — Archie** |
+| 14 | Fix CORS wildcard | All Edge Functions use wildcard `*`; `ALLOWED_ORIGIN` not applied universally. | Medium | **Done 2026-04-12** — `getCorsHeaders()` in `_shared/cors.ts`; all 19 Edge Functions updated; wildcard removed; throws on missing `ALLOWED_ORIGIN` |
+| 15 | Add `deepgram-token` to version control with rate limiting | `deepgram-token` Edge Function not in `supabase/functions/`. | Medium | **Done 2026-04-12** — `deepgram-token/index.ts` added; JWT auth + rate limit (20/hr) + 10s TTL; `verify_jwt = true` in config.toml |
 | 16 | Establish git tagging convention | No git tag at production-ready state. | Low | **Resolved 2026-04-12** — tagged `v0.5.0-20260412` |
 
 ---
@@ -382,7 +382,7 @@ For individual user data deletion requests under UK or EU GDPR Article 17, the u
 
 ---
 
-*Document version 0.2 — Review Ready. 13 of 16 pre-pilot items resolved. Items 13, 14, 15 remain open (Tom: legal placeholders; Archie: CORS + Deepgram token). Next review due: at first external pilot deployment.*
+*Document version 0.3 — Review Ready. 15 of 16 pre-pilot items resolved. Item 13 remains open (Tom: legal placeholders in PrivacyPolicy.tsx). Next review due: at first external pilot deployment.*
 
 ---
 
@@ -403,3 +403,5 @@ For individual user data deletion requests under UK or EU GDPR Article 17, the u
 | 11 | Security headers added to `vercel.json` (HSTS, CSP, X-Frame-Options, etc.) | `d0bbf7d` | 2026-04-12 |
 | 12 | GDPR Art. 17 erasure endpoint (`gdpr-erasure` function, `erasure_audit_log`, `/account/delete` UI) | `af4b663` | 2026-04-12 |
 | 13 | Baseline git tag `v0.5.0-20260412` created | — | 2026-04-12 |
+| 14 | CORS centralised — `_shared/cors.ts`; all 19 Edge Functions updated; wildcard `*` removed | `4783e20` | 2026-04-12 |
+| 15 | `deepgram-token` added to version control — JWT auth, rate limit (20/hr), 10s TTL, `verify_jwt = true` | `e7531d4` | 2026-04-12 |
