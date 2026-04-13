@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { checkOrgAiLimit } from "../_shared/orgRateLimit.ts";
 
 const MODEL = "claude-sonnet-4-5"; // Pattern analysis across deals
+// Estimated tokens per get_correlation call: ~1000 prompt + 1024 max output
+const ESTIMATED_TOKENS = 2000;
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -116,6 +119,16 @@ serve(async (req) => {
       const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
       if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not configured");
 
+      // ── Org-level daily budget check ────────────────────────────────────────
+      if (!profile?.org_id) throw new Error("Forbidden: no org_id resolved for user");
+      const rateLimit = await checkOrgAiLimit(supabase, profile.org_id, "deal-outcomes", ESTIMATED_TOKENS);
+      if (!rateLimit.allowed) {
+        return new Response(
+          JSON.stringify({ ok: false, error: rateLimit.message }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
       // Fetch outcomes and associated pitch data
       const { data: outcomes } = await supabase
         .from("deal_outcomes")
@@ -159,23 +172,38 @@ Identify patterns and return ONLY a JSON object:
 
 Return ONLY the JSON, no markdown.`;
 
-      const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: 1024,
-          system: systemPrompt,
-          messages: [{ role: "user", content: userMessage }],
-        }),
-      });
+      let aiResponse: Response;
+      try {
+        aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: MODEL,
+            max_tokens: 1024,
+            system: systemPrompt,
+            messages: [{ role: "user", content: userMessage }],
+          }),
+        });
+      } catch (fetchErr) {
+        console.error("[deal-outcomes] Anthropic fetch failed:", fetchErr);
+        return new Response(
+          JSON.stringify({ ok: false, error: "AI provider is temporarily unavailable. Please try again in a moment.", retryable: true }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
 
       const aiData = await aiResponse.json();
-      if (!aiResponse.ok) throw new Error(aiData.error?.message ?? "AI error");
+      if (!aiResponse.ok) {
+        console.error("[deal-outcomes] Anthropic error response:", aiData);
+        return new Response(
+          JSON.stringify({ ok: false, error: "AI provider returned an error. Please try again.", retryable: true }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
 
       let result: { correlations: unknown[]; insights: string[] };
       try {

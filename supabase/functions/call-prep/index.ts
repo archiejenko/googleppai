@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { checkOrgAiLimit } from "../_shared/orgRateLimit.ts";
 
 const MODEL = "claude-sonnet-4-5"; // Contextual reasoning over historical data
+// Estimated tokens per generate_brief call: ~950 prompt + 2048 max output
+const ESTIMATED_TOKENS = 3000;
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -51,6 +54,19 @@ serve(async (req) => {
 
     // ── GENERATE BRIEF ────────────────────────────────────────────────────────
     if (action === "generate_brief") {
+      // ── Org-level daily budget check ────────────────────────────────────────
+      const orgId: string | undefined =
+        user.app_metadata?.org_id ?? user.user_metadata?.org_id;
+      if (!orgId) throw new Error("Forbidden: no org_id in token");
+
+      const rateLimit = await checkOrgAiLimit(supabase, orgId, "call-prep", ESTIMATED_TOKENS);
+      if (!rateLimit.allowed) {
+        return new Response(
+          JSON.stringify({ ok: false, error: rateLimit.message }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Fetch rep's historical pitch performance (last 30 days)
@@ -117,22 +133,37 @@ Generate a pre-call brief. Return ONLY a JSON object with this exact structure:
 
 Tailor everything to a ${session_type ?? "discovery"} call. Return ONLY the JSON, no markdown.`;
 
-      const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: 2048,
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
+      let aiResponse: Response;
+      try {
+        aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: MODEL,
+            max_tokens: 2048,
+            messages: [{ role: "user", content: prompt }],
+          }),
+        });
+      } catch (fetchErr) {
+        console.error("[call-prep] Anthropic fetch failed:", fetchErr);
+        return new Response(
+          JSON.stringify({ ok: false, error: "AI provider is temporarily unavailable. Please try again in a moment.", retryable: true }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
 
       const aiData = await aiResponse.json();
-      if (!aiResponse.ok) throw new Error(aiData.error?.message ?? "AI error");
+      if (!aiResponse.ok) {
+        console.error("[call-prep] Anthropic error response:", aiData);
+        return new Response(
+          JSON.stringify({ ok: false, error: "AI provider returned an error. Please try again.", retryable: true }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
 
       let briefContent: Record<string, unknown>;
       try {
