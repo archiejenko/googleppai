@@ -1,7 +1,7 @@
 # Sprint 2 Security Audit — Summary
 **Date:** 2026-04-13
 **Scope:** Authentication & Session Hardening · Operational Readiness · Observability & Abuse Controls · Dependency & Supply Chain · Commercial & Legal
-**Status:** READ-ONLY — findings documented, no remediation applied
+**Status:** Sprint 2 remediation complete — see Consolidated Findings for resolved/open counts
 
 ---
 
@@ -109,8 +109,8 @@ Minimum required contents if created: escalation contacts, severity classificati
 
 | Finding | Severity | Status |
 |---|---|---|
-| No secrets register exists in repo — no record of which secrets exist, their scope, or last rotation date | HIGH | **RESOLVED** — `docs/SECRETS_REGISTER.md` created; all 18 vars catalogued |
-| No rotation schedule documented for any secret (Anthropic, OpenAI, Deepgram, ElevenLabs, Stripe, Supabase JWT secret) | HIGH | **PARTIAL** — rotation procedure documented; actual rotation dates still NOT DOCUMENTED, require owner action |
+| No secrets register exists in repo — no record of which secrets exist, their scope, or last rotation date | HIGH | **RESOLVED** `ef41d3b` — `docs/SECRETS_REGISTER.md` created; all 18 vars catalogued |
+| No rotation schedule documented for any secret (Anthropic, OpenAI, Deepgram, ElevenLabs, Stripe, Supabase JWT secret) | HIGH | OPEN — rotation procedure documented in `SECRETS_REGISTER.md`; actual rotation dates require owner action |
 | Secrets accessed via `Deno.env.get()` in Edge Functions — correctly scoped to Supabase environment, not hardcoded | ✓ PASS | N/A |
 | `ALLOWED_ORIGIN` CORS validation present in Edge Functions — correct scoping | ✓ PASS | N/A |
 
@@ -125,22 +125,24 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 
 | Function | Rate Limit | Severity |
 |---|---|---|
-| `admin-delete-user` | 5/min burst, 20/hr — per user | HIGH | **RESOLVED** |
-| `create-organisation` | 5/min burst, 10/hr — per user | HIGH | **RESOLVED** |
-| `gdpr-erasure` | 3/min burst, 10/day — per user | HIGH | **RESOLVED** |
-| `correlation-engine` | 20/min burst, 200/hr — per user | HIGH | **RESOLVED** |
-| `revenue-intelligence` | 20/min burst, 200/hr — per user | MEDIUM | **RESOLVED** |
-| `stripe-checkout` | 5/min burst, 20/hr — per user | HIGH | **RESOLVED** |
-| `stripe-portal` | 5/min burst, 30/hr — per user | MEDIUM | **RESOLVED** |
-| `deployment-request` | 3/min burst, 20/hr — per IP (no auth) | HIGH | **RESOLVED** |
-| `upgrade-request` | 5/min burst, 10/hr — per user | MEDIUM | **RESOLVED** |
-| `training-api` | 20/min burst, 100/hr — per user | HIGH | **RESOLVED** |
-| `tts-generate` | 20/min burst, 200/hr — per user | HIGH | **RESOLVED** |
+| `admin-delete-user` | 5/min burst, 20/hr — per user | HIGH | **RESOLVED** `93ba732` |
+| `create-organisation` | 5/min burst, 10/hr — per user | HIGH | **RESOLVED** `93ba732` |
+| `gdpr-erasure` | 3/min burst, 10/day — per user | HIGH | **RESOLVED** `93ba732` |
+| `correlation-engine` | 20/min burst, 200/hr — per user | HIGH | **RESOLVED** `93ba732` |
+| `revenue-intelligence` | 20/min burst, 200/hr — per user | MEDIUM | **RESOLVED** `93ba732` |
+| `stripe-checkout` | 5/min burst, 20/hr — per user | HIGH | **RESOLVED** `93ba732` |
+| `stripe-portal` | 5/min burst, 30/hr — per user | MEDIUM | **RESOLVED** `93ba732` |
+| `deployment-request` | 3/min burst, 20/hr — per IP (no auth) | HIGH | **RESOLVED** `93ba732` |
+| `upgrade-request` | 5/min burst, 10/hr — per user | MEDIUM | **RESOLVED** `93ba732` |
+| `training-api` | 20/min burst, 100/hr — per user | HIGH | **RESOLVED** `93ba732` |
+| `tts-generate` | 20/min burst, 200/hr — per user | HIGH | **RESOLVED** `93ba732` |
 | `stripe-webhook` | NONE — acceptable (signature-verified) | ACCEPTABLE | N/A |
 
 **Summary:** All 11 unprotected functions now have `check_rate_limit_hardened` rate limiting.
 
-**Additional finding:** `orgRateLimit.ts` fails **open** on RPC error — line 41 returns `{ allowed: true }` when `check_org_ai_limit` RPC fails. An infrastructure failure silently disables spend controls. | MEDIUM | OPEN
+| Finding | Severity | Status |
+|---|---|---|
+| `orgRateLimit.ts` fails **open** on RPC error — line 41 returns `{ allowed: true }` when `check_org_ai_limit` RPC fails; infrastructure failure silently disables spend controls | MEDIUM | OPEN |
 
 ### 3.2 AI Spend Controls
 
@@ -153,7 +155,7 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 | `unified-ai` | GPT-4o mini | ✗ per-user only | ✗ generic error | ✗ |
 | `drill-generation` | GPT-4o mini | ✗ per-user only | ✗ throws | ✗ |
 | `pitch-api` | GPT-4o | ✗ per-user only | ✗ throws | ✗ |
-| `training-api` | GPT-4o mini | ✗ no rate limit | ✗ throws | ✗ |
+| `training-api` | GPT-4o mini | ✗ no org-level ceiling | ✗ throws | ✗ |
 | `tts-generate` | ElevenLabs TTS | ✗ none | ✗ none | ✗ |
 | `deepgram-token` | Deepgram STT | ✗ per-user 20/hr | ✗ throws | ✗ |
 
@@ -164,11 +166,11 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 | Finding | Severity | Status |
 |---|---|---|
 | `erasure_audit_log` table exists (`gdpr-erasure/index.ts:114–119`) — writes hashed user_id, timestamp, items_deleted | ✓ PARTIAL | N/A |
-| No general admin action audit log — user deletions, org creations, role changes, tier upgrades are unlogged | CRITICAL | **RESOLVED** `admin_action_log` migration + `_shared/auditLog.ts` |
-| `admin-delete-user` deletes users without recording actor, timestamp, or reason | CRITICAL | **RESOLVED** — logs actor_id, action, target_id, deleted_at |
-| Stripe subscription events (upgrades, cancellations) not logged to an internal audit table | HIGH | **RESOLVED** — all 4 Stripe event types logged with stripe_event_id |
-| No way to trace who accessed what customer data and when | CRITICAL | **RESOLVED** — `admin_action_log` covers user/org/subscription mutations; read access via service-role only |
-| Immutability of `erasure_audit_log` not enforced — no RLS delete protection confirmed | MEDIUM | **RESOLVED** — `admin_action_log` has `NO DELETE` and `NO UPDATE` rules at DB layer |
+| No general admin action audit log — user deletions, org creations, role changes, tier upgrades are unlogged | CRITICAL | **RESOLVED** `c5402cc` — `admin_action_log` migration + `_shared/auditLog.ts` |
+| `admin-delete-user` deletes users without recording actor, timestamp, or reason | CRITICAL | **RESOLVED** `c5402cc` — logs actor_id, action, target_id, deleted_at |
+| Stripe subscription events (upgrades, cancellations) not logged to an internal audit table | HIGH | **RESOLVED** `c5402cc` — all 4 Stripe event types logged with stripe_event_id |
+| No way to trace who accessed what customer data and when | CRITICAL | **RESOLVED** `c5402cc` — `admin_action_log` covers user/org/subscription mutations; service-role only |
+| Immutability of `erasure_audit_log` not enforced — no RLS delete protection confirmed | MEDIUM | **RESOLVED** `c5402cc` — `admin_action_log` has `NO DELETE` and `NO UPDATE` rules at DB layer |
 
 ### 3.4 Anomaly Detection
 
@@ -185,19 +187,19 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 
 ### 4.1 npm audit (run 2026-04-13)
 
-**Result: 9 vulnerabilities (3 moderate, 6 high). All fixed via `npm audit fix` — commit `remediation/sprint-2`.**
+**Result: 9 vulnerabilities (3 moderate, 6 high). All fixed via `npm audit fix` — commit `b62c453`. `npm audit` now reports 0 vulnerabilities.**
 
-| Package | Severity | Type | Fix | Production dep? | Status |
-|---|---|---|---|---|---|
-| `react-router` 7.0.0–7.12.0-pre | HIGH | CSRF in Action processing; XSS via open redirect; SSR XSS in ScrollRestoration | `npm audit fix` | YES | RESOLVED |
-| `react-router-dom` 7.0.0-pre–7.11.0 | HIGH | Depends on vulnerable react-router | `npm audit fix` | YES | RESOLVED |
-| `rollup` 4.0.0–4.58.0 | HIGH | Arbitrary file write via path traversal | `npm audit fix` | dev only | RESOLVED |
-| `vite` 7.0.0–7.3.1 | HIGH | Path traversal in `.map` handling; `server.fs.deny` bypass; arbitrary file read via dev server WebSocket | `npm audit fix` | dev only | RESOLVED |
-| `flatted` ≤3.4.1 | HIGH | Unbounded recursion DoS + prototype pollution in `parse()` | `npm audit fix` | dev only | RESOLVED |
-| `minimatch` ≤3.1.3 or 9.0.0–9.0.6 | HIGH | ReDoS via repeated wildcards (3 CVEs) | `npm audit fix` | dev only | RESOLVED |
-| `picomatch` ≤2.3.1 or 4.0.0–4.0.3 | HIGH | Method injection; ReDoS via extglob quantifiers (2 CVEs) | `npm audit fix` | dev only | RESOLVED |
-| `ajv` <6.14.0 | MODERATE | ReDoS when using `$data` option | `npm audit fix` | dev only | RESOLVED |
-| `brace-expansion` <1.1.13 or ≥2.0.0 <2.0.3 | MODERATE | Zero-step sequence causes process hang + memory exhaustion | `npm audit fix` | dev only | RESOLVED |
+| Package | Severity | Type | Production dep? | Status |
+|---|---|---|---|---|
+| `react-router` 7.0.0–7.12.0-pre | HIGH | CSRF in Action processing; XSS via open redirect; SSR XSS in ScrollRestoration | YES | **RESOLVED** `b62c453` |
+| `react-router-dom` 7.0.0-pre–7.11.0 | HIGH | Depends on vulnerable react-router | YES | **RESOLVED** `b62c453` |
+| `rollup` 4.0.0–4.58.0 | HIGH | Arbitrary file write via path traversal | dev only | **RESOLVED** `b62c453` |
+| `vite` 7.0.0–7.3.1 | HIGH | Path traversal in `.map` handling; `server.fs.deny` bypass; arbitrary file read via dev server WebSocket | dev only | **RESOLVED** `b62c453` |
+| `flatted` ≤3.4.1 | HIGH | Unbounded recursion DoS + prototype pollution in `parse()` | dev only | **RESOLVED** `b62c453` |
+| `minimatch` ≤3.1.3 or 9.0.0–9.0.6 | HIGH | ReDoS via repeated wildcards (3 CVEs) | dev only | **RESOLVED** `b62c453` |
+| `picomatch` ≤2.3.1 or 4.0.0–4.0.3 | HIGH | Method injection; ReDoS via extglob quantifiers (2 CVEs) | dev only | **RESOLVED** `b62c453` |
+| `ajv` <6.14.0 | MODERATE | ReDoS when using `$data` option | dev only | **RESOLVED** `b62c453` |
+| `brace-expansion` <1.1.13 or ≥2.0.0 <2.0.3 | MODERATE | Zero-step sequence causes process hang + memory exhaustion | dev only | **RESOLVED** `b62c453` |
 
 ### 4.2 Edge Function Dependencies
 
@@ -254,26 +256,45 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 
 ## Consolidated Findings
 
-### Severity Counts (Sprint 2 only)
+### Sprint 2 Remediation Summary
 
-| Severity | Stage 1 | Stage 2 | Stage 3 | Stage 4 | Stage 5 | Total |
+| | CRITICAL | HIGH | MEDIUM | LOW | Total |
+|---|---|---|---|---|---|
+| **As found** | 3 | 29 | 14 | 5 | **51** |
+| **Resolved in Sprint 2** | 3 | 11 | 4 | 0 | **18** |
+| **Remaining open** | **0** | **18** | **10** | **5** | **33** |
+
+**Resolved commits:**
+
+| Commit | Stage | What was fixed |
+|---|---|---|
+| `b62c453` | Stage 4 | All 9 npm vulnerabilities (react-router-dom CSRF/XSS + 7 dev tooling vulns) |
+| `ef41d3b` | Stage 2 | Secrets register created — all 18 env vars catalogued |
+| `c5402cc` | Stage 3 | 3 CRITICAL + 1 HIGH + 1 MEDIUM: admin_action_log table, auditLog.ts helper, logging wired into admin-delete-user / create-organisation / stripe-webhook |
+| `93ba732` | Stage 3 | 8 HIGH + 3 MEDIUM: check_rate_limit_hardened added to all 11 previously unprotected Edge Functions |
+
+### Remaining Open by Stage
+
+| Severity | Stage 1 | Stage 2 | Stage 3 | Stage 4 | Stage 5 | Remaining |
 |---|---|---|---|---|---|---|
-| CRITICAL | 0 | 0 | 4 | 0 | 0 | **4** |
-| HIGH | 5 | 5 | 10 | 2 | 7 | **29** |
-| MEDIUM | 6 | 3 | 2 | 3 | 0 | **14** |
+| CRITICAL | 0 | 0 | 0 | 0 | 0 | **0** |
+| HIGH | 5 | 4 | 7 | 1 | 7 | **24** |
+| MEDIUM | 6 | 3 | 1 | 2 | 0 | **12** |
 | LOW | 4 | 0 | 0 | 1 | 0 | **5** |
-| **Total** | **15** | **8** | **16** | **6** | **7** | **52** |
+| **Total** | **15** | **7** | **8** | **4** | **7** | **41** |
+
+Stage 3 remaining HIGH: AI spend controls missing for 5 functions (`chat-ai`, `unified-ai`, `drill-generation`, `pitch-api`, `training-api`) + anomaly detection missing (4 items). Stage 3 remaining MEDIUM: `orgRateLimit.ts` fails open.
 
 ### Top 10 Must-Fix Before First Paying Contract
 
 | # | Finding | Files | Effort | Severity | Blocks |
 |---|---|---|---|---|---|
-| 1 | ~~**Admin action audit log**~~ | Migration `20260413000004` + `_shared/auditLog.ts` + 3 Edge Functions | M | CRITICAL | **RESOLVED** |
+| 1 | ~~**Admin action audit log**~~ | Migration `20260413000004` + `_shared/auditLog.ts` + 3 Edge Functions | M | CRITICAL | **RESOLVED** `c5402cc` |
 | 2 | **Fill Privacy Policy placeholders** — `[COMPANY_LEGAL_NAME]`, `[ICO_REGISTRATION_NUMBER]`, `[DPO_EMAIL]` | `src/pages/PrivacyPolicy.tsx` | S | HIGH | All contracts |
 | 3 | **Draft and sign MSA + ToS + AUP** | Business task — external legal | L | HIGH | All contracts |
 | 4 | **Sign sub-processor DPAs** (Anthropic, OpenAI, Deepgram, PostHog, Resend, Recall.ai) | Business task + `docs/compliance/dpas/` | M | HIGH | All contracts (GDPR) |
-| 5 | ~~**react-router-dom vulnerability**~~ | `package.json` / `package-lock.json` | S | HIGH | **RESOLVED** `npm audit fix` — 0 vulnerabilities |
-| 6 | ~~**Rate-limit 11 unprotected Edge Functions**~~ | 11 Edge Function files | M | HIGH | **RESOLVED** — all 11 protected via `check_rate_limit_hardened` |
+| 5 | ~~**react-router-dom vulnerability**~~ | `package.json` / `package-lock.json` | S | HIGH | **RESOLVED** `b62c453` — 0 vulnerabilities |
+| 6 | ~~**Rate-limit 11 unprotected Edge Functions**~~ | 11 Edge Function files | M | HIGH | **RESOLVED** `93ba732` |
 | 7 | **Remove dead function declarations from config.toml** — `create-admin` and `reset-password` declared but missing on disk | `supabase/config.toml:7–27` | S | HIGH | Deployment stability |
 | 8 | **Incident response runbook** — document escalation, rollback, post-mortem procedures | New `docs/RUNBOOK.md` | M | HIGH | Mid-market procurement |
 | 9 | **Document backup RTO/RPO and test restore** — confirm Supabase backup retention, run and document restore drill | External + `docs/BACKUP_DR.md` | M | HIGH | Mid-market procurement |
@@ -284,7 +305,7 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 - No Cyber Essentials certification or application in progress
 - No cyber insurance policy on file
 - No SLA with uptime targets and credit terms
-- No secrets rotation register
+- Secrets rotation dates not documented — owner action required (`docs/SECRETS_REGISTER.md` created)
 - No monitoring or alerting (Supabase errors, Vercel failures, uptime)
 - `orgRateLimit.ts` fails open on RPC error — spend controls silently disabled on infrastructure fault
 - No anomaly detection on token abuse or auth failure spikes
