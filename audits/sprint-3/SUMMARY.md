@@ -35,9 +35,10 @@
 
 | Finding | Severity | Status |
 |---------|----------|--------|
-| CSP uses `unsafe-inline` for `script-src` and `style-src` — XSS protection negated | HIGH | OPEN |
+| CSP `style-src` `unsafe-inline` removed; `style-src 'self' https://fonts.googleapis.com` + `font-src https://fonts.gstatic.com` added | HIGH | RESOLVED — remediation/sprint-3 |
+| CSP `script-src 'unsafe-inline'` remains — requires report-uri audit before removal (separate effort) | HIGH | OPEN |
 | HSTS missing `preload` directive — not on browser preload list | LOW | OPEN |
-| CSP `font-src` not scoped — Google Fonts fallback unconstrained | LOW | OPEN |
+| CSP `font-src` not scoped — RESOLVED: `font-src https://fonts.gstatic.com` added | LOW | RESOLVED — remediation/sprint-3 |
 
 ### 1.2 CORS Policy Audit
 
@@ -313,8 +314,8 @@ The current CSP (`script-src 'self' 'unsafe-inline'`) blocks strict CSP adoption
 
 | Finding | Severity | Status |
 |---------|----------|--------|
-| `unsafe-inline` in `script-src` and `style-src` prevents strict CSP enforcement | HIGH | OPEN (see Stage 1) |
-| Inline `<style>` block in `index.html` is the only blocker to removing `unsafe-inline` from `style-src` | MEDIUM | OPEN |
+| `unsafe-inline` removed from `style-src`; `script-src` still carries it pending report-uri audit | HIGH | PARTIAL — remediation/sprint-3 |
+| Inline `<style>` block removed from `index.html`; rules consolidated into `src/index.css` (`.font-body` added) | MEDIUM | RESOLVED — remediation/sprint-3 |
 | No CSP `report-uri` configured — no visibility into CSP violations in production | MEDIUM | OPEN |
 
 ---
@@ -426,7 +427,7 @@ The `check_org_ai_limit` RPC is already deployed and parameterised — this is a
 | CF-2 | 20 of 22 Edge Functions accept unvalidated JSON bodies | MEDIUM | Sprint 1 | OPEN |
 | CF-3 | `orgRateLimit.ts` fails open on RPC error | MEDIUM | Sprint 2 | OPEN |
 | CF-4 | Per-org AI spend controls missing on 4 confirmed Edge Functions | HIGH | Sprint 2 | OPEN |
-| S3-1 | CSP `unsafe-inline` negates XSS protection | HIGH | Sprint 3 | OPEN |
+| S3-1 | CSP `style-src unsafe-inline` removed; `script-src` remains open pending report-uri audit | HIGH | Sprint 3 | PARTIAL — remediation/sprint-3 |
 | S3-2 | Supabase JWT in `localStorage` — XSS escalation path | HIGH | Sprint 3 | OPEN |
 | S3-3 | CORS `getCorsHeaders` tautological ternary | LOW | Sprint 3 | OPEN |
 | S3-4 | HSTS missing `preload` | LOW | Sprint 3 | OPEN |

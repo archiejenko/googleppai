@@ -106,7 +106,7 @@ input, select, textarea,
     }
 
     /* DM Sans for body prose — marketing components use this for paragraphs */
-    p, .body-copy, .prose {
+    p, .body-copy, .prose, .font-body {
         font-family: 'DM Sans', sans-serif;
         font-weight: 400;
     }

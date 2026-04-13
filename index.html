@@ -35,28 +35,10 @@
   <!-- IndexNow — uncomment after generating a key at bing.com/indexnow -->
   <!-- <meta name="indexnow-verification" content="PASTE_YOUR_INDEXNOW_KEY_HERE" /> -->
 
-  <!-- Fonts -->
+  <!-- Fonts — font rules live in src/index.css, not inline here (CSP: no unsafe-inline on style-src) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <style>
-    /* Oswald for display/UI — DM Sans for body copy */
-    h1, h2, h3, h4, h5, h6 {
-      font-family: 'Oswald', sans-serif !important;
-      font-weight: 700 !important;
-    }
-    button, nav, th, label,
-    input, select, textarea,
-    .label-os, .tag-os {
-      font-family: 'Oswald', sans-serif !important;
-      font-weight: 600 !important;
-    }
-    /* DM Sans for body copy — applied via class .font-body on prose elements */
-    .font-body {
-      font-family: 'DM Sans', sans-serif !important;
-      font-weight: 400 !important;
-    }
-  </style>
 </head>
 
 <body>
