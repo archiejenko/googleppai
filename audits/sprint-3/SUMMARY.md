@@ -13,7 +13,7 @@
 |---|---------|----------|--------|------------|--------|
 | CF-1 | `chat-ai` + `unified-ai` DB-derived prompt fields sanitized via `_shared/sanitizePromptField.ts`; `difficulty` enum-validated | HIGH | Sprint 1 | ad8d46c → remediation/sprint-3 | RESOLVED |
 | CF-2 | `_shared/validateBody.ts` added; applied to all 15 JSON-body functions with consistent 400 shape | MEDIUM | Sprint 1 | — | RESOLVED — remediation/sprint-3 |
-| CF-3 | `orgRateLimit.ts` fails open on RPC error | MEDIUM | Sprint 2 | — | OPEN |
+| CF-3 | Circuit breaker added to `orgRateLimit.ts`: opens after 3 consecutive failures, resets after 60s HALF-OPEN | MEDIUM | Sprint 2 | — | RESOLVED — remediation/sprint-3 |
 | CF-4 | Per-org AI spend controls missing on 5 remaining Edge Functions | HIGH | Sprint 2 | — | OPEN (4 confirmed: `chat-ai`, `pitch-api`, `training-api`, `unified-ai`) |
 
 ---
