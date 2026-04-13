@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { checkOrgAiLimit } from '../_shared/orgRateLimit.ts'
+import { validateBody } from '../_shared/validateBody.ts'
 
 const AI_ESTIMATED_TOKENS = 1500; // ~800 prompt (transcript) + 700 max output (gpt-4o-mini)
 
@@ -56,7 +57,18 @@ serve(async (req: Request) => {
         const orgId: string | undefined =
             user.app_metadata?.org_id ?? user.user_metadata?.org_id;
 
-        const body = await req.json()
+        const rawBody = await req.json().catch(() => null)
+        const v = validateBody<{ action?: string; sessionId?: string; messages?: unknown[]; scenario?: string; difficulty?: string; targetPersona?: string; pitchGoal?: string; timeLimit?: number; language?: string; industryId?: string }>(rawBody, {
+            action:    { type: 'string' },
+            sessionId: { type: 'string' },
+            messages:  { type: 'array' },
+            timeLimit: { type: 'number' },
+        })
+        if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: v.status,
+        })
+        const body = v.body
         const { action, sessionId, messages, scenario, difficulty, targetPersona, pitchGoal, timeLimit, language, industryId } = body
 
         // === ACTION: COMPLETE SESSION ===

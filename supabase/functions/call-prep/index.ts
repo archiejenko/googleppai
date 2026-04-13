@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { checkOrgAiLimit } from "../_shared/orgRateLimit.ts";
+import { validateBody } from "../_shared/validateBody.ts";
 
 const MODEL = "claude-sonnet-4-5"; // Contextual reasoning over historical data
 // Estimated tokens per generate_brief call: ~950 prompt + 2048 max output
@@ -33,7 +34,14 @@ serve(async (req) => {
 
     if (authError || !user) throw new Error("Unauthorized");
 
-    const { action, session_id, session_title, session_type, prospect_company } = await req.json();
+    const rawBody = await req.json().catch(() => null);
+    const v = validateBody<{ action: string; session_id?: string; session_title?: string; session_type?: string; prospect_company?: string }>(rawBody, {
+      action: { type: 'string', required: true },
+    });
+    if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+      status: v.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+    const { action, session_id, session_title, session_type, prospect_company } = v.body;
 
     // ── GET BRIEF ─────────────────────────────────────────────────────────────
     if (action === "get_brief") {

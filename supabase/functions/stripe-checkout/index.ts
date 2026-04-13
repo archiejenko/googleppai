@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody } from "../_shared/validateBody.ts";
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -48,6 +49,18 @@ serve(async (req) => {
       });
     }
 
+    const rawBody = await req.json().catch(() => null);
+    const sv = validateBody<{ tier: string; billing_cycle?: string; seat_count?: number; triggered_from?: string; include_deployment_fee?: boolean; is_founding_member?: boolean }>(rawBody, {
+      tier:                   { type: 'string',  required: true },
+      billing_cycle:          { type: 'string' },
+      seat_count:             { type: 'number' },
+      triggered_from:         { type: 'string' },
+      include_deployment_fee: { type: 'boolean' },
+      is_founding_member:     { type: 'boolean' },
+    });
+    if (!sv.ok) return new Response(JSON.stringify({ error: sv.error }), {
+      status: sv.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
     const {
       tier,
       billing_cycle = "monthly",
@@ -55,7 +68,7 @@ serve(async (req) => {
       triggered_from,
       include_deployment_fee = false,
       is_founding_member = false,
-    } = await req.json();
+    } = sv.body;
 
     // TODO: Founding member price lock — grandfathering via Stripe coupon not yet implemented.
     // For now, the founding member discount is handled at the pricing page level.

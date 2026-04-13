@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { writeAuditLog } from "../_shared/auditLog.ts";
+import { validateBody } from "../_shared/validateBody.ts";
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -55,8 +56,14 @@ serve(async (req) => {
       });
     }
 
-    const { targetUserId } = await req.json();
-    if (!targetUserId) throw new Error("targetUserId is required");
+    const rawBody = await req.json().catch(() => null);
+    const v = validateBody<{ targetUserId: string }>(rawBody, {
+      targetUserId: { type: 'string', required: true },
+    });
+    if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+      status: v.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+    const { targetUserId } = v.body;
 
     // Prevent self-deletion
     if (targetUserId === caller.id) {

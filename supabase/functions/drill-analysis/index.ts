@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody } from "../_shared/validateBody.ts";
 import { checkOrgAiLimit } from "../_shared/orgRateLimit.ts";
 
 const MODEL = "gpt-4o-mini"; // High-volume, simple comparison task — cost efficient
@@ -33,8 +34,16 @@ serve(async (req) => {
 
     if (authError || !user) throw new Error("Unauthorized");
 
-    const { drillId, userAttempt, bestPractice } = await req.json();
-    if (!userAttempt) throw new Error("userAttempt is required");
+    const rawBody = await req.json().catch(() => null);
+    const v = validateBody<{ userAttempt: string; drillId?: string; bestPractice?: string }>(rawBody, {
+      userAttempt:  { type: 'string', required: true },
+      drillId:      { type: 'string' },
+      bestPractice: { type: 'string' },
+    });
+    if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+      status: v.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+    const { drillId, userAttempt, bestPractice } = v.body;
 
     // ── Org-level daily budget check ──────────────────────────────────────────
     const orgId: string | undefined =

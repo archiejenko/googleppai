@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { validateBody } from '../_shared/validateBody.ts';
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -60,7 +61,16 @@ serve(async (req) => {
       });
     }
 
-    const { requested_tier, message, seats } = await req.json();
+    const rawBody = await req.json().catch(() => null);
+    const v = validateBody<{ requested_tier?: string; message?: string; seats?: number }>(rawBody, {
+      requested_tier: { type: 'string' },
+      message:        { type: 'string' },
+      seats:          { type: 'number' },
+    });
+    if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+      status: v.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+    const { requested_tier, message, seats } = v.body;
 
     const { error } = await supabase.from('upgrade_requests').insert({
       user_id: user.id,

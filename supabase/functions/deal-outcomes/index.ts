@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { validateBody } from "../_shared/validateBody.ts";
 import { checkOrgAiLimit } from "../_shared/orgRateLimit.ts";
 
 const MODEL = "claude-sonnet-4-5"; // Pattern analysis across deals
@@ -36,8 +37,15 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
 
-    const body = await req.json();
-    const { action } = body;
+    const rawBody = await req.json().catch(() => null);
+    const v = validateBody<Record<string, unknown>>(rawBody, {
+      action: { type: 'string', required: true },
+    });
+    if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+      status: v.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+    const body = v.body;
+    const { action } = body as { action: string };
 
     // ── LIST OUTCOMES ─────────────────────────────────────────────────────────
     if (action === "list_outcomes") {

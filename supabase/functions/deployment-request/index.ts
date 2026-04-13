@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { validateBody } from '../_shared/validateBody.ts';
 
 async function hashIp(ip: string): Promise<string> {
   const data = new TextEncoder().encode(ip + (Deno.env.get('SUPABASE_ANON_KEY') ?? 'salt'));
@@ -38,14 +39,15 @@ serve(async (req) => {
       });
     }
 
-    const body = await req.json();
-    const { name, company, email, industry, message, request_type } = body;
-
-    if (!name || !email) {
-      return new Response(JSON.stringify({ error: 'name and email are required' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const rawBody = await req.json().catch(() => null);
+    const v = validateBody<{ name: string; email: string; company?: string; industry?: string; message?: string; request_type?: string }>(rawBody, {
+      name:  { type: 'string', required: true },
+      email: { type: 'string', required: true },
+    });
+    if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+      status: v.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+    const { name, company, email, industry, message, request_type } = v.body;
 
     const { error } = await supabase.from('deployment_requests').insert({
       name,

@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { sanitizeTextField, validateDifficulty } from '../_shared/sanitizePromptField.ts'
 import { checkOrgAiLimit } from '../_shared/orgRateLimit.ts'
+import { validateBody } from '../_shared/validateBody.ts'
 
 const ESTIMATED_TOKENS = 2000; // ~800 prompt + 1200 max output (gpt-4.1)
 
@@ -87,7 +88,16 @@ serve(async (req) => {
         }
         // ─────────────────────────────────────────────────────────────────────
 
-        const { sessionId, message, history } = await req.json()
+        const rawBody = await req.json().catch(() => null)
+        const v = validateBody<{ sessionId: string; message: string; history?: unknown[] }>(rawBody, {
+            sessionId: { type: 'string', required: true },
+            message:   { type: 'string', required: true },
+            history:   { type: 'array' },
+        })
+        if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+            status: v.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+        const { sessionId, message, history } = v.body
 
         // Fetch session for context using RLS (Client has access to own sessions)
         const { data: session } = await supabaseClient

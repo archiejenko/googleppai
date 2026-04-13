@@ -20,6 +20,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { validateBody } from '../_shared/validateBody.ts'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -409,12 +410,14 @@ async function handleCompute(req: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: corsHeaders })
   }
 
-  const body = await req.json().catch(() => ({}))
-  const repId: string | undefined = body.rep_id
-
-  if (!repId) {
-    return new Response(JSON.stringify({ error: 'rep_id required' }), { status: 400, headers: corsHeaders })
-  }
+  const rawBody = await req.json().catch(() => null)
+  const v = validateBody<{ rep_id: string }>(rawBody, {
+    rep_id: { type: 'string', required: true },
+  })
+  if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+    status: v.status, headers: corsHeaders,
+  })
+  const repId = v.body.rep_id
 
   const db = adminClient()
 

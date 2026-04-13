@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { validateBody } from '../_shared/validateBody.ts';
 import { writeAuditLog } from '../_shared/auditLog.ts';
 
 serve(async (req) => {
@@ -28,12 +29,14 @@ serve(async (req) => {
       });
     }
 
-    const { companyName } = await req.json();
-    if (!companyName) {
-      return new Response(JSON.stringify({ error: 'companyName is required' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const rawBody = await req.json().catch(() => null);
+    const v = validateBody<{ companyName: string }>(rawBody, {
+      companyName: { type: 'string', required: true },
+    });
+    if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+      status: v.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+    const { companyName } = v.body;
 
     // Use service role to bypass RLS for org creation only
     const supabase = createClient(

@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { MODELS } from "../_shared/models.ts"
 import { getCorsHeaders } from "../_shared/cors.ts"
+import { validateBody } from "../_shared/validateBody.ts"
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -49,13 +50,16 @@ serve(async (req) => {
     }
 
     // Parse body
-    const { text, voice_id } = await req.json()
-    if (!text || typeof text !== 'string') {
-      return new Response(JSON.stringify({ error: 'text is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    const rawBody = await req.json().catch(() => null)
+    const v = validateBody<{ text: string; voice_id?: string }>(rawBody, {
+      text:     { type: 'string', required: true },
+      voice_id: { type: 'string' },
+    })
+    if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+      status: v.status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+    const { text, voice_id } = v.body
 
     const voiceId = voice_id ?? MODELS.ELEVENLABS_DEFAULT_VOICE_ID
 

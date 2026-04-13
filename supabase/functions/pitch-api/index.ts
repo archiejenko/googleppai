@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { checkOrgAiLimit } from '../_shared/orgRateLimit.ts'
+import { validateBody } from '../_shared/validateBody.ts'
 
 const ESTIMATED_TOKENS = 3500; // ~1500 prompt + 2000 max output (gpt-4o)
 
@@ -93,7 +94,16 @@ serve(async (req) => {
         // ─────────────────────────────────────────────────────────────────────
 
         // 4. Parse Input
-        const { text, audioUrl, trainingSessionId } = await req.json()
+        const rawBody = await req.json().catch(() => null)
+        const v = validateBody<{ text?: string; audioUrl?: string; trainingSessionId?: string }>(rawBody, {
+            text:              { type: 'string' },
+            audioUrl:          { type: 'string' },
+            trainingSessionId: { type: 'string' },
+        })
+        if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+            status: v.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+        const { text, audioUrl, trainingSessionId } = v.body
 
         // 5. AI Analysis (OpenAI)
         const systemPrompt = `
@@ -142,7 +152,9 @@ serve(async (req) => {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             })
         } else {
-            throw new Error("Text or Audio URL required.")
+            return new Response(JSON.stringify({ error: 'Missing required field: text' }), {
+                status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            })
         }
 
         const res = await fetch('https://api.openai.com/v1/chat/completions', {

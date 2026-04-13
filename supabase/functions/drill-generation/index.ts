@@ -20,6 +20,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { validateBody } from '../_shared/validateBody.ts'
 
 // Human-readable labels for each skill key
 const SKILL_LABELS: Record<string, string> = {
@@ -108,14 +109,17 @@ serve(async (req) => {
     }
 
     // ── Parse input ─────────────────────────────────────────────────────────
-    const { rep_id, trigger_id, skill_key: bodySkillKey, difficulty_override } = await req.json()
-
-    if (!rep_id) {
-      return new Response(JSON.stringify({ error: 'rep_id is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    const rawBody = await req.json().catch(() => null)
+    const v = validateBody<{ rep_id: string; trigger_id?: string; skill_key?: string; difficulty_override?: string }>(rawBody, {
+      rep_id:             { type: 'string', required: true },
+      trigger_id:         { type: 'string' },
+      skill_key:          { type: 'string' },
+      difficulty_override: { type: 'string' },
+    })
+    if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
+      status: v.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+    const { rep_id, trigger_id, skill_key: bodySkillKey, difficulty_override } = v.body
 
     // ── Resolve skill key + score ────────────────────────────────────────────
     let skillKey: string | null = bodySkillKey ?? null
