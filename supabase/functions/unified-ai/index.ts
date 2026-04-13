@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { sanitizeTextField, validateDifficulty } from '../_shared/sanitizePromptField.ts'
 
 async function hashIp(ip: string): Promise<string> {
     const encoder = new TextEncoder();
@@ -78,13 +79,20 @@ serve(async (req) => {
             })
         }
 
+        // Sanitize all DB-derived values before interpolation into the system prompt.
+        const persona    = sanitizeTextField(session.target_persona, 200) || 'Sales Prospect';
+        const scenario   = sanitizeTextField(session.scenario, 300)       || 'Sales Call';
+        const pitchGoal  = sanitizeTextField(session.pitch_goal, 300)     || 'close the deal';
+        const difficulty = validateDifficulty(session.difficulty);
+        const methodology = sanitizeTextField(session.methodology, 50)    || 'SPIN';
+
         const isGreeting = message === '__START_SIMULATION__';
 
-        const systemInstruction = `You are a ROLEPLAYING AI acting as "${session.target_persona || 'Sales Prospect'}".
-SCENARIO: ${session.scenario || 'Sales Call'}.
-The user is a salesperson trying to "${session.pitch_goal || 'close the deal'}".
-Difficulty: ${session.difficulty || 'medium'}.
-Methodology: ${session.methodology || 'SPIN'}.
+        const systemInstruction = `You are a ROLEPLAYING AI acting as "${persona}".
+SCENARIO: ${scenario}.
+The user is a salesperson trying to "${pitchGoal}".
+Difficulty: ${difficulty}.
+Methodology: ${methodology}.
 
 RULES:
 1. STAY IN CHARACTER. Never break character. Never say "I am an AI".

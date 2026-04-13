@@ -11,7 +11,7 @@
 
 | # | Finding | Severity | Sprint | Commit/Ref | Status |
 |---|---------|----------|--------|------------|--------|
-| CF-1 | `chat-ai` system instruction interpolates DB-derived values (`session.target_persona`, `session.scenario`, `session.pitch_goal`, `session.difficulty`) without sanitisation | HIGH | Sprint 1 | ad8d46c | OPEN |
+| CF-1 | `chat-ai` + `unified-ai` DB-derived prompt fields sanitized via `_shared/sanitizePromptField.ts`; `difficulty` enum-validated | HIGH | Sprint 1 | ad8d46c → remediation/sprint-3 | RESOLVED |
 | CF-2 | 20 of 22 Edge Functions accept unvalidated JSON bodies | MEDIUM | Sprint 1 | — | OPEN |
 | CF-3 | `orgRateLimit.ts` fails open on RPC error | MEDIUM | Sprint 2 | — | OPEN |
 | CF-4 | Per-org AI spend controls missing on 5 remaining Edge Functions | HIGH | Sprint 2 | — | OPEN (4 confirmed: `chat-ai`, `pitch-api`, `training-api`, `unified-ai`) |
@@ -103,7 +103,7 @@ All resource-returning Edge Functions were reviewed for IDOR. Every function tha
 | Raw SQL / string-interpolated queries | No raw SQL found — all database access uses Supabase client with parameterised queries | — | PASS |
 | `pg_cron` / `exec` / dynamic function calls | Not present in any Edge Function | — | PASS |
 | Unparameterised Supabase RPC calls | All RPC calls use named parameter objects (`p_org_id`, `p_function_name`, etc.) | — | PASS |
-| Prompt injection (beyond Sprint 1 CF-1) | `unified-ai` interpolates user-submitted `message` and `history` into the AI context without input sanitisation. `chat-ai` carries CF-1. | MEDIUM | OPEN |
+| Prompt injection (beyond Sprint 1 CF-1) | `unified-ai` DB-derived fields sanitized via `sanitizePromptField.ts`. User `message` content handled by structural message separation (system/user role boundary). | MEDIUM | RESOLVED — remediation/sprint-3 |
 
 | Finding | Severity | Status |
 |---------|----------|--------|
@@ -423,7 +423,7 @@ The `check_org_ai_limit` RPC is already deployed and parameterised — this is a
 
 | ID | Finding | Severity | Sprint | Status |
 |----|---------|----------|--------|--------|
-| CF-1 | `chat-ai` system prompt interpolates DB-derived values | HIGH | Sprint 1 | OPEN |
+| CF-1 | `chat-ai` + `unified-ai` DB-derived prompt fields sanitized; `difficulty` enum-validated | HIGH | Sprint 1 | RESOLVED — remediation/sprint-3 |
 | CF-2 | 20 of 22 Edge Functions accept unvalidated JSON bodies | MEDIUM | Sprint 1 | OPEN |
 | CF-3 | `orgRateLimit.ts` fails open on RPC error | MEDIUM | Sprint 2 | OPEN |
 | CF-4 | Per-org AI spend controls missing on 4 confirmed Edge Functions | HIGH | Sprint 2 | OPEN |
@@ -435,7 +435,7 @@ The `check_org_ai_limit` RPC is already deployed and parameterised — this is a
 | S3-6 | No separate staging environment | MEDIUM | Sprint 3 | OPEN |
 | S3-7 | Password reset `redirectTo` uses `window.location.origin` — verify allowlist | MEDIUM | Sprint 3 | OPEN |
 | S3-8 | `tts-generate` leaks upstream ElevenLabs error body to client | MEDIUM | Sprint 3 | OPEN |
-| S3-9 | `unified-ai` interpolates unsanitised user message into AI context | MEDIUM | Sprint 3 | OPEN |
+| S3-9 | `unified-ai` DB-derived fields sanitized; user message kept in user role boundary | MEDIUM | Sprint 3 | RESOLVED — remediation/sprint-3 |
 | S3-10 | 6 Edge Functions return `error.message` to client | LOW | Sprint 3 | OPEN |
 | S3-11 | `source maps` not explicitly disabled in `vite.config.ts` (relies on Vite default) | LOW | Sprint 3 | OPEN |
 | S3-12 | No CSP `report-uri` configured | MEDIUM | Sprint 3 | OPEN |
@@ -454,7 +454,7 @@ The following findings would be raised in a Cyber Essentials Plus assessment or 
 |---------|-----------|--------------|
 | S3-1: `unsafe-inline` in CSP | CE: Boundary Firewalls & Secure Configuration | BLOCKS certification |
 | S3-2: JWT in `localStorage` | CE: Access Control | BLOCKS certification — credential storage must be protected |
-| CF-1: Prompt injection via unsanitised DB values | CE: Malware Protection / Input Validation | BLOCKS enterprise procurement |
+| CF-1: Prompt injection via DB values — RESOLVED in remediation/sprint-3 | CE: Malware Protection / Input Validation | RESOLVED |
 | S3-5: Unauthenticated preview deployment URLs | CE: Access Control | LIKELY FLAGS in questionnaire |
 | S3-6: No staging environment isolation | Enterprise procurement standard | FLAGS in mid-market security review |
 | CF-4: Unbounded AI spend per org | Commercial risk | Not CE-specific but flags in procurement risk assessment |
