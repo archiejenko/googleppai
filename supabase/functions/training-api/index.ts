@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { checkOrgAiLimit } from '../_shared/orgRateLimit.ts'
+
+const AI_ESTIMATED_TOKENS = 1500; // ~800 prompt (transcript) + 700 max output (gpt-4o-mini)
 
 serve(async (req: Request) => {
     const corsHeaders = getCorsHeaders(req)
@@ -49,6 +52,10 @@ serve(async (req: Request) => {
             })
         }
 
+        // Extract org_id once — used by the AI spend check inside the complete branch.
+        const orgId: string | undefined =
+            user.app_metadata?.org_id ?? user.user_metadata?.org_id;
+
         const body = await req.json()
         const { action, sessionId, messages, scenario, difficulty, targetPersona, pitchGoal, timeLimit, language, industryId } = body
 
@@ -73,6 +80,22 @@ serve(async (req: Request) => {
 
             // OpenAI Analysis if messages exist
             if (messages && messages.length > 0) {
+                // ── Per-org AI spend check ────────────────────────────────────
+                if (!orgId) {
+                    return new Response(JSON.stringify({ error: 'Forbidden: no org_id in token' }), {
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                        status: 403,
+                    });
+                }
+                const orgLimit = await checkOrgAiLimit(supabaseAdmin, orgId, 'training-api', AI_ESTIMATED_TOKENS);
+                if (!orgLimit.allowed) {
+                    return new Response(JSON.stringify({ error: orgLimit.message }), {
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                        status: 429,
+                    });
+                }
+                // ─────────────────────────────────────────────────────────────
+
                 try {
                     const transcript = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
 

@@ -409,7 +409,7 @@ The `check_org_ai_limit` RPC is already deployed and parameterised — this is a
 | # | Finding | Severity | Effort | Blocking |
 |---|---------|----------|--------|---------|
 | 1 | CF-1: `chat-ai` system prompt interpolates unsanitised DB values (prompt injection) | HIGH | S | Mid-market procurement, Cyber Essentials |
-| 2 | CF-4: `chat-ai`, `pitch-api`, `training-api`, `unified-ai` missing per-org AI spend controls | HIGH | S | Commercial viability — unbounded AI cost exposure |
+| 2 | CF-4: per-org AI spend controls added to all 4 functions | HIGH | S | RESOLVED — remediation/sprint-3 |
 | 3 | Supabase JWT stored in `localStorage` — any XSS escalates to full session takeover | HIGH | M | Cyber Essentials (credential storage requirement) |
 | 4 | CSP `unsafe-inline` in `script-src` / `style-src` — XSS protection negated | HIGH | M | Cyber Essentials (A3: XSS mitigation) |
 | 5 | CF-3: `orgRateLimit.ts` fails open on RPC error — AI spend ungated during DB degradation | MEDIUM | S | Commercial viability |
@@ -426,7 +426,7 @@ The `check_org_ai_limit` RPC is already deployed and parameterised — this is a
 | CF-1 | `chat-ai` + `unified-ai` DB-derived prompt fields sanitized; `difficulty` enum-validated | HIGH | Sprint 1 | RESOLVED — remediation/sprint-3 |
 | CF-2 | 20 of 22 Edge Functions accept unvalidated JSON bodies | MEDIUM | Sprint 1 | OPEN |
 | CF-3 | `orgRateLimit.ts` fails open on RPC error | MEDIUM | Sprint 2 | OPEN |
-| CF-4 | Per-org AI spend controls missing on 4 confirmed Edge Functions | HIGH | Sprint 2 | OPEN |
+| CF-4 | Per-org AI spend controls added to `chat-ai` (2000t), `pitch-api` (3500t), `training-api` (1500t), `unified-ai` (1200t) | HIGH | Sprint 2 | RESOLVED — remediation/sprint-3 |
 | S3-1 | CSP `style-src unsafe-inline` removed; `script-src` remains open pending report-uri audit | HIGH | Sprint 3 | PARTIAL — remediation/sprint-3 |
 | S3-2 | Supabase JWT in `localStorage` — XSS escalation path | HIGH | Sprint 3 | OPEN |
 | S3-3 | CORS `getCorsHeaders` tautological ternary | LOW | Sprint 3 | OPEN |

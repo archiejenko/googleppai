@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { sanitizeTextField, validateDifficulty } from '../_shared/sanitizePromptField.ts'
+import { checkOrgAiLimit } from '../_shared/orgRateLimit.ts'
+
+const ESTIMATED_TOKENS = 1200; // ~600 prompt + 600 max output (gpt-4o-mini)
 
 async function hashIp(ip: string): Promise<string> {
     const encoder = new TextEncoder();
@@ -63,6 +66,20 @@ serve(async (req) => {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             })
         }
+
+        // ── Per-org AI spend check ────────────────────────────────────────────
+        const orgId: string | undefined =
+            user.app_metadata?.org_id ?? user.user_metadata?.org_id;
+        if (!orgId) throw new Error("Forbidden: no org_id in token");
+
+        const orgLimit = await checkOrgAiLimit(supabaseAdmin, orgId, 'unified-ai', ESTIMATED_TOKENS);
+        if (!orgLimit.allowed) {
+            return new Response(JSON.stringify({ error: orgLimit.message }), {
+                status: 429,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         const { sessionId, message, history } = await req.json()
 
