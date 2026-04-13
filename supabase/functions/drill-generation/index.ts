@@ -128,6 +128,7 @@ serve(async (req) => {
         .from('coaching_triggers')
         .select('trigger_type, severity, trigger_data')
         .eq('id', trigger_id)
+        .eq('org_id', org_id)
         .single()
 
       if (trigger) {

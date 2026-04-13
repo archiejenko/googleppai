@@ -62,6 +62,10 @@ serve(async (req) => {
 
     const orgId = profile?.org_id ?? null;
 
+    if (!orgId) {
+      return err("Forbidden: no org_id resolved for user", 403);
+    }
+
     // Route on URL path: /revenue-intelligence/<sub-path>
     const url = new URL(req.url);
     const subPath = url.pathname.split("/").pop(); // last segment
@@ -74,8 +78,7 @@ serve(async (req) => {
         .order("recovery_score", { ascending: false })
         .limit(50);
 
-      const scoped = orgId ? query.eq("org_id", orgId) : query;
-      const rows = await safeSelect(scoped);
+      const rows = await safeSelect(query.eq("org_id", orgId));
       return ok(rows);
     }
 
@@ -88,7 +91,6 @@ serve(async (req) => {
         .order("deal_value_gbp", { ascending: false })
         .limit(100);
 
-      const scoped = orgId ? query.eq("org_id", orgId) : query;
       const deals = await safeSelect<{
         id: string;
         company_name: string;
@@ -96,7 +98,7 @@ serve(async (req) => {
         stage: string | null;
         probability: number | null;
         signal_score: number | null;
-      }>(scoped);
+      }>(query.eq("org_id", orgId));
 
       const totalValue = deals.reduce((s, d) => s + (d.deal_value_gbp ?? 0), 0);
       const avgValue = deals.length > 0 ? Math.round(totalValue / deals.length) : 0;
@@ -124,8 +126,7 @@ serve(async (req) => {
         .order("mention_count", { ascending: false })
         .limit(50);
 
-      const scoped = orgId ? query.eq("org_id", orgId) : query;
-      const rows = await safeSelect(scoped);
+      const rows = await safeSelect(query.eq("org_id", orgId));
       return ok(rows);
     }
 
@@ -137,8 +138,7 @@ serve(async (req) => {
         .order("confidence_score", { ascending: false })
         .limit(100);
 
-      const scoped = orgId ? query.eq("org_id", orgId) : query;
-      const rows = await safeSelect(scoped);
+      const rows = await safeSelect(query.eq("org_id", orgId));
       return ok(rows);
     }
 
