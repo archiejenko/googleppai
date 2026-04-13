@@ -572,14 +572,21 @@ export default function ActiveTraining() {
             setIsRecordingAudio(false);
             if (audioChunksRef.current.length > 0 && sessionId) {
                 const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                // Path is org-prefixed so bucket RLS can scope by org_id
+                const { data: { user: recUser } } = await supabase.auth.getUser();
+                const recOrgId: string | undefined =
+                    recUser?.app_metadata?.org_id ?? recUser?.user_metadata?.org_id;
+                const recPath = recOrgId
+                    ? `${recOrgId}/sessions/${sessionId}.webm`
+                    : `sessions/${sessionId}.webm`; // fallback: org_id not yet in token
                 const { data: uploadData } = await supabase.storage
                     .from('recordings')
-                    .upload(`sessions/${sessionId}.webm`, blob, { upsert: true, contentType: 'audio/webm' });
+                    .upload(recPath, blob, { upsert: true, contentType: 'audio/webm' });
                 if (uploadData) {
                     // Bucket is private — generate a short-lived signed URL (1 hour)
                     const { data: signedData } = await supabase.storage
                         .from('recordings')
-                        .createSignedUrl(`sessions/${sessionId}.webm`, 3600);
+                        .createSignedUrl(recPath, 3600);
                     audioUrl = signedData?.signedUrl ?? null;
                 }
             }

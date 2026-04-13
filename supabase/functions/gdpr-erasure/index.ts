@@ -28,6 +28,9 @@ serve(async (req) => {
     }
 
     const userId = user.id;
+    // org_id needed to build new-format storage paths
+    const orgId: string | undefined =
+      user.app_metadata?.org_id ?? user.user_metadata?.org_id;
 
     // Service-role client for privileged operations
     const serviceClient = createClient(
@@ -59,15 +62,22 @@ serve(async (req) => {
       itemsDeleted['pitch-recordings'] = pitchPaths.length;
     }
 
-    // Session recordings: look up session IDs via DB, then delete storage objects
+    // Session recordings: look up session IDs via DB, then delete storage objects.
+    // Handles both the new org-prefixed path format ({org_id}/sessions/{id}.webm)
+    // and the legacy format (sessions/{id}.webm) for recordings uploaded before
+    // the Stage 3 storage policy migration.
     const { data: sessions } = await serviceClient
       .from('training_sessions')
       .select('id')
       .eq('user_id', userId);
     if (sessions && sessions.length > 0) {
-      const sessionPaths = sessions.map((s: { id: string }) => `sessions/${s.id}.webm`);
-      await serviceClient.storage.from('recordings').remove(sessionPaths);
-      itemsDeleted['session-recordings'] = sessionPaths.length;
+      const legacyPaths = sessions.map((s: { id: string }) => `sessions/${s.id}.webm`);
+      const newPaths = orgId
+        ? sessions.map((s: { id: string }) => `${orgId}/sessions/${s.id}.webm`)
+        : [];
+      const allPaths = [...newPaths, ...legacyPaths];
+      await serviceClient.storage.from('recordings').remove(allPaths);
+      itemsDeleted['session-recordings'] = sessions.length;
     }
 
     // 3. Delete DB rows (order respects FK constraints)
