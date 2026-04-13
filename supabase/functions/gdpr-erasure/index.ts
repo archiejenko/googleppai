@@ -38,6 +38,24 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
+    // Rate limit: 3 erasure requests/min burst, 10/day sustained — per user
+    const { data: isAllowed, error: rateLimitError } = await serviceClient
+      .rpc('check_rate_limit_hardened', {
+        dimension_keys:           [`user:${userId}`],
+        cost:                     1,
+        burst_limit:              3,
+        burst_window_seconds:     60,
+        sustained_limit:          10,
+        sustained_window_seconds: 86400,
+      });
+    if (rateLimitError) {
+      console.error('[gdpr-erasure] rate limit check failed:', rateLimitError);
+    } else if (!isAllowed) {
+      return new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const itemsDeleted: Record<string, number> = {};
 
     // 2. Collect and delete storage objects

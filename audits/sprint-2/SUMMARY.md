@@ -125,20 +125,20 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 
 | Function | Rate Limit | Severity |
 |---|---|---|
-| `admin-delete-user` | NONE | HIGH |
-| `create-organisation` | NONE | HIGH |
-| `gdpr-erasure` | NONE | HIGH |
-| `correlation-engine` | NONE | HIGH |
-| `revenue-intelligence` | NONE | MEDIUM |
-| `stripe-checkout` | NONE | HIGH |
-| `stripe-portal` | NONE | MEDIUM |
-| `deployment-request` | NONE — **no auth required** | HIGH |
-| `upgrade-request` | NONE | MEDIUM |
-| `training-api` | NONE | HIGH |
-| `tts-generate` | NONE — ElevenLabs calls exposed | HIGH |
-| `stripe-webhook` | NONE — acceptable (signature-verified) | ACCEPTABLE |
+| `admin-delete-user` | 5/min burst, 20/hr — per user | HIGH | **RESOLVED** |
+| `create-organisation` | 5/min burst, 10/hr — per user | HIGH | **RESOLVED** |
+| `gdpr-erasure` | 3/min burst, 10/day — per user | HIGH | **RESOLVED** |
+| `correlation-engine` | 20/min burst, 200/hr — per user | HIGH | **RESOLVED** |
+| `revenue-intelligence` | 20/min burst, 200/hr — per user | MEDIUM | **RESOLVED** |
+| `stripe-checkout` | 5/min burst, 20/hr — per user | HIGH | **RESOLVED** |
+| `stripe-portal` | 5/min burst, 30/hr — per user | MEDIUM | **RESOLVED** |
+| `deployment-request` | 3/min burst, 20/hr — per IP (no auth) | HIGH | **RESOLVED** |
+| `upgrade-request` | 5/min burst, 10/hr — per user | MEDIUM | **RESOLVED** |
+| `training-api` | 20/min burst, 100/hr — per user | HIGH | **RESOLVED** |
+| `tts-generate` | 20/min burst, 200/hr — per user | HIGH | **RESOLVED** |
+| `stripe-webhook` | NONE — acceptable (signature-verified) | ACCEPTABLE | N/A |
 
-**Summary:** 11 of 21 functions have no rate limiting.
+**Summary:** All 11 unprotected functions now have `check_rate_limit_hardened` rate limiting.
 
 **Additional finding:** `orgRateLimit.ts` fails **open** on RPC error — line 41 returns `{ allowed: true }` when `check_org_ai_limit` RPC fails. An infrastructure failure silently disables spend controls. | MEDIUM | OPEN
 
@@ -273,7 +273,7 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 | 3 | **Draft and sign MSA + ToS + AUP** | Business task — external legal | L | HIGH | All contracts |
 | 4 | **Sign sub-processor DPAs** (Anthropic, OpenAI, Deepgram, PostHog, Resend, Recall.ai) | Business task + `docs/compliance/dpas/` | M | HIGH | All contracts (GDPR) |
 | 5 | ~~**react-router-dom vulnerability**~~ | `package.json` / `package-lock.json` | S | HIGH | **RESOLVED** `npm audit fix` — 0 vulnerabilities |
-| 6 | **Rate-limit 11 unprotected Edge Functions** — add `check_rate_limit_hardened` to `admin-delete-user`, `create-organisation`, `gdpr-erasure`, `correlation-engine`, `stripe-checkout`, `training-api`, `tts-generate`, `deployment-request`, `upgrade-request`, `revenue-intelligence`, `stripe-portal` | 11 Edge Function files | M | HIGH | Mid-market procurement |
+| 6 | ~~**Rate-limit 11 unprotected Edge Functions**~~ | 11 Edge Function files | M | HIGH | **RESOLVED** — all 11 protected via `check_rate_limit_hardened` |
 | 7 | **Remove dead function declarations from config.toml** — `create-admin` and `reset-password` declared but missing on disk | `supabase/config.toml:7–27` | S | HIGH | Deployment stability |
 | 8 | **Incident response runbook** — document escalation, rollback, post-mortem procedures | New `docs/RUNBOOK.md` | M | HIGH | Mid-market procurement |
 | 9 | **Document backup RTO/RPO and test restore** — confirm Supabase backup retention, run and document restore drill | External + `docs/BACKUP_DR.md` | M | HIGH | Mid-market procurement |

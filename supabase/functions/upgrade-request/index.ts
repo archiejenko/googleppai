@@ -42,6 +42,24 @@ serve(async (req) => {
       })
     }
 
+    // Rate limit: 5 upgrade requests/min burst, 10/hr sustained — per user
+    const { data: isAllowed, error: rateLimitError } = await supabase
+      .rpc('check_rate_limit_hardened', {
+        dimension_keys:           [`user:${user.id}`],
+        cost:                     1,
+        burst_limit:              5,
+        burst_window_seconds:     60,
+        sustained_limit:          10,
+        sustained_window_seconds: 3600,
+      });
+    if (rateLimitError) {
+      console.error('[upgrade-request] rate limit check failed:', rateLimitError);
+    } else if (!isAllowed) {
+      return new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { requested_tier, message, seats } = await req.json();
 
     const { error } = await supabase.from('upgrade_requests').insert({

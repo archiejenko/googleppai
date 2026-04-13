@@ -30,6 +30,24 @@ serve(async (req) => {
 
     if (authError || !user) throw new Error("Unauthorized");
 
+    // Rate limit: 5 portal sessions/min burst, 30/hr sustained — per user
+    const { data: isAllowed, error: rateLimitError } = await supabase
+      .rpc("check_rate_limit_hardened", {
+        dimension_keys:           [`user:${user.id}`],
+        cost:                     1,
+        burst_limit:              5,
+        burst_window_seconds:     60,
+        sustained_limit:          30,
+        sustained_window_seconds: 3600,
+      });
+    if (rateLimitError) {
+      console.error("[stripe-portal] rate limit check failed:", rateLimitError);
+    } else if (!isAllowed) {
+      return new Response(JSON.stringify({ error: "Too many requests" }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Fetch the org's Stripe customer ID
     const { data: profile } = await supabase
       .from("profiles")

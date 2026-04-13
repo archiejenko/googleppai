@@ -37,6 +37,24 @@ serve(async (req) => {
       throw new Error("Forbidden: admin role required");
     }
 
+    // Rate limit: 5 deletions/min burst, 20/hr sustained — per admin user
+    const { data: isAllowed, error: rateLimitError } = await serviceClient
+      .rpc("check_rate_limit_hardened", {
+        dimension_keys:          [`user:${caller.id}`],
+        cost:                    1,
+        burst_limit:             5,
+        burst_window_seconds:    60,
+        sustained_limit:         20,
+        sustained_window_seconds: 3600,
+      });
+    if (rateLimitError) {
+      console.error("[admin-delete-user] rate limit check failed:", rateLimitError);
+    } else if (!isAllowed) {
+      return new Response(JSON.stringify({ error: "Too many requests" }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { targetUserId } = await req.json();
     if (!targetUserId) throw new Error("targetUserId is required");
 

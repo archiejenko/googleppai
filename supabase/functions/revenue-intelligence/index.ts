@@ -53,6 +53,22 @@ serve(async (req) => {
 
     if (authError || !user) return err("Unauthorized", 401);
 
+    // Rate limit: 20 req/min burst, 200/hr sustained — per user
+    const { data: isAllowed, error: rateLimitError } = await supabase
+      .rpc("check_rate_limit_hardened", {
+        dimension_keys:           [`user:${user.id}`],
+        cost:                     1,
+        burst_limit:              20,
+        burst_window_seconds:     60,
+        sustained_limit:          200,
+        sustained_window_seconds: 3600,
+      });
+    if (rateLimitError) {
+      console.error("[revenue-intelligence] rate limit check failed:", rateLimitError);
+    } else if (!isAllowed) {
+      return err("Too many requests", 429);
+    }
+
     // Fetch org_id for scoping all queries
     const { data: profile } = await supabase
       .from("profiles")

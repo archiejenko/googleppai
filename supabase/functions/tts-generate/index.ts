@@ -25,6 +25,29 @@ serve(async (req) => {
       })
     }
 
+    // Rate limit: 20 TTS req/min burst, 200/hr sustained — per user
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+    const { data: isAllowed, error: rateLimitError } = await supabaseAdmin
+      .rpc('check_rate_limit_hardened', {
+        dimension_keys:           [`user:${user.id}`],
+        cost:                     1,
+        burst_limit:              20,
+        burst_window_seconds:     60,
+        sustained_limit:          200,
+        sustained_window_seconds: 3600,
+      })
+    if (rateLimitError) {
+      console.error('[tts-generate] rate limit check failed:', rateLimitError)
+    } else if (!isAllowed) {
+      return new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Parse body
     const { text, voice_id } = await req.json()
     if (!text || typeof text !== 'string') {

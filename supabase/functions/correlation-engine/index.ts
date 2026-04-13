@@ -647,6 +647,31 @@ serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
+    // Rate limit: lightweight JWT check here only to get user ID for rate limiting.
+    // Each handler calls getAuthedUser() independently for full role/team validation.
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      const { data: { user: rlUser } } = await authedClient(req).auth.getUser();
+      if (rlUser) {
+        const { data: isAllowed, error: rateLimitError } = await adminClient()
+          .rpc('check_rate_limit_hardened', {
+            dimension_keys:           [`user:${rlUser.id}`],
+            cost:                     1,
+            burst_limit:              20,
+            burst_window_seconds:     60,
+            sustained_limit:          200,
+            sustained_window_seconds: 3600,
+          });
+        if (rateLimitError) {
+          console.error('[correlation-engine] rate limit check failed:', rateLimitError);
+        } else if (!isAllowed) {
+          return new Response(JSON.stringify({ error: 'Too many requests' }), {
+            status: 429, headers: corsHeaders,
+          });
+        }
+      }
+    }
+
     const url = new URL(req.url)
     // Strip the function name prefix from the path
     const path = url.pathname.replace(/^\/correlation-engine/, '').replace(/\/$/, '')

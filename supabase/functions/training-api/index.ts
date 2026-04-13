@@ -26,6 +26,29 @@ serve(async (req: Request) => {
             })
         }
 
+        // Rate limit: 20 req/min burst, 100/hr sustained — per user
+        const supabaseAdmin = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        )
+        const { data: isAllowed, error: rateLimitError } = await supabaseAdmin
+            .rpc('check_rate_limit_hardened', {
+                dimension_keys:           [`user:${user.id}`],
+                cost:                     1,
+                burst_limit:              20,
+                burst_window_seconds:     60,
+                sustained_limit:          100,
+                sustained_window_seconds: 3600,
+            })
+        if (rateLimitError) {
+            console.error('[training-api] rate limit check failed:', rateLimitError)
+        } else if (!isAllowed) {
+            return new Response(JSON.stringify({ error: 'Too many requests' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 429,
+            })
+        }
+
         const body = await req.json()
         const { action, sessionId, messages, scenario, difficulty, targetPersona, pitchGoal, timeLimit, language, industryId } = body
 
