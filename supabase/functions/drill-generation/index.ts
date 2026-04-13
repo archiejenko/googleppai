@@ -7,10 +7,11 @@
  *
  * POST body:
  *   rep_id            uuid    — required
- *   org_id            uuid    — required
  *   trigger_id        uuid    — optional; pulls skill context from coaching_triggers
  *   skill_key         string  — optional; overrides skill derived from trigger/snapshot
  *   difficulty_override string — optional: 'easy' | 'medium' | 'hard'
+ *
+ * org_id is extracted from the authenticated user's JWT — never accepted from the request body.
  *
  * Returns:
  *   { session: training_sessions row, coaching_focus: string, drill_label: string }
@@ -60,6 +61,17 @@ serve(async (req) => {
       })
     }
 
+    // ── Extract org_id from JWT — never trust request body ──────────────────
+    const org_id: string | undefined =
+      user.user_metadata?.org_id ?? user.app_metadata?.org_id
+
+    if (!org_id) {
+      return new Response(JSON.stringify({ error: 'Forbidden: no org_id in token' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // ── Rate limit ──────────────────────────────────────────────────────────
     // Cost: 5 tokens (moderate — one AI call per drill generation)
     // Burst: 10 tokens / 1 min | Sustained: 50 tokens / 1 hour
@@ -96,10 +108,10 @@ serve(async (req) => {
     }
 
     // ── Parse input ─────────────────────────────────────────────────────────
-    const { rep_id, org_id, trigger_id, skill_key: bodySkillKey, difficulty_override } = await req.json()
+    const { rep_id, trigger_id, skill_key: bodySkillKey, difficulty_override } = await req.json()
 
-    if (!rep_id || !org_id) {
-      return new Response(JSON.stringify({ error: 'rep_id and org_id are required' }), {
+    if (!rep_id) {
+      return new Response(JSON.stringify({ error: 'rep_id is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -165,12 +177,19 @@ serve(async (req) => {
     // Final fallback
     if (!skillKey) skillKey = 'discovery_questioning'
 
-    // ── Fetch rep profile for context ────────────────────────────────────────
+    // ── Fetch rep profile — verify rep belongs to caller's org ──────────────
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('name, sales_role')
+      .select('name, sales_role, org_id')
       .eq('id', rep_id)
       .single()
+
+    if (!profile || profile.org_id !== org_id) {
+      return new Response(JSON.stringify({ error: 'Forbidden: rep does not belong to your organisation' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     const salesRole = profile?.sales_role ?? 'Sales Representative'
     const skillLabel = SKILL_LABELS[skillKey] ?? skillKey.replace(/_/g, ' ')

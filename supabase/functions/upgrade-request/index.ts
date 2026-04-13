@@ -22,10 +22,31 @@ serve(async (req) => {
 
     if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
 
+    // Extract org_id from JWT — fall back to profiles lookup
+    let org_id: string | undefined =
+      user.user_metadata?.org_id ?? user.app_metadata?.org_id
+
+    if (!org_id) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .single()
+      org_id = profile?.org_id
+    }
+
+    if (!org_id) {
+      return new Response(JSON.stringify({ error: 'Forbidden: no org_id resolved for user' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const { requested_tier, message, seats } = await req.json();
 
     const { error } = await supabase.from('upgrade_requests').insert({
       user_id: user.id,
+      org_id,
       requested_tier: requested_tier ?? 'revenue_intelligence',
       message: message ?? null,
       seats: seats ?? 1,
