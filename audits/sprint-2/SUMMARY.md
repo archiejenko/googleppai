@@ -109,8 +109,8 @@ Minimum required contents if created: escalation contacts, severity classificati
 
 | Finding | Severity | Status |
 |---|---|---|
-| No secrets register exists in repo — no record of which secrets exist, their scope, or last rotation date | HIGH | OPEN |
-| No rotation schedule documented for any secret (Anthropic, OpenAI, Deepgram, ElevenLabs, Stripe, Supabase JWT secret) | HIGH | OPEN |
+| No secrets register exists in repo — no record of which secrets exist, their scope, or last rotation date | HIGH | **RESOLVED** — `docs/SECRETS_REGISTER.md` created; all 18 vars catalogued |
+| No rotation schedule documented for any secret (Anthropic, OpenAI, Deepgram, ElevenLabs, Stripe, Supabase JWT secret) | HIGH | **PARTIAL** — rotation procedure documented; actual rotation dates still NOT DOCUMENTED, require owner action |
 | Secrets accessed via `Deno.env.get()` in Edge Functions — correctly scoped to Supabase environment, not hardcoded | ✓ PASS | N/A |
 | `ALLOWED_ORIGIN` CORS validation present in Edge Functions — correct scoping | ✓ PASS | N/A |
 
