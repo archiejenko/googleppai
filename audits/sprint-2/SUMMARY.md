@@ -185,21 +185,19 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 
 ### 4.1 npm audit (run 2026-04-13)
 
-**Result: 9 vulnerabilities (3 moderate, 6 high). All fixable via `npm audit fix`.**
+**Result: 9 vulnerabilities (3 moderate, 6 high). All fixed via `npm audit fix` — commit `remediation/sprint-2`.**
 
-| Package | Severity | Type | Fix Available | Production dep? |
-|---|---|---|---|---|
-| `react-router` 7.0.0–7.12.0-pre | HIGH | CSRF in Action processing; XSS via open redirect; SSR XSS in ScrollRestoration | ✓ `npm audit fix` | YES |
-| `react-router-dom` 7.0.0-pre–7.11.0 | HIGH | Depends on vulnerable react-router | ✓ `npm audit fix` | YES |
-| `rollup` 4.0.0–4.58.0 | HIGH | Arbitrary file write via path traversal | ✓ `npm audit fix` | dev only |
-| `vite` 7.0.0–7.3.1 | HIGH | Path traversal in `.map` handling; `server.fs.deny` bypass; arbitrary file read via dev server WebSocket | ✓ `npm audit fix` | dev only |
-| `flatted` ≤3.4.1 | HIGH | Unbounded recursion DoS + prototype pollution in `parse()` | ✓ `npm audit fix` | dev only |
-| `minimatch` ≤3.1.3 or 9.0.0–9.0.6 | HIGH | ReDoS via repeated wildcards (3 CVEs) | ✓ `npm audit fix` | dev only |
-| `picomatch` ≤2.3.1 or 4.0.0–4.0.3 | HIGH | Method injection; ReDoS via extglob quantifiers (2 CVEs) | ✓ `npm audit fix` | dev only |
-| `ajv` <6.14.0 | MODERATE | ReDoS when using `$data` option | ✓ `npm audit fix` | dev only |
-| `brace-expansion` <1.1.13 or ≥2.0.0 <2.0.3 | MODERATE | Zero-step sequence causes process hang + memory exhaustion | ✓ `npm audit fix` | dev only |
-
-`react-router-dom` CSRF and XSS vulnerabilities are in a **production dependency**. All others are dev tooling.
+| Package | Severity | Type | Fix | Production dep? | Status |
+|---|---|---|---|---|---|
+| `react-router` 7.0.0–7.12.0-pre | HIGH | CSRF in Action processing; XSS via open redirect; SSR XSS in ScrollRestoration | `npm audit fix` | YES | RESOLVED |
+| `react-router-dom` 7.0.0-pre–7.11.0 | HIGH | Depends on vulnerable react-router | `npm audit fix` | YES | RESOLVED |
+| `rollup` 4.0.0–4.58.0 | HIGH | Arbitrary file write via path traversal | `npm audit fix` | dev only | RESOLVED |
+| `vite` 7.0.0–7.3.1 | HIGH | Path traversal in `.map` handling; `server.fs.deny` bypass; arbitrary file read via dev server WebSocket | `npm audit fix` | dev only | RESOLVED |
+| `flatted` ≤3.4.1 | HIGH | Unbounded recursion DoS + prototype pollution in `parse()` | `npm audit fix` | dev only | RESOLVED |
+| `minimatch` ≤3.1.3 or 9.0.0–9.0.6 | HIGH | ReDoS via repeated wildcards (3 CVEs) | `npm audit fix` | dev only | RESOLVED |
+| `picomatch` ≤2.3.1 or 4.0.0–4.0.3 | HIGH | Method injection; ReDoS via extglob quantifiers (2 CVEs) | `npm audit fix` | dev only | RESOLVED |
+| `ajv` <6.14.0 | MODERATE | ReDoS when using `$data` option | `npm audit fix` | dev only | RESOLVED |
+| `brace-expansion` <1.1.13 or ≥2.0.0 <2.0.3 | MODERATE | Zero-step sequence causes process hang + memory exhaustion | `npm audit fix` | dev only | RESOLVED |
 
 ### 4.2 Edge Function Dependencies
 
@@ -274,7 +272,7 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 | 2 | **Fill Privacy Policy placeholders** — `[COMPANY_LEGAL_NAME]`, `[ICO_REGISTRATION_NUMBER]`, `[DPO_EMAIL]` | `src/pages/PrivacyPolicy.tsx` | S | HIGH | All contracts |
 | 3 | **Draft and sign MSA + ToS + AUP** | Business task — external legal | L | HIGH | All contracts |
 | 4 | **Sign sub-processor DPAs** (Anthropic, OpenAI, Deepgram, PostHog, Resend, Recall.ai) | Business task + `docs/compliance/dpas/` | M | HIGH | All contracts (GDPR) |
-| 5 | **react-router-dom vulnerability** — run `npm audit fix` to upgrade to patched version | `package.json` / `package-lock.json` | S | HIGH | Any security review |
+| 5 | ~~**react-router-dom vulnerability**~~ | `package.json` / `package-lock.json` | S | HIGH | **RESOLVED** `npm audit fix` — 0 vulnerabilities |
 | 6 | **Rate-limit 11 unprotected Edge Functions** — add `check_rate_limit_hardened` to `admin-delete-user`, `create-organisation`, `gdpr-erasure`, `correlation-engine`, `stripe-checkout`, `training-api`, `tts-generate`, `deployment-request`, `upgrade-request`, `revenue-intelligence`, `stripe-portal` | 11 Edge Function files | M | HIGH | Mid-market procurement |
 | 7 | **Remove dead function declarations from config.toml** — `create-admin` and `reset-password` declared but missing on disk | `supabase/config.toml:7–27` | S | HIGH | Deployment stability |
 | 8 | **Incident response runbook** — document escalation, rollback, post-mortem procedures | New `docs/RUNBOOK.md` | M | HIGH | Mid-market procurement |
