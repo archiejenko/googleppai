@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { writeAuditLog } from "../_shared/auditLog.ts";
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -47,6 +48,15 @@ serve(async (req) => {
     // Delete user from Supabase Auth (cascades to profiles via FK)
     const { error: deleteError } = await serviceClient.auth.admin.deleteUser(targetUserId);
     if (deleteError) throw deleteError;
+
+    await writeAuditLog(serviceClient, {
+      actor_id:    caller.id,
+      actor_role:  "admin",
+      action:      "delete_user",
+      target_type: "user",
+      target_id:   targetUserId,
+      metadata:    { deleted_at: new Date().toISOString() },
+    });
 
     return new Response(
       JSON.stringify({ success: true }),

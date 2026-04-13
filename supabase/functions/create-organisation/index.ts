@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { writeAuditLog } from '../_shared/auditLog.ts';
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -64,6 +65,15 @@ serve(async (req) => {
       .eq('id', user.id); // user.id from verified JWT, never from request body
 
     if (profileError) throw profileError;
+
+    await writeAuditLog(supabase, {
+      actor_id:    user.id,
+      actor_role:  "user",
+      action:      "create_organisation",
+      target_type: "organisation",
+      target_id:   org.id,
+      metadata:    { company_name: companyName },
+    });
 
     return new Response(JSON.stringify({ org_id: org.id }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

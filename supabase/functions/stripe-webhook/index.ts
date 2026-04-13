@@ -8,6 +8,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { writeAuditLog } from "../_shared/auditLog.ts";
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
@@ -56,21 +57,57 @@ serve(async (req) => {
 
   try {
     switch (event.type) {
-      case "checkout.session.completed":
-        await handleCheckoutCompleted(supabase, event.data.object);
+      case "checkout.session.completed": {
+        const obj = event.data.object;
+        await handleCheckoutCompleted(supabase, obj);
+        await writeAuditLog(supabase, {
+          actor_role:  "system",
+          action:      "stripe.checkout.session.completed",
+          target_type: "organisation",
+          target_id:   obj.metadata?.org_id ?? obj.customer ?? "unknown",
+          metadata:    { stripe_event_id: event.id, tier: obj.metadata?.tier, subscription_id: obj.subscription },
+        });
         break;
+      }
 
-      case "customer.subscription.updated":
-        await handleSubscriptionUpdated(supabase, event.data.object);
+      case "customer.subscription.updated": {
+        const obj = event.data.object;
+        await handleSubscriptionUpdated(supabase, obj);
+        await writeAuditLog(supabase, {
+          actor_role:  "system",
+          action:      "stripe.customer.subscription.updated",
+          target_type: "subscription",
+          target_id:   obj.id ?? obj.customer,
+          metadata:    { stripe_event_id: event.id, customer_id: obj.customer, status: obj.status },
+        });
         break;
+      }
 
-      case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(supabase, event.data.object);
+      case "customer.subscription.deleted": {
+        const obj = event.data.object;
+        await handleSubscriptionDeleted(supabase, obj);
+        await writeAuditLog(supabase, {
+          actor_role:  "system",
+          action:      "stripe.customer.subscription.deleted",
+          target_type: "subscription",
+          target_id:   obj.id ?? obj.customer,
+          metadata:    { stripe_event_id: event.id, customer_id: obj.customer },
+        });
         break;
+      }
 
-      case "invoice.payment_failed":
-        await handlePaymentFailed(supabase, event.data.object);
+      case "invoice.payment_failed": {
+        const obj = event.data.object;
+        await handlePaymentFailed(supabase, obj);
+        await writeAuditLog(supabase, {
+          actor_role:  "system",
+          action:      "stripe.invoice.payment_failed",
+          target_type: "organisation",
+          target_id:   obj.customer ?? "unknown",
+          metadata:    { stripe_event_id: event.id, invoice_id: obj.id, amount_due: obj.amount_due },
+        });
         break;
+      }
 
       default:
         // Unhandled event — return 200 to acknowledge receipt

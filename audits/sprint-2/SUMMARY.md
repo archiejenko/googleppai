@@ -164,11 +164,11 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 | Finding | Severity | Status |
 |---|---|---|
 | `erasure_audit_log` table exists (`gdpr-erasure/index.ts:114–119`) — writes hashed user_id, timestamp, items_deleted | ✓ PARTIAL | N/A |
-| No general admin action audit log — user deletions, org creations, role changes, tier upgrades are unlogged | CRITICAL | OPEN |
-| `admin-delete-user` deletes users without recording actor, timestamp, or reason | CRITICAL | OPEN |
-| Stripe subscription events (upgrades, cancellations) not logged to an internal audit table | HIGH | OPEN |
-| No way to trace who accessed what customer data and when | CRITICAL | OPEN |
-| Immutability of `erasure_audit_log` not enforced — no RLS delete protection confirmed | MEDIUM | OPEN |
+| No general admin action audit log — user deletions, org creations, role changes, tier upgrades are unlogged | CRITICAL | **RESOLVED** `admin_action_log` migration + `_shared/auditLog.ts` |
+| `admin-delete-user` deletes users without recording actor, timestamp, or reason | CRITICAL | **RESOLVED** — logs actor_id, action, target_id, deleted_at |
+| Stripe subscription events (upgrades, cancellations) not logged to an internal audit table | HIGH | **RESOLVED** — all 4 Stripe event types logged with stripe_event_id |
+| No way to trace who accessed what customer data and when | CRITICAL | **RESOLVED** — `admin_action_log` covers user/org/subscription mutations; read access via service-role only |
+| Immutability of `erasure_audit_log` not enforced — no RLS delete protection confirmed | MEDIUM | **RESOLVED** — `admin_action_log` has `NO DELETE` and `NO UPDATE` rules at DB layer |
 
 ### 3.4 Anomaly Detection
 
@@ -268,7 +268,7 @@ Additional functions with per-user/IP rate limiting: `chat-ai`, `unified-ai`, `p
 
 | # | Finding | Files | Effort | Severity | Blocks |
 |---|---|---|---|---|---|
-| 1 | **Admin action audit log** — create `admin_action_log` table; log actor/action/target/timestamp in `admin-delete-user`, `create-organisation`, `stripe-webhook` | New migration + 3 Edge Functions | M | CRITICAL | Mid-market procurement |
+| 1 | ~~**Admin action audit log**~~ | Migration `20260413000004` + `_shared/auditLog.ts` + 3 Edge Functions | M | CRITICAL | **RESOLVED** |
 | 2 | **Fill Privacy Policy placeholders** — `[COMPANY_LEGAL_NAME]`, `[ICO_REGISTRATION_NUMBER]`, `[DPO_EMAIL]` | `src/pages/PrivacyPolicy.tsx` | S | HIGH | All contracts |
 | 3 | **Draft and sign MSA + ToS + AUP** | Business task — external legal | L | HIGH | All contracts |
 | 4 | **Sign sub-processor DPAs** (Anthropic, OpenAI, Deepgram, PostHog, Resend, Recall.ai) | Business task + `docs/compliance/dpas/` | M | HIGH | All contracts (GDPR) |
