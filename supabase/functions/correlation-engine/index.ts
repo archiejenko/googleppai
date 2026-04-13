@@ -491,7 +491,7 @@ async function handleCompute(req: Request): Promise<Response> {
   if (upsertError) {
     console.error('[correlation-engine] upsert failed:', upsertError.message)
     return new Response(
-      JSON.stringify({ error: 'Snapshot write failed', detail: upsertError.message }),
+      JSON.stringify({ error: 'Snapshot write failed' }),
       { status: 500, headers: corsHeaders }
     )
   }
@@ -696,8 +696,7 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers: corsHeaders })
 
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Internal error'
-    console.error('[correlation-engine]', message)
-    return new Response(JSON.stringify({ error: message }), { status: 500, headers: corsHeaders })
+    console.error('[correlation-engine]', err instanceof Error ? err.message : err)
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred.' }), { status: 500, headers: corsHeaders })
   }
 })

@@ -79,8 +79,9 @@ serve(async (req) => {
 
     if (!res.ok) {
       const errText = await res.text()
-      return new Response(JSON.stringify({ error: errText }), {
-        status: res.status,
+      console.error('[tts-generate] ElevenLabs error:', res.status, errText)
+      return new Response(JSON.stringify({ error: 'TTS generation failed' }), {
+        status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -90,7 +91,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'audio/mpeg' },
     })
   } catch (err) {
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
+    console.error('[tts-generate] unhandled error:', err)
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred.' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

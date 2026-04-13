@@ -19,12 +19,14 @@ export function getCorsHeaders(req: Request): Record<string, string> {
   }
 
   // Validate request origin against the allowlist.
-  // Only reflect the origin back if it matches; browsers enforce the mismatch for unrecognised origins.
+  // Only reflect the origin back if it matches; omit the header entirely for non-matching origins
+  // so browsers enforce the mismatch rather than a wildcard grant.
   const requestOrigin = req.headers.get('Origin') ?? ''
-  const origin = requestOrigin === allowedOrigin ? allowedOrigin : allowedOrigin
-
-  return {
-    'Access-Control-Allow-Origin': origin,
+  const headers: Record<string, string> = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, accept, x-keepwarm',
   }
+  if (requestOrigin === allowedOrigin) {
+    headers['Access-Control-Allow-Origin'] = allowedOrigin
+  }
+  return headers
 }

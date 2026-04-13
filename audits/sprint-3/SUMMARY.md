@@ -14,7 +14,7 @@
 | CF-1 | `chat-ai` + `unified-ai` DB-derived prompt fields sanitized via `_shared/sanitizePromptField.ts`; `difficulty` enum-validated | HIGH | Sprint 1 | ad8d46c → remediation/sprint-3 | RESOLVED |
 | CF-2 | `_shared/validateBody.ts` added; applied to all 15 JSON-body functions with consistent 400 shape | MEDIUM | Sprint 1 | — | RESOLVED — remediation/sprint-3 |
 | CF-3 | Circuit breaker added to `orgRateLimit.ts`: opens after 3 consecutive failures, resets after 60s HALF-OPEN | MEDIUM | Sprint 2 | — | RESOLVED — remediation/sprint-3 |
-| CF-4 | Per-org AI spend controls missing on 5 remaining Edge Functions | HIGH | Sprint 2 | — | OPEN (4 confirmed: `chat-ai`, `pitch-api`, `training-api`, `unified-ai`) |
+| CF-4 | Per-org AI spend controls missing on 5 remaining Edge Functions | HIGH | Sprint 2 | — | RESOLVED — remediation/sprint-3 (`chat-ai`, `pitch-api`, `training-api`, `unified-ai`) |
 
 ---
 
@@ -54,7 +54,7 @@ The intent (only reflect the origin back if it matches) is correct, but the impl
 
 | Finding | Severity | Status |
 |---------|----------|--------|
-| CORS `getCorsHeaders` tautological ternary — always emits allowedOrigin regardless of request origin | LOW | OPEN |
+| CORS `getCorsHeaders` tautological ternary — always emits allowedOrigin regardless of request origin | LOW | RESOLVED — remediation/sprint-3 |
 | All functions handle OPTIONS preflight correctly | — | PASS |
 | No wildcard `*` CORS fallback present | — | PASS |
 
@@ -128,8 +128,8 @@ Six Edge Functions return `error.message` directly to the client in catch blocks
 
 | Finding | Severity | Status |
 |---------|----------|--------|
-| `tts-generate` returns full ElevenLabs error body to client — may expose upstream service details | MEDIUM | OPEN |
-| 4 functions return `error.message` to client — leaks internal field names / RPC signatures | LOW | OPEN |
+| `tts-generate` returns full ElevenLabs error body to client — may expose upstream service details | MEDIUM | RESOLVED — remediation/sprint-3 |
+| 5 functions return `error.message` to client — leaks internal field names / RPC signatures | LOW | RESOLVED — remediation/sprint-3 |
 
 ### 2.4 Insecure Design — Password Reset Flow
 
@@ -429,14 +429,14 @@ The `check_org_ai_limit` RPC is already deployed and parameterised — this is a
 | CF-4 | Per-org AI spend controls added to `chat-ai` (2000t), `pitch-api` (3500t), `training-api` (1500t), `unified-ai` (1200t) | HIGH | Sprint 2 | RESOLVED — remediation/sprint-3 |
 | S3-1 | CSP `style-src unsafe-inline` removed; `script-src` remains open pending report-uri audit | HIGH | Sprint 3 | PARTIAL — remediation/sprint-3 |
 | S3-2 | Supabase JWT in `localStorage` — XSS escalation path | HIGH | Sprint 3 | OPEN |
-| S3-3 | CORS `getCorsHeaders` tautological ternary | LOW | Sprint 3 | OPEN |
+| S3-3 | CORS `getCorsHeaders` tautological ternary | LOW | Sprint 3 | RESOLVED — remediation/sprint-3 |
 | S3-4 | HSTS missing `preload` | LOW | Sprint 3 | OPEN |
 | S3-5 | Vercel preview deployments publicly accessible; no deployment protection | MEDIUM | Sprint 3 | OPEN |
 | S3-6 | No separate staging environment | MEDIUM | Sprint 3 | OPEN |
 | S3-7 | Password reset `redirectTo` uses `window.location.origin` — verify allowlist | MEDIUM | Sprint 3 | OPEN |
-| S3-8 | `tts-generate` leaks upstream ElevenLabs error body to client | MEDIUM | Sprint 3 | OPEN |
+| S3-8 | `tts-generate` leaks upstream ElevenLabs error body to client | MEDIUM | Sprint 3 | RESOLVED — remediation/sprint-3 |
 | S3-9 | `unified-ai` DB-derived fields sanitized; user message kept in user role boundary | MEDIUM | Sprint 3 | RESOLVED — remediation/sprint-3 |
-| S3-10 | 6 Edge Functions return `error.message` to client | LOW | Sprint 3 | OPEN |
+| S3-10 | 6 Edge Functions return `error.message` to client | LOW | Sprint 3 | RESOLVED — remediation/sprint-3 |
 | S3-11 | `source maps` not explicitly disabled in `vite.config.ts` (relies on Vite default) | LOW | Sprint 3 | OPEN |
 | S3-12 | No CSP `report-uri` configured | MEDIUM | Sprint 3 | OPEN |
 | S3-13 | Inline `<style>` in `index.html` blocks strict CSP | MEDIUM | Sprint 3 | OPEN |

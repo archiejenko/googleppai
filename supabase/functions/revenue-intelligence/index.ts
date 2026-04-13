@@ -158,8 +158,9 @@ serve(async (req) => {
       return ok(rows);
     }
 
-    return err(`Unknown sub-path: ${subPath}`, 404);
+    return err('Not found', 404);
   } catch (error) {
-    return err(error.message);
+    console.error('[revenue-intelligence] unhandled error:', error);
+    return err('An unexpected error occurred.');
   }
 });
