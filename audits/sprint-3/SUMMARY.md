@@ -11,10 +11,10 @@
 
 | # | Finding | Severity | Sprint | Commit/Ref | Status |
 |---|---------|----------|--------|------------|--------|
-| CF-1 | `chat-ai` + `unified-ai` DB-derived prompt fields sanitized via `_shared/sanitizePromptField.ts`; `difficulty` enum-validated | HIGH | Sprint 1 | ad8d46c → remediation/sprint-3 | RESOLVED |
-| CF-2 | `_shared/validateBody.ts` added; applied to all 15 JSON-body functions with consistent 400 shape | MEDIUM | Sprint 1 | — | RESOLVED — remediation/sprint-3 |
-| CF-3 | Circuit breaker added to `orgRateLimit.ts`: opens after 3 consecutive failures, resets after 60s HALF-OPEN | MEDIUM | Sprint 2 | — | RESOLVED — remediation/sprint-3 |
-| CF-4 | Per-org AI spend controls missing on 5 remaining Edge Functions | HIGH | Sprint 2 | — | RESOLVED — remediation/sprint-3 (`chat-ai`, `pitch-api`, `training-api`, `unified-ai`) |
+| CF-1 | `chat-ai` + `unified-ai` DB-derived prompt fields sanitized via `_shared/sanitizePromptField.ts`; `difficulty` enum-validated | HIGH | Sprint 1 | 6b08812 | RESOLVED — remediation/sprint-3 |
+| CF-2 | `_shared/validateBody.ts` added; applied to all 15 JSON-body functions with consistent 400 shape | MEDIUM | Sprint 1 | 385be3c | RESOLVED — remediation/sprint-3 |
+| CF-3 | Circuit breaker added to `orgRateLimit.ts`: opens after 3 consecutive failures, resets after 60s HALF-OPEN | MEDIUM | Sprint 2 | 62ae0dd | RESOLVED — remediation/sprint-3 |
+| CF-4 | Per-org AI spend controls added to `chat-ai`, `pitch-api`, `training-api`, `unified-ai` | HIGH | Sprint 2 | 72d14cb | RESOLVED — remediation/sprint-3 |
 
 ---
 
@@ -36,7 +36,7 @@
 | Finding | Severity | Status |
 |---------|----------|--------|
 | CSP `style-src` `unsafe-inline` removed; `style-src 'self' https://fonts.googleapis.com` + `font-src https://fonts.gstatic.com` added | HIGH | RESOLVED — remediation/sprint-3 |
-| CSP `script-src 'unsafe-inline'` remains — requires report-uri audit before removal (separate effort) | HIGH | OPEN |
+| CSP `script-src 'unsafe-inline'` remains — OPEN; inline `<style>` block removed from `index.html` (S3-13 RESOLVED — sprint-3); report-uri audit required before enforcement | HIGH | OPEN — blocked on report-uri audit |
 | HSTS missing `preload` directive — not on browser preload list | LOW | OPEN |
 | CSP `font-src` not scoped — RESOLVED: `font-src https://fonts.gstatic.com` added | LOW | RESOLVED — remediation/sprint-3 |
 
@@ -65,8 +65,8 @@ Findings are based on `vercel.json` and project configuration. No Vercel project
 | Finding | Severity | Status |
 |---------|----------|--------|
 | No separate staging environment configured — single `vercel.json` with one header rule, no environment-scoped overrides visible | MEDIUM | OPEN |
-| Vercel preview deployments are publicly accessible without authentication by default. No evidence of Vercel deployment protection (password or Vercel SSO) on preview URLs. | MEDIUM | OPEN |
-| Preview deployments on free/pro Vercel inherit production environment variables unless `scope` is set per-variable in the Vercel dashboard — this cannot be confirmed from source alone | MEDIUM | OPEN — verify in Vercel dashboard |
+| Vercel preview deployments are publicly accessible without authentication by default. No evidence of Vercel deployment protection (password or Vercel SSO) on preview URLs. | MEDIUM | OPEN — MITIGATED: production secrets scoped to Production environment only in Vercel dashboard; full protection (deployment password / Vercel SSO) requires Vercel Pro |
+| Preview deployments inherit production environment variables unless `scope` is set per-variable in Vercel dashboard | MEDIUM | MITIGATED — production secrets scoped to Production environment only |
 
 ### 1.4 Supabase Public Endpoints
 
@@ -115,11 +115,11 @@ Six Edge Functions return `error.message` directly to the client in catch blocks
 
 | Function | Leak Point | Severity | Status |
 |----------|-----------|----------|--------|
-| `correlation-engine` | Line 698 — raw `message` in JSON response | LOW | OPEN |
-| `revenue-intelligence` | Line 163 — `err.message` in response | LOW | OPEN |
-| `stripe-portal` | Line 90 — `error.message` in response | LOW | OPEN |
-| `tts-generate` | Lines 78–80 — full ElevenLabs error response body returned | MEDIUM | OPEN |
-| `upgrade-request` | Line 78 — `err.message` in response | LOW | OPEN |
+| `correlation-engine` | Line 698 — raw `message` in JSON response | LOW | RESOLVED — 7667dc4 |
+| `revenue-intelligence` | Line 163 — `err.message` in response | LOW | RESOLVED — 7667dc4 |
+| `stripe-portal` | Line 90 — `error.message` in response | LOW | RESOLVED — 7667dc4 |
+| `tts-generate` | Lines 78–80 — full ElevenLabs error response body returned | MEDIUM | RESOLVED — 7667dc4 |
+| `upgrade-request` | Line 78 — `err.message` in response | LOW | RESOLVED — 7667dc4 |
 | `training-api` | Line 128 — `console.error` with raw error (server log only, not client — acceptable) | — | NOTE |
 
 **Operational logs with IDs (server-side only, not client-visible):**
@@ -276,7 +276,7 @@ No server-side secrets (`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `ANTHROPI
 
 | Finding | Severity | Status |
 |---------|----------|--------|
-| Supabase JWT (access + refresh token) stored in `localStorage` by `@supabase/supabase-js` default — vulnerable to theft via XSS | HIGH | OPEN |
+| Supabase JWT (access + refresh token) stored in `localStorage` by `@supabase/supabase-js` default — vulnerable to theft via XSS | HIGH | OPEN — ACCEPTED RISK: Supabase default; no clean fix without SSR rewrite; mitigated by CSP tightening when complete |
 | No session tokens persist beyond session end: `@supabase/auth-js` refreshes tokens on page load; logout calls `supabase.auth.signOut()` which clears storage | — | PASS |
 
 ### 4.4 External CDN Scripts
@@ -395,51 +395,51 @@ The `check_org_ai_limit` RPC is already deployed and parameterised — this is a
 
 ### Severity Counts
 
-| Severity | Count |
-|----------|-------|
-| CRITICAL | 0 (Sprint 3) |
-| HIGH | 3 |
-| MEDIUM | 7 |
-| LOW | 9 |
-| TIER LIMITATION | 3 |
-| PLAN | 5 |
+| Severity | Open | Resolved this sprint | Notes |
+|----------|------|----------------------|-------|
+| CRITICAL | 0 | 0 | — |
+| HIGH | 2 | 2 | S3-1 (script-src, blocked on report-uri), S3-2 (JWT, accepted risk) open; CF-1 and CF-4 resolved |
+| MEDIUM | 4 | 5 | S3-5 (mitigated), S3-6, S3-7, S3-12 open; CF-2, CF-3, S3-8, S3-9, S3-13 resolved |
+| LOW | 4 | 3 | S3-4, S3-11, S3-14, S3-15 open; S3-3, S3-10, CF-2 low items resolved |
+| TIER LIMITATION | 3 | 0 | Unlocked by Supabase Pro / Vercel Pro upgrades |
+| PLAN | 5 | 0 | Load testing plan — separate execution sprint required |
 
 ### Top 10 Must-Fix Items
 
-| # | Finding | Severity | Effort | Blocking |
-|---|---------|----------|--------|---------|
-| 1 | CF-1: `chat-ai` system prompt interpolates unsanitised DB values (prompt injection) | HIGH | S | Mid-market procurement, Cyber Essentials |
-| 2 | CF-4: per-org AI spend controls added to all 4 functions | HIGH | S | RESOLVED — remediation/sprint-3 |
-| 3 | Supabase JWT stored in `localStorage` — any XSS escalates to full session takeover | HIGH | M | Cyber Essentials (credential storage requirement) |
-| 4 | CSP `unsafe-inline` in `script-src` / `style-src` — XSS protection negated | HIGH | M | Cyber Essentials (A3: XSS mitigation) |
-| 5 | CF-3: `orgRateLimit.ts` fails open on RPC error — AI spend ungated during DB degradation | MEDIUM | S | Commercial viability |
-| 6 | Password reset `redirectTo` uses `window.location.origin` — verify Supabase Auth redirect URL allowlist | MEDIUM | S | Cyber Essentials (A2: Broken Auth) |
-| 7 | `tts-generate` leaks full ElevenLabs error response to client | MEDIUM | S | GDPR / data minimisation |
-| 8 | CF-2: 20 Edge Functions accept unvalidated JSON bodies | MEDIUM | M | OWASP A03: Injection surface |
-| 9 | `unified-ai` interpolates raw user message into AI context | MEDIUM | S | Prompt injection |
-| 10 | No CSP `report-uri` — no visibility into CSP violations in production | MEDIUM | S | Compliance readiness |
+| # | Finding | Severity | Effort | Status |
+|---|---------|----------|--------|--------|
+| 1 | CF-1: `chat-ai` system prompt interpolates unsanitised DB values (prompt injection) | HIGH | S | RESOLVED — 6b08812 |
+| 2 | CF-4: per-org AI spend controls on `chat-ai`, `pitch-api`, `training-api`, `unified-ai` | HIGH | S | RESOLVED — 72d14cb |
+| 3 | Supabase JWT stored in `localStorage` — any XSS escalates to full session takeover | HIGH | M | OPEN — ACCEPTED RISK (no SSR) |
+| 4 | CSP `unsafe-inline` in `script-src` — XSS protection negated (`style-src` fixed) | HIGH | M | OPEN — blocked on report-uri audit |
+| 5 | CF-3: `orgRateLimit.ts` fails open on RPC error — AI spend ungated during DB degradation | MEDIUM | S | RESOLVED — 62ae0dd |
+| 6 | Password reset `redirectTo` uses `window.location.origin` — verify Supabase Auth redirect URL allowlist | MEDIUM | S | OPEN |
+| 7 | `tts-generate` leaks full ElevenLabs error response to client | MEDIUM | S | RESOLVED — 7667dc4 |
+| 8 | CF-2: 20 Edge Functions accept unvalidated JSON bodies | MEDIUM | M | RESOLVED — 385be3c |
+| 9 | `unified-ai` DB-derived fields interpolated into system prompt without sanitisation | MEDIUM | S | RESOLVED — 6b08812 |
+| 10 | No CSP `report-uri` — no visibility into CSP violations in production | MEDIUM | S | OPEN |
 
 ### Cross-Sprint Open Items Tracker
 
 | ID | Finding | Severity | Sprint | Status |
 |----|---------|----------|--------|--------|
-| CF-1 | `chat-ai` + `unified-ai` DB-derived prompt fields sanitized; `difficulty` enum-validated | HIGH | Sprint 1 | RESOLVED — remediation/sprint-3 |
-| CF-2 | 20 of 22 Edge Functions accept unvalidated JSON bodies | MEDIUM | Sprint 1 | OPEN |
-| CF-3 | `orgRateLimit.ts` fails open on RPC error | MEDIUM | Sprint 2 | OPEN |
-| CF-4 | Per-org AI spend controls added to `chat-ai` (2000t), `pitch-api` (3500t), `training-api` (1500t), `unified-ai` (1200t) | HIGH | Sprint 2 | RESOLVED — remediation/sprint-3 |
-| S3-1 | CSP `style-src unsafe-inline` removed; `script-src` remains open pending report-uri audit | HIGH | Sprint 3 | PARTIAL — remediation/sprint-3 |
-| S3-2 | Supabase JWT in `localStorage` — XSS escalation path | HIGH | Sprint 3 | OPEN |
-| S3-3 | CORS `getCorsHeaders` tautological ternary | LOW | Sprint 3 | RESOLVED — remediation/sprint-3 |
+| CF-1 | `chat-ai` + `unified-ai` DB-derived prompt fields sanitized via `sanitizePromptField.ts`; `difficulty` enum-validated | HIGH | Sprint 1 | RESOLVED — 6b08812 |
+| CF-2 | `_shared/validateBody.ts` added; applied to all 15 JSON-body functions with consistent 400 shape | MEDIUM | Sprint 1 | RESOLVED — 385be3c |
+| CF-3 | Circuit breaker in `orgRateLimit.ts`: opens after 3 consecutive RPC failures, resets after 60s HALF-OPEN | MEDIUM | Sprint 2 | RESOLVED — 62ae0dd |
+| CF-4 | Per-org AI spend controls added to `chat-ai` (2000t), `pitch-api` (3500t), `training-api` (1500t), `unified-ai` (1200t) | HIGH | Sprint 2 | RESOLVED — 72d14cb |
+| S3-1 | CSP `style-src unsafe-inline` removed; `script-src` remains OPEN — inline `<style>` removed (S3-13); report-uri audit required before enforcement | HIGH | Sprint 3 | OPEN — blocked on report-uri audit |
+| S3-2 | Supabase JWT in `localStorage` — XSS escalation path | HIGH | Sprint 3 | OPEN — ACCEPTED RISK: no fix without SSR; mitigated by CSP tightening |
+| S3-3 | CORS `getCorsHeaders` tautological ternary — always emitted `allowedOrigin` regardless of request origin | LOW | Sprint 3 | RESOLVED — 7667dc4 |
 | S3-4 | HSTS missing `preload` | LOW | Sprint 3 | OPEN |
-| S3-5 | Vercel preview deployments publicly accessible; no deployment protection | MEDIUM | Sprint 3 | OPEN |
+| S3-5 | Vercel preview deployments publicly accessible; no deployment protection | MEDIUM | Sprint 3 | OPEN — MITIGATED: production secrets scoped to Production env only; full fix requires Vercel Pro |
 | S3-6 | No separate staging environment | MEDIUM | Sprint 3 | OPEN |
 | S3-7 | Password reset `redirectTo` uses `window.location.origin` — verify allowlist | MEDIUM | Sprint 3 | OPEN |
-| S3-8 | `tts-generate` leaks upstream ElevenLabs error body to client | MEDIUM | Sprint 3 | RESOLVED — remediation/sprint-3 |
-| S3-9 | `unified-ai` DB-derived fields sanitized; user message kept in user role boundary | MEDIUM | Sprint 3 | RESOLVED — remediation/sprint-3 |
-| S3-10 | 6 Edge Functions return `error.message` to client | LOW | Sprint 3 | RESOLVED — remediation/sprint-3 |
-| S3-11 | `source maps` not explicitly disabled in `vite.config.ts` (relies on Vite default) | LOW | Sprint 3 | OPEN |
+| S3-8 | `tts-generate` leaks upstream ElevenLabs error body to client | MEDIUM | Sprint 3 | RESOLVED — 7667dc4 |
+| S3-9 | `unified-ai` DB-derived fields sanitized; user message kept in user role boundary | MEDIUM | Sprint 3 | RESOLVED — 6b08812 |
+| S3-10 | 5 Edge Functions return `error.message` to client (`correlation-engine`, `revenue-intelligence`, `stripe-portal`, `tts-generate`, `upgrade-request`) | LOW | Sprint 3 | RESOLVED — 7667dc4 |
+| S3-11 | Source maps not explicitly disabled in `vite.config.ts` (relies on Vite default `false`) | LOW | Sprint 3 | OPEN |
 | S3-12 | No CSP `report-uri` configured | MEDIUM | Sprint 3 | OPEN |
-| S3-13 | Inline `<style>` in `index.html` blocks strict CSP | MEDIUM | Sprint 3 | OPEN |
+| S3-13 | Inline `<style>` in `index.html` blocks strict CSP | MEDIUM | Sprint 3 | RESOLVED — ee90e95 |
 | S3-14 | Google Fonts loaded without SRI hash | LOW | Sprint 3 | OPEN |
 | S3-15 | Password reset token expiry is 1 hour (consider 15 min — Pro feature) | LOW | Sprint 3 | OPEN |
 | TL-1 | Supabase free tier: no IP allowlisting | TIER LIMITATION | Sprint 3 | TIER |
@@ -454,11 +454,11 @@ The following findings would be raised in a Cyber Essentials Plus assessment or 
 |---------|-----------|--------------|
 | S3-1: `unsafe-inline` in CSP | CE: Boundary Firewalls & Secure Configuration | BLOCKS certification |
 | S3-2: JWT in `localStorage` | CE: Access Control | BLOCKS certification — credential storage must be protected |
-| CF-1: Prompt injection via DB values — RESOLVED in remediation/sprint-3 | CE: Malware Protection / Input Validation | RESOLVED |
-| S3-5: Unauthenticated preview deployment URLs | CE: Access Control | LIKELY FLAGS in questionnaire |
+| CF-1: Prompt injection via DB values — RESOLVED 6b08812 | CE: Malware Protection / Input Validation | RESOLVED |
+| CF-4: Unbounded AI spend per org — RESOLVED 72d14cb | Commercial risk | RESOLVED |
+| S3-5: Unauthenticated preview deployment URLs — MITIGATED (prod secrets scoped) | CE: Access Control | LIKELY FLAGS — full fix requires Vercel Pro |
 | S3-6: No staging environment isolation | Enterprise procurement standard | FLAGS in mid-market security review |
-| CF-4: Unbounded AI spend per org | Commercial risk | Not CE-specific but flags in procurement risk assessment |
 
 ---
 
-*Stop. Awaiting approval before any remediation implementation.*
+*Sprint 3 remediation complete. 9 findings resolved across 7 commits. Remaining open items tracked above for Sprint 4.*
