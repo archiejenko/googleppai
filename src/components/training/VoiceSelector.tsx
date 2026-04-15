@@ -58,7 +58,8 @@ export default function VoiceSelector({ value, onChange, label }: VoiceSelectorP
       if (data instanceof Blob) {
         blob = data;
       } else if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
-        blob = new Blob([data], { type: 'audio/mpeg' });
+        const blobPart = data instanceof Uint8Array ? data.buffer.slice(0) : data;
+        blob = new Blob([blobPart], { type: 'audio/mpeg' });
       } else {
         throw new Error('non-binary response');
       }
