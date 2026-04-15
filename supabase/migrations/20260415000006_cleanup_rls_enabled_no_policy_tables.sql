@@ -1,0 +1,52 @@
+-- Migration: Document RLS-enabled tables that have no policies
+--
+-- The Supabase Security Advisor reports 5 tables that have RLS enabled but
+-- zero policies attached. With RLS on and no policies, PostgreSQL's default
+-- behaviour is to deny ALL access to every role (including authenticated).
+-- This is the safe/restrictive default — no action is required to block access.
+--
+-- This migration is DOCUMENTATION ONLY. No DDL is executed.
+-- Each table's status is recorded below for audit purposes.
+--
+-- Codebase scan performed on 2026-04-15:
+--   Searched: src/**  supabase/functions/**
+--   Method:   grep for quoted table name in .from(), supabase.rpc(), and
+--             direct SQL string literals.
+--
+-- ┌─────────────────┬───────────────────────────────────────────────────────┐
+-- │ Table           │ Status                                                │
+-- ├─────────────────┼───────────────────────────────────────────────────────┤
+-- │ documents       │ UNUSED — zero references in src/ or supabase/        │
+-- │                 │ functions/. Likely a pgvector staging table created   │
+-- │                 │ via the Supabase dashboard. RLS blocks all access;   │
+-- │                 │ leave as-is until a migration introduces a policy.   │
+-- ├─────────────────┼───────────────────────────────────────────────────────┤
+-- │ posts           │ UNUSED — zero references in src/ or supabase/        │
+-- │                 │ functions/. Appears to be a leftover from initial    │
+-- │                 │ Supabase project scaffolding. RLS blocks all access; │
+-- │                 │ candidate for DROP if confirmed obsolete.            │
+-- ├─────────────────┼───────────────────────────────────────────────────────┤
+-- │ rate_limits     │ UNUSED as a direct table — the rate-limiting system  │
+-- │                 │ uses the check_rate_limit_hardened() RPC (dashboard- │
+-- │                 │ created SECURITY DEFINER function) which manages its │
+-- │                 │ own internal state. No code accesses rate_limits     │
+-- │                 │ directly. RLS blocks all access; safe as-is.        │
+-- ├─────────────────┼───────────────────────────────────────────────────────┤
+-- │ seeding_buffer  │ UNUSED — zero references in src/ or supabase/        │
+-- │                 │ functions/. Likely a temporary data-loading table.   │
+-- │                 │ RLS blocks all access; candidate for DROP.           │
+-- ├─────────────────┼───────────────────────────────────────────────────────┤
+-- │ test_vectors    │ UNUSED — zero references in src/ or supabase/        │
+-- │                 │ functions/. Likely a pgvector development/debug      │
+-- │                 │ table. RLS blocks all access; candidate for DROP.    │
+-- └─────────────────┴───────────────────────────────────────────────────────┘
+--
+-- Recommended follow-up actions (separate migration, not this one):
+--   1. Confirm each table is truly obsolete by checking dashboard query history.
+--   2. DROP confirmed-dead tables to reduce attack surface.
+--   3. Add a policy to 'documents' and 'rate_limits' if they are reactivated.
+--
+-- No policies are added here: RLS-on-with-no-policies is the correct safe
+-- default for tables that should not be client-accessible.
+
+SELECT 1; -- no-op statement so the migration file is valid SQL
