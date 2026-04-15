@@ -86,9 +86,11 @@ serve(async (req) => {
       })
     }
 
-    // Stream binary response back to client
+    // Stream binary response back to client.
+    // Content-Type is set to application/octet-stream so the Supabase JS client
+    // SDK auto-detects binary and returns a Blob rather than decoding as text.
     return new Response(res.body, {
-      headers: { ...corsHeaders, 'Content-Type': 'audio/mpeg' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/octet-stream' },
     })
   } catch (err) {
     console.error('[tts-generate] unhandled error:', err)

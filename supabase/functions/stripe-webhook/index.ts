@@ -120,9 +120,8 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error(`[stripe-webhook] Error handling ${event.type}:`, err.message);
-    // Return 200 to prevent Stripe from retrying — log the error for manual resolution
-    return new Response(JSON.stringify({ received: true, warning: err.message }), {
-      status: 200,
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

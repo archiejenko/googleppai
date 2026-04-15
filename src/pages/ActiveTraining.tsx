@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { showError } from '../utils/toast';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAudioQueue } from '../hooks/useAudioQueue';
 import { Info } from 'lucide-react';
@@ -585,9 +586,12 @@ export default function ActiveTraining() {
                 const { data: { user: recUser } } = await supabase.auth.getUser();
                 const recOrgId: string | undefined =
                     recUser?.app_metadata?.org_id ?? recUser?.user_metadata?.org_id;
+                if (!recOrgId) {
+                    console.warn('[ActiveTraining] org_id missing from auth token — recording uploaded without org prefix. Path will be sessions/${sessionId}.webm. Ensure storage RLS allows access to this path.');
+                }
                 const recPath = recOrgId
                     ? `${recOrgId}/sessions/${sessionId}.webm`
-                    : `sessions/${sessionId}.webm`; // fallback: org_id not yet in token
+                    : `sessions/${sessionId}.webm`;
                 const { data: uploadData, error: uploadError } = await supabase.storage
                     .from('recordings')
                     .upload(recPath, blob, { upsert: true, contentType: 'audio/webm' });
@@ -607,15 +611,20 @@ export default function ActiveTraining() {
                 body: { action: 'complete', sessionId, messages: messages.map(m => ({ role: m.role, text: m.text })), audioUrl },
             });
             if (error) throw error;
+            if (!data || data.error) {
+                throw new Error(data?.error ?? 'Session completion returned an unexpected response.');
+            }
             if (isPostHogEnabled) {
                 posthog.capture('training_session_completed', {
                     session_id: sessionId, message_count: messages.length, pitch_id: data.pitchId ?? null,
                 });
             }
             // Show inline scorecard instead of navigating immediately
-            setFinalPitchId(data.pitchId);
+            setFinalPitchId(data.pitchId ?? null);
             setShowScorecard(true);
-        } catch {
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Session could not be saved.';
+            showError('Session ended with an error', msg);
             navigate('/dashboard');
         } finally {
             setIsProcessing(false);

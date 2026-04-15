@@ -59,11 +59,17 @@ serve(async (req: Request) => {
 
         const rawBody = await req.json().catch(() => null)
         const v = validateBody<{ action?: string; sessionId?: string; messages?: unknown[]; scenario?: string; difficulty?: string; targetPersona?: string; pitchGoal?: string; timeLimit?: number; language?: string; industryId?: string; audioUrl?: string }>(rawBody, {
-            action:    { type: 'string' },
-            sessionId: { type: 'string' },
-            messages:  { type: 'array' },
-            timeLimit: { type: 'number' },
-            audioUrl:  { type: 'string' },
+            action:        { type: 'string' },
+            sessionId:     { type: 'string' },
+            messages:      { type: 'array' },
+            timeLimit:     { type: 'number' },
+            audioUrl:      { type: 'string' },
+            scenario:      { type: 'string' },
+            difficulty:    { type: 'string' },
+            targetPersona: { type: 'string' },
+            pitchGoal:     { type: 'string' },
+            language:      { type: 'string' },
+            industryId:    { type: 'string' },
         })
         if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -109,6 +115,14 @@ serve(async (req: Request) => {
                 }
                 // ─────────────────────────────────────────────────────────────
 
+                for (const m of messages) {
+                    if (typeof (m as any)?.role !== 'string') {
+                        return new Response(JSON.stringify({ error: 'Each message must have a string role field' }), {
+                            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                            status: 400,
+                        })
+                    }
+                }
                 const transcript = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
 
                 const prompt = `You are an expert sales coach. Analyze this transcript.
@@ -191,7 +205,10 @@ serve(async (req: Request) => {
                         .from('dispatched_drills')
                         .insert(drills)
                     if (drillError) {
-                        console.error('[training-api] dispatched_drills insert failed:', drillError)
+                        return new Response(JSON.stringify({ error: 'Failed to create drills: ' + drillError.message }), {
+                            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                            status: 500,
+                        })
                     }
                 }
             }
@@ -200,29 +217,22 @@ serve(async (req: Request) => {
             const xpMap: Record<string, number> = { easy: 50, medium: 100, hard: 200 };
             const xpEarned = xpMap[session.difficulty] || 50;
 
-            await supabaseClient
+            const { error: sessionUpdateError } = await supabaseClient
                 .from('training_sessions')
                 .update({ completed: true, xp_earned: xpEarned })
                 .eq('id', sessionId)
 
-            // RPC call to increment user XP if I created a function, or just update directly if RLS allows (security concern: user updating own XP)
-            // Better: use a Database Function `increment_xp` and call it via RPC.
-            // For now, I'll direct update user profile if RLS permits, or assume service_role key usage to bypass RLS for this sensitive op?
-            // Wait, I am using the auth context of the user (anon key + auth header).
-            // RLS usually prevents users from updating their own XP.
-            // I should use the Service Role Client for this specific operation or use a Postgres function with `SECURITY DEFINER`.
-            // Let's use Service Role Client for the XP update part to be safe/secure.
-
-            const supabaseAdmin = createClient(
-                Deno.env.get('SUPABASE_URL') ?? '',
-                Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-            )
-
-            await supabaseAdmin.rpc('increment_user_xp', { user_id: user.id, xp: xpEarned })
-                .catch(async () => {
-                    // Fallback to update if RPC not pending
-                    await supabaseAdmin.from('profiles').update({ total_xp: 0 /* increment logic needed */ }).eq('id', user.id)
+            if (sessionUpdateError) {
+                return new Response(JSON.stringify({ error: 'Failed to mark session complete: ' + sessionUpdateError.message }), {
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                    status: 500,
                 })
+            }
+
+            const { error: xpError } = await supabaseAdmin.rpc('increment_user_xp', { user_id: user.id, xp: xpEarned })
+            if (xpError) {
+                console.error('[training-api] increment_user_xp RPC failed:', xpError)
+            }
 
             return new Response(JSON.stringify({ success: true, pitchId, xpEarned }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },

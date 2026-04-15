@@ -126,7 +126,7 @@ Return ONLY the JSON, no markdown, no preamble.`;
 
     // Persist result back to dispatched_drills if drillId provided
     if (drillId) {
-      await supabase
+      const { error: updateError } = await supabase
         .from("dispatched_drills")
         .update({
           ai_critique: result.critique,
@@ -138,6 +138,12 @@ Return ONLY the JSON, no markdown, no preamble.`;
         })
         .eq("id", drillId)
         .eq("user_id", user.id);
+      if (updateError) {
+        return new Response(
+          JSON.stringify({ error: "Failed to save drill result: " + updateError.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     return new Response(

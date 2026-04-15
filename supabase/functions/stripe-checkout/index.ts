@@ -70,6 +70,22 @@ serve(async (req) => {
       is_founding_member = false,
     } = sv.body;
 
+    const validTiers = ["core", "revenue_intelligence"];
+    if (!validTiers.includes(tier)) {
+      return new Response(
+        JSON.stringify({ error: `Invalid tier. Must be one of: ${validTiers.join(', ')}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const validBillingCycles = ["monthly", "annual"];
+    if (!validBillingCycles.includes(billing_cycle)) {
+      return new Response(
+        JSON.stringify({ error: `Invalid billing_cycle. Must be one of: ${validBillingCycles.join(', ')}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // TODO: Founding member price lock — grandfathering via Stripe coupon not yet implemented.
     // For now, the founding member discount is handled at the pricing page level.
     // When implementing: create a Stripe coupon with 100% off the deployment fee and attach it here.
@@ -134,10 +150,13 @@ serve(async (req) => {
 
       // Persist Stripe customer ID back to org
       if (org?.id) {
-        await supabase
+        const { error: customerIdUpdateError } = await supabase
           .from("organisations")
           .update({ stripe_customer_id: customerId })
           .eq("id", org.id);
+        if (customerIdUpdateError) {
+          throw new Error("Failed to persist Stripe customer ID: " + customerIdUpdateError.message);
+        }
       }
     }
 

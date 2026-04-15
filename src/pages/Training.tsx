@@ -186,7 +186,13 @@ export default function Training() {
             if (typeof data === 'string') {
                 try { sessionData = JSON.parse(data); } catch { throw new Error('Server returned an unparseable response.'); }
             }
-            if (!sessionData?.id) throw new Error('Server returned a response without a session ID.');
+            if (!sessionData || typeof sessionData !== 'object') {
+                throw new Error(`Server returned an unexpected response type: ${typeof data}. Value: ${JSON.stringify(data)?.slice(0, 200)}`);
+            }
+            if ((sessionData as Record<string, unknown>).error) {
+                throw new Error(`Server error: ${(sessionData as Record<string, unknown>).error}`);
+            }
+            if (!(sessionData as Record<string, unknown>)?.id) throw new Error('Server returned a response without a session ID.');
 
             navigate(`/active-training?sessionId=${sessionData.id}&voice_id=${encodeURIComponent(formData.voice_id)}`);
         } catch (error: unknown) {

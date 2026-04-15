@@ -65,19 +65,6 @@ export default function DrillSession() {
 
             if (error) throw error;
             setCritique(data.critique);
-
-            // Update mastery if score is high
-            if (data.score >= 80) {
-                await supabase
-                    .from('dispatched_drills')
-                    .update({
-                        mastered: true,
-                        user_attempt: { text: attempt },
-                        ai_critique: data.critique,
-                        mastery_score: data.score
-                    })
-                    .eq('id', id);
-            }
         } catch (error) {
             console.error('Analysis failed', error);
         } finally {

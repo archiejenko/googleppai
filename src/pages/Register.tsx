@@ -97,12 +97,13 @@ export default function Register() {
 
             if (data.user) {
                 // Call Edge Function to create org and link to profile
-                await supabase.functions.invoke('create-organisation', {
+                const { error: orgError } = await supabase.functions.invoke('create-organisation', {
                     body: {
                         userId: data.user.id,
                         companyName: form.companyName.trim(),
                     },
                 });
+                if (orgError) throw new Error('Failed to create organisation: ' + orgError.message);
             }
 
             // Preserve plan selection through onboarding so checkout can be initiated post-signup

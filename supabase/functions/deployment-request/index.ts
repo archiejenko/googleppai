@@ -41,8 +41,12 @@ serve(async (req) => {
 
     const rawBody = await req.json().catch(() => null);
     const v = validateBody<{ name: string; email: string; company?: string; industry?: string; message?: string; request_type?: string }>(rawBody, {
-      name:  { type: 'string', required: true },
-      email: { type: 'string', required: true },
+      name:         { type: 'string', required: true },
+      email:        { type: 'string', required: true },
+      company:      { type: 'string' },
+      industry:     { type: 'string' },
+      message:      { type: 'string' },
+      request_type: { type: 'string' },
     });
     if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
       status: v.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

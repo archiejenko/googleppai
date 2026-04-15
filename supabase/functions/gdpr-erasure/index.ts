@@ -66,7 +66,8 @@ serve(async (req) => {
       .list(userId);
     if (avatarObjects && avatarObjects.length > 0) {
       const avatarPaths = avatarObjects.map((o) => `${userId}/${o.name}`);
-      await serviceClient.storage.from('avatars').remove(avatarPaths);
+      const { error: avatarRemoveError } = await serviceClient.storage.from('avatars').remove(avatarPaths);
+      if (avatarRemoveError) throw new Error('Failed to delete avatar storage objects: ' + avatarRemoveError.message);
       itemsDeleted.avatars = avatarPaths.length;
     }
 
@@ -76,7 +77,8 @@ serve(async (req) => {
       .list(userId);
     if (pitchObjects && pitchObjects.length > 0) {
       const pitchPaths = pitchObjects.map((o) => `${userId}/${o.name}`);
-      await serviceClient.storage.from('pitch-recordings').remove(pitchPaths);
+      const { error: pitchRemoveError } = await serviceClient.storage.from('pitch-recordings').remove(pitchPaths);
+      if (pitchRemoveError) throw new Error('Failed to delete pitch-recordings storage objects: ' + pitchRemoveError.message);
       itemsDeleted['pitch-recordings'] = pitchPaths.length;
     }
 
@@ -94,7 +96,8 @@ serve(async (req) => {
         ? sessions.map((s: { id: string }) => `${orgId}/sessions/${s.id}.webm`)
         : [];
       const allPaths = [...newPaths, ...legacyPaths];
-      await serviceClient.storage.from('recordings').remove(allPaths);
+      const { error: sessionRemoveError } = await serviceClient.storage.from('recordings').remove(allPaths);
+      if (sessionRemoveError) throw new Error('Failed to delete session recordings storage objects: ' + sessionRemoveError.message);
       itemsDeleted['session-recordings'] = sessions.length;
     }
 
@@ -113,10 +116,11 @@ serve(async (req) => {
     ];
 
     for (const table of tablesToDelete) {
-      const { count } = await serviceClient
+      const { count, error: deleteError } = await serviceClient
         .from(table)
         .delete({ count: 'exact' })
         .eq('user_id', userId);
+      if (deleteError) throw new Error(`Failed to delete rows from ${table}: ${deleteError.message}`);
       if (count) itemsDeleted[table] = count;
     }
 
@@ -129,12 +133,13 @@ serve(async (req) => {
     const reference = `ERASURE-${userIdHash.slice(0, 16).toUpperCase()}-${Date.now()}`;
     const completedAt = new Date().toISOString();
 
-    await serviceClient.from('erasure_audit_log').insert({
+    const { error: auditError } = await serviceClient.from('erasure_audit_log').insert({
       user_id_hash: userIdHash,
       completed_at: completedAt,
       items_deleted: itemsDeleted,
       reference,
     });
+    if (auditError) throw new Error('Failed to write erasure audit log: ' + auditError.message);
 
     // 5. Delete the auth user (cascades to profiles via FK)
     const { error: deleteError } = await serviceClient.auth.admin.deleteUser(userId);

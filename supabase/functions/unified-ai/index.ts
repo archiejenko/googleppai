@@ -154,6 +154,13 @@ For closing_probability: 0.0–1.0.
 ${isGreeting ? 'This is the opening of the call. Start the scene as the buyer picking up the phone. Score all evaluation metrics at 0.5 baseline.' : ''}
 JSON ONLY. No markdown, no explanation.`
 
+        for (const h of (history || [])) {
+            if (typeof (h as any)?.role !== 'string') {
+                return new Response(JSON.stringify({ error: 'Each history item must have a string role field' }), {
+                    status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                })
+            }
+        }
         const historyMessages = (history || []).map((h: any) => ({
             role: h.role === 'ai' ? 'assistant' : 'user',
             content: h.text,

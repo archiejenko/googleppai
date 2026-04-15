@@ -36,7 +36,11 @@ serve(async (req) => {
 
     const rawBody = await req.json().catch(() => null);
     const v = validateBody<{ action: string; session_id?: string; session_title?: string; session_type?: string; prospect_company?: string }>(rawBody, {
-      action: { type: 'string', required: true },
+      action:           { type: 'string', required: true },
+      session_id:       { type: 'string' },
+      session_title:    { type: 'string' },
+      session_type:     { type: 'string' },
+      prospect_company: { type: 'string' },
     });
     if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
       status: v.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -199,11 +203,10 @@ Tailor everything to a ${session_type ?? "discovery"} call. Return ONLY the JSON
         .single();
 
       if (insertError) {
-        // Table may not exist yet — return the brief without persisting
-        console.warn("call_prep_briefs insert failed:", insertError.message);
+        console.error("call_prep_briefs insert failed:", insertError.message);
         return new Response(
-          JSON.stringify({ ok: true, data: { brief: { id: "unsaved", ...briefRow } } }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          JSON.stringify({ ok: false, error: "Failed to save brief: " + insertError.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
