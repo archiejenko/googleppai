@@ -33,7 +33,7 @@ CREATE POLICY "coaching_triggers_select" ON public.coaching_triggers
   FOR SELECT TO authenticated
   USING (
     rep_id = auth.uid()
-    OR (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+    OR (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
   );
 
 -- INSERT: service-role only — no authenticated INSERT policy
@@ -45,18 +45,18 @@ CREATE POLICY "coaching_triggers_update" ON public.coaching_triggers
   FOR UPDATE TO authenticated
   USING (
     rep_id = auth.uid()
-    OR (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+    OR (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
   )
   WITH CHECK (
     rep_id = auth.uid()
-    OR (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+    OR (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
   );
 
 -- DELETE: admin only
 DROP POLICY IF EXISTS "coaching_triggers_delete" ON public.coaching_triggers;
 CREATE POLICY "coaching_triggers_delete" ON public.coaching_triggers
   FOR DELETE TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+  USING (org_id = public.user_org_id() AND auth.user_role() = 'admin');
 
 -- ── training_attempts ─────────────────────────────────────────────────────────
 -- No direct org_id column — org is derived via rep_id → profiles.org_id.
@@ -86,7 +86,7 @@ CREATE POLICY "training_attempts_select" ON public.training_attempts
     OR (
       auth.user_role() IN ('team_lead', 'admin')
       AND rep_id IN (
-        SELECT id FROM public.profiles WHERE org_id = auth.user_org_id()
+        SELECT id FROM public.profiles WHERE org_id = public.user_org_id()
       )
     )
   );
@@ -112,13 +112,13 @@ CREATE POLICY "objection_entries_select" ON public.objection_entries
   FOR SELECT TO authenticated
   USING (
     user_id = auth.uid()
-    OR (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+    OR (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
   );
 
 DROP POLICY IF EXISTS "objection_entries_insert" ON public.objection_entries;
 CREATE POLICY "objection_entries_insert" ON public.objection_entries
   FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid() AND org_id = auth.user_org_id());
+  WITH CHECK (user_id = auth.uid() AND org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "objection_entries_update" ON public.objection_entries;
 CREATE POLICY "objection_entries_update" ON public.objection_entries
@@ -152,18 +152,18 @@ ALTER TABLE public.missed_opportunities ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "missed_opportunities_select" ON public.missed_opportunities;
 CREATE POLICY "missed_opportunities_select" ON public.missed_opportunities
   FOR SELECT TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "missed_opportunities_update" ON public.missed_opportunities;
 CREATE POLICY "missed_opportunities_update" ON public.missed_opportunities
   FOR UPDATE TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
-  WITH CHECK (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
+  USING (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+  WITH CHECK (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
 
 DROP POLICY IF EXISTS "missed_opportunities_delete" ON public.missed_opportunities;
 CREATE POLICY "missed_opportunities_delete" ON public.missed_opportunities
   FOR DELETE TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+  USING (org_id = public.user_org_id() AND auth.user_role() = 'admin');
 
 -- ── competitor_profiles ───────────────────────────────────────────────────────
 -- Written by service-role. All org members read; managers update; admin deletes.
@@ -186,18 +186,18 @@ ALTER TABLE public.competitor_profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "competitor_profiles_select" ON public.competitor_profiles;
 CREATE POLICY "competitor_profiles_select" ON public.competitor_profiles
   FOR SELECT TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "competitor_profiles_update" ON public.competitor_profiles;
 CREATE POLICY "competitor_profiles_update" ON public.competitor_profiles
   FOR UPDATE TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
-  WITH CHECK (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
+  USING (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+  WITH CHECK (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
 
 DROP POLICY IF EXISTS "competitor_profiles_delete" ON public.competitor_profiles;
 CREATE POLICY "competitor_profiles_delete" ON public.competitor_profiles
   FOR DELETE TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+  USING (org_id = public.user_org_id() AND auth.user_role() = 'admin');
 
 -- ── business_synergies ────────────────────────────────────────────────────────
 -- Written by service-role. All org members read; managers update; admin deletes.
@@ -219,15 +219,15 @@ ALTER TABLE public.business_synergies ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "business_synergies_select" ON public.business_synergies;
 CREATE POLICY "business_synergies_select" ON public.business_synergies
   FOR SELECT TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "business_synergies_update" ON public.business_synergies;
 CREATE POLICY "business_synergies_update" ON public.business_synergies
   FOR UPDATE TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
-  WITH CHECK (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
+  USING (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+  WITH CHECK (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
 
 DROP POLICY IF EXISTS "business_synergies_delete" ON public.business_synergies;
 CREATE POLICY "business_synergies_delete" ON public.business_synergies
   FOR DELETE TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+  USING (org_id = public.user_org_id() AND auth.user_role() = 'admin');

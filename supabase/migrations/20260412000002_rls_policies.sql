@@ -7,7 +7,7 @@
 
 -- ── Helper functions ──────────────────────────────────────────────────────────
 
-CREATE OR REPLACE FUNCTION auth.user_org_id()
+CREATE OR REPLACE FUNCTION public.user_org_id()
 RETURNS uuid AS $$
   SELECT org_id FROM public.profiles WHERE id = auth.uid();
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
@@ -43,7 +43,7 @@ CREATE POLICY "profiles_select" ON public.profiles
   FOR SELECT TO authenticated
   USING (
     id = auth.uid()
-    OR org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin')
+    OR org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin')
   );
 
 DROP POLICY IF EXISTS "profiles_update" ON public.profiles;
@@ -59,13 +59,13 @@ CREATE POLICY "profiles_update" ON public.profiles
 DROP POLICY IF EXISTS "organisations_select" ON public.organisations;
 CREATE POLICY "organisations_select" ON public.organisations
   FOR SELECT TO authenticated
-  USING (id = auth.user_org_id());
+  USING (id = public.user_org_id());
 
 DROP POLICY IF EXISTS "organisations_update" ON public.organisations;
 CREATE POLICY "organisations_update" ON public.organisations
   FOR UPDATE TO authenticated
-  USING (id = auth.user_org_id() AND auth.user_role() = 'admin')
-  WITH CHECK (id = auth.user_org_id() AND auth.user_role() = 'admin');
+  USING (id = public.user_org_id() AND auth.user_role() = 'admin')
+  WITH CHECK (id = public.user_org_id() AND auth.user_role() = 'admin');
 
 -- ── pitches ───────────────────────────────────────────────────────────────────
 
@@ -74,7 +74,7 @@ CREATE POLICY "pitches_select" ON public.pitches
   FOR SELECT TO authenticated
   USING (
     user_id = auth.uid()
-    OR (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+    OR (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
   );
 
 DROP POLICY IF EXISTS "pitches_insert" ON public.pitches;
@@ -100,7 +100,7 @@ CREATE POLICY "training_sessions_select" ON public.training_sessions
   FOR SELECT TO authenticated
   USING (
     user_id = auth.uid()
-    OR (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+    OR (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
   );
 
 DROP POLICY IF EXISTS "training_sessions_insert" ON public.training_sessions;
@@ -126,13 +126,13 @@ CREATE POLICY "deal_outcomes_select" ON public.deal_outcomes
   FOR SELECT TO authenticated
   USING (
     user_id = auth.uid()
-    OR (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+    OR (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
   );
 
 DROP POLICY IF EXISTS "deal_outcomes_insert" ON public.deal_outcomes;
 CREATE POLICY "deal_outcomes_insert" ON public.deal_outcomes
   FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid() AND org_id = auth.user_org_id());
+  WITH CHECK (user_id = auth.uid() AND org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "deal_outcomes_update" ON public.deal_outcomes;
 CREATE POLICY "deal_outcomes_update" ON public.deal_outcomes
@@ -177,7 +177,7 @@ CREATE POLICY "live_scores_select" ON public.live_scores
   FOR SELECT TO authenticated
   USING (
     rep_id = auth.uid()
-    OR (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+    OR (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
   );
 
 -- INSERT/UPDATE/DELETE: service role only (no client-facing policy needed;
@@ -189,7 +189,7 @@ CREATE POLICY "live_scores_select" ON public.live_scores
 DROP POLICY IF EXISTS "leaderboard_snapshots_select" ON public.leaderboard_snapshots;
 CREATE POLICY "leaderboard_snapshots_select" ON public.leaderboard_snapshots
   FOR SELECT TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 -- ── rep_correlation_snapshots ─────────────────────────────────────────────────
 -- Written by service-role correlation-engine. Reps read own; managers read org.
@@ -199,7 +199,7 @@ CREATE POLICY "rep_corr_snapshots_select" ON public.rep_correlation_snapshots
   FOR SELECT TO authenticated
   USING (
     user_id = auth.uid()
-    OR (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+    OR (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
   );
 
 -- ── prospect_profiles ─────────────────────────────────────────────────────────
@@ -207,23 +207,23 @@ CREATE POLICY "rep_corr_snapshots_select" ON public.rep_correlation_snapshots
 DROP POLICY IF EXISTS "prospect_profiles_select" ON public.prospect_profiles;
 CREATE POLICY "prospect_profiles_select" ON public.prospect_profiles
   FOR SELECT TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "prospect_profiles_insert" ON public.prospect_profiles;
 CREATE POLICY "prospect_profiles_insert" ON public.prospect_profiles
   FOR INSERT TO authenticated
-  WITH CHECK (org_id = auth.user_org_id());
+  WITH CHECK (org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "prospect_profiles_update" ON public.prospect_profiles;
 CREATE POLICY "prospect_profiles_update" ON public.prospect_profiles
   FOR UPDATE TO authenticated
-  USING (org_id = auth.user_org_id())
-  WITH CHECK (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id())
+  WITH CHECK (org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "prospect_profiles_delete" ON public.prospect_profiles;
 CREATE POLICY "prospect_profiles_delete" ON public.prospect_profiles
   FOR DELETE TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
+  USING (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
 
 -- ── upgrade_requests ─────────────────────────────────────────────────────────
 
@@ -232,18 +232,18 @@ CREATE POLICY "upgrade_requests_select" ON public.upgrade_requests
   FOR SELECT TO authenticated
   USING (
     user_id = auth.uid()
-    OR (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+    OR (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
   );
 
 DROP POLICY IF EXISTS "upgrade_requests_insert" ON public.upgrade_requests;
 CREATE POLICY "upgrade_requests_insert" ON public.upgrade_requests
   FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid() AND org_id = auth.user_org_id());
+  WITH CHECK (user_id = auth.uid() AND org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "upgrade_requests_delete" ON public.upgrade_requests;
 CREATE POLICY "upgrade_requests_delete" ON public.upgrade_requests
   FOR DELETE TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+  USING (org_id = public.user_org_id() AND auth.user_role() = 'admin');
 
 -- ── call_consent_log ──────────────────────────────────────────────────────────
 
@@ -254,7 +254,7 @@ CREATE POLICY "consent_log_select" ON public.call_consent_log
     user_id = auth.uid()
     OR (auth.user_role() IN ('team_lead', 'admin')
         AND user_id IN (
-          SELECT id FROM public.profiles WHERE org_id = auth.user_org_id()
+          SELECT id FROM public.profiles WHERE org_id = public.user_org_id()
         ))
   );
 

@@ -29,13 +29,13 @@ ALTER TABLE public.org_ai_limits ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "org_ai_limits_select" ON public.org_ai_limits;
 CREATE POLICY "org_ai_limits_select" ON public.org_ai_limits
   FOR SELECT TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+  USING (org_id = public.user_org_id() AND auth.user_role() = 'admin');
 
 DROP POLICY IF EXISTS "org_ai_limits_update" ON public.org_ai_limits;
 CREATE POLICY "org_ai_limits_update" ON public.org_ai_limits
   FOR UPDATE TO authenticated
-  USING  (org_id = auth.user_org_id() AND auth.user_role() = 'admin')
-  WITH CHECK (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+  USING  (org_id = public.user_org_id() AND auth.user_role() = 'admin')
+  WITH CHECK (org_id = public.user_org_id() AND auth.user_role() = 'admin');
 
 -- ── org_ai_usage ──────────────────────────────────────────────────────────────
 -- One row per (org, function, UTC calendar day). Upserted by check_org_ai_limit.
@@ -59,7 +59,7 @@ ALTER TABLE public.org_ai_usage ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "org_ai_usage_select" ON public.org_ai_usage;
 CREATE POLICY "org_ai_usage_select" ON public.org_ai_usage
   FOR SELECT TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
+  USING (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
 
 -- ── check_org_ai_limit ────────────────────────────────────────────────────────
 -- Returns jsonb: { allowed, daily_calls, daily_tokens, call_limit, token_limit }

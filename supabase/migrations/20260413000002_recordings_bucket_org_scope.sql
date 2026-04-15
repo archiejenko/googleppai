@@ -5,7 +5,7 @@
 --
 -- New path structure: {org_id}/sessions/{session_id}.webm
 -- The first folder segment is enforced to equal the caller's org_id via
--- auth.user_org_id() (defined in 20260412000002_rls_policies.sql).
+-- public.user_org_id() (defined in 20260412000002_rls_policies.sql).
 --
 -- Client upload and erasure paths were updated atomically with this migration.
 -- Legacy paths (sessions/{id}.webm) remain in storage but are no longer
@@ -24,7 +24,7 @@ CREATE POLICY "recordings_insert" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (
     bucket_id = 'recordings'
-    AND (storage.foldername(name))[1] = auth.user_org_id()::text
+    AND (storage.foldername(name))[1] = public.user_org_id()::text
   );
 
 -- ── SELECT (signed URL generation): org members only ─────────────────────────
@@ -35,7 +35,7 @@ CREATE POLICY "recordings_select" ON storage.objects
   FOR SELECT TO authenticated
   USING (
     bucket_id = 'recordings'
-    AND (storage.foldername(name))[1] = auth.user_org_id()::text
+    AND (storage.foldername(name))[1] = public.user_org_id()::text
   );
 
 -- ── UPDATE: org members only (e.g. upsert on re-upload) ──────────────────────
@@ -45,11 +45,11 @@ CREATE POLICY "recordings_update" ON storage.objects
   FOR UPDATE TO authenticated
   USING (
     bucket_id = 'recordings'
-    AND (storage.foldername(name))[1] = auth.user_org_id()::text
+    AND (storage.foldername(name))[1] = public.user_org_id()::text
   )
   WITH CHECK (
     bucket_id = 'recordings'
-    AND (storage.foldername(name))[1] = auth.user_org_id()::text
+    AND (storage.foldername(name))[1] = public.user_org_id()::text
   );
 
 -- DELETE is service-role only (gdpr-erasure handles deletion; no client policy).

@@ -28,7 +28,7 @@ ALTER TABLE public.upgrade_requests      ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "leaderboard_snapshots_select" ON public.leaderboard_snapshots;
 CREATE POLICY "leaderboard_snapshots_select" ON public.leaderboard_snapshots
   FOR SELECT TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 -- dispatched_drills ───────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS "dispatched_drills_select" ON public.dispatched_drills;
@@ -65,23 +65,23 @@ CREATE POLICY "deployment_requests_insert" ON public.deployment_requests
 DROP POLICY IF EXISTS "prospect_profiles_select" ON public.prospect_profiles;
 CREATE POLICY "prospect_profiles_select" ON public.prospect_profiles
   FOR SELECT TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "prospect_profiles_insert" ON public.prospect_profiles;
 CREATE POLICY "prospect_profiles_insert" ON public.prospect_profiles
   FOR INSERT TO authenticated
-  WITH CHECK (org_id = auth.user_org_id());
+  WITH CHECK (org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "prospect_profiles_update" ON public.prospect_profiles;
 CREATE POLICY "prospect_profiles_update" ON public.prospect_profiles
   FOR UPDATE TO authenticated
-  USING (org_id = auth.user_org_id())
-  WITH CHECK (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id())
+  WITH CHECK (org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "prospect_profiles_delete" ON public.prospect_profiles;
 CREATE POLICY "prospect_profiles_delete" ON public.prospect_profiles
   FOR DELETE TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
+  USING (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'));
 
 -- upgrade_requests ────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS "upgrade_requests_select" ON public.upgrade_requests;
@@ -89,15 +89,15 @@ CREATE POLICY "upgrade_requests_select" ON public.upgrade_requests
   FOR SELECT TO authenticated
   USING (
     user_id = auth.uid()
-    OR (org_id = auth.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
+    OR (org_id = public.user_org_id() AND auth.user_role() IN ('team_lead', 'admin'))
   );
 
 DROP POLICY IF EXISTS "upgrade_requests_insert" ON public.upgrade_requests;
 CREATE POLICY "upgrade_requests_insert" ON public.upgrade_requests
   FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid() AND org_id = auth.user_org_id());
+  WITH CHECK (user_id = auth.uid() AND org_id = public.user_org_id());
 
 DROP POLICY IF EXISTS "upgrade_requests_delete" ON public.upgrade_requests;
 CREATE POLICY "upgrade_requests_delete" ON public.upgrade_requests
   FOR DELETE TO authenticated
-  USING (org_id = auth.user_org_id() AND auth.user_role() = 'admin');
+  USING (org_id = public.user_org_id() AND auth.user_role() = 'admin');
