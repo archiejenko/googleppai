@@ -35,3 +35,5 @@ dist-ssr
 
 # Supabase CLI cache (contains connection strings — do not commit)
 supabase/.temp/
+# Added by code-review-graph
+.code-review-graph/
