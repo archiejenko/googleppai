@@ -58,18 +58,19 @@ serve(async (req: Request) => {
             user.app_metadata?.org_id ?? user.user_metadata?.org_id;
 
         const rawBody = await req.json().catch(() => null)
-        const v = validateBody<{ action?: string; sessionId?: string; messages?: unknown[]; scenario?: string; difficulty?: string; targetPersona?: string; pitchGoal?: string; timeLimit?: number; language?: string; industryId?: string }>(rawBody, {
+        const v = validateBody<{ action?: string; sessionId?: string; messages?: unknown[]; scenario?: string; difficulty?: string; targetPersona?: string; pitchGoal?: string; timeLimit?: number; language?: string; industryId?: string; audioUrl?: string }>(rawBody, {
             action:    { type: 'string' },
             sessionId: { type: 'string' },
             messages:  { type: 'array' },
             timeLimit: { type: 'number' },
+            audioUrl:  { type: 'string' },
         })
         if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: v.status,
         })
         const body = v.body
-        const { action, sessionId, messages, scenario, difficulty, targetPersona, pitchGoal, timeLimit, language, industryId } = body
+        const { action, sessionId, messages, scenario, difficulty, targetPersona, pitchGoal, timeLimit, language, industryId, audioUrl } = body
 
         // === ACTION: COMPLETE SESSION ===
         if (action === 'complete') {
@@ -108,60 +109,90 @@ serve(async (req: Request) => {
                 }
                 // ─────────────────────────────────────────────────────────────
 
-                try {
-                    const transcript = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
+                const transcript = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
 
-                    const prompt = `You are an expert sales coach. Analyze this transcript.
+                const prompt = `You are an expert sales coach. Analyze this transcript.
                 Transcript:
                 ${transcript}
 
                 Return JSON with fields: score (0-100), feedback (string), sentimentScore (-1 to 1), confidenceScore (0-100), paceScore (0-100), clarityScore(0-100), duration(int seconds approx from word count).
                 JSON ONLY.`
 
-                    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-                        },
-                        body: JSON.stringify({
-                            model: 'gpt-4o-mini',
-                            messages: [{ role: 'user', content: prompt }],
-                            response_format: { type: 'json_object' },
-                            temperature: 0.3,
-                        }),
+                const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [{ role: 'user', content: prompt }],
+                        response_format: { type: 'json_object' },
+                        temperature: 0.3,
+                    }),
+                })
+
+                if (!res.ok) throw new Error('AI service unavailable')
+
+                const openaiJson = await res.json()
+                const textResponse = openaiJson.choices?.[0]?.message?.content ?? ''
+                const analysis = JSON.parse(textResponse)
+
+                // Use service role to bypass any RLS ambiguity on pitches insert
+                const { data: pitch, error: pitchError } = await supabaseAdmin
+                    .from('pitches')
+                    .insert({
+                        user_id: user.id,
+                        training_session_id: sessionId,
+                        audio_url: audioUrl || 'text-based-session',
+                        transcript: transcript,
+                        analysis: analysis,
+                        score: analysis.score || 0,
+                        feedback: analysis.feedback,
+                        sentiment_score: analysis.sentimentScore,
+                        confidence_score: analysis.confidenceScore,
+                        pace_score: analysis.paceScore,
+                        clarity_score: analysis.clarityScore,
+                        duration: analysis.duration,
                     })
+                    .select()
+                    .single()
 
-                    if (!res.ok) throw new Error('AI service unavailable')
+                if (pitchError) {
+                    console.error('[training-api] pitch insert failed:', pitchError)
+                    throw new Error('Failed to save session analysis')
+                }
 
-                    const openaiJson = await res.json()
-                    const textResponse = openaiJson.choices?.[0]?.message?.content ?? ''
-                    const analysis = JSON.parse(textResponse)
+                pitchId = pitch.id;
 
-                    const { data: pitch, error: pitchError } = await supabaseClient
-                        .from('pitches')
-                        .insert({
-                            user_id: user.id,
-                            training_session_id: sessionId,
-                            audio_url: 'text-based-session',
-                            transcript: transcript,
-                            analysis: analysis,
-                            score: analysis.score || 0,
-                            feedback: analysis.feedback,
-                            sentiment_score: analysis.sentimentScore,
-                            confidence_score: analysis.confidenceScore,
-                            pace_score: analysis.paceScore,
-                            clarity_score: analysis.clarityScore,
-                            duration: analysis.duration,
-                        })
-                        .select()
-                        .single()
+                // Dispatch targeted drills based on weakest skill areas
+                type SkillEntry = { area: string; score: number; weakness: string };
+                const skillScores: SkillEntry[] = [
+                    { area: 'Delivery & Confidence', score: analysis.confidenceScore ?? 100, weakness: 'Low confidence detected in delivery' },
+                    { area: 'Clarity & Structure',   score: analysis.clarityScore    ?? 100, weakness: 'Clarity of message needs improvement' },
+                    { area: 'Pacing & Rhythm',        score: analysis.paceScore       ?? 100, weakness: 'Pacing issues identified during session' },
+                ]
+                const weakSkills = skillScores
+                    .filter(s => s.score < 70)
+                    .sort((a, b) => a.score - b.score)
+                    .slice(0, 2)
 
-                    if (!pitchError) pitchId = pitch.id;
-
-                } catch (err) {
-                    console.error("Analysis failed", err)
-                    // Continue to complete session even if analysis fails?
+                if (weakSkills.length > 0) {
+                    const drills = weakSkills.map((s: SkillEntry) => ({
+                        user_id:             user.id,
+                        pitch_id:            pitchId,
+                        focus_area:          s.area,
+                        weakness_identified: s.weakness,
+                        difficulty:          s.score < 40 ? 'easy' : s.score < 60 ? 'medium' : 'hard',
+                        drill_type:          s.area,
+                        context:             `Score: ${Math.round(s.score)}/100 in your last session`,
+                    }))
+                    const { error: drillError } = await supabaseAdmin
+                        .from('dispatched_drills')
+                        .insert(drills)
+                    if (drillError) {
+                        console.error('[training-api] dispatched_drills insert failed:', drillError)
+                    }
                 }
             }
 

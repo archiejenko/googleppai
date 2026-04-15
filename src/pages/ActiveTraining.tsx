@@ -543,8 +543,17 @@ export default function ActiveTraining() {
                 headers: { Accept: 'audio/mpeg' },
             });
             if (error) throw error;
-            if (!(data instanceof ArrayBuffer) && !(data instanceof Uint8Array)) throw new Error('TTS non-binary');
-            await enqueue(data as ArrayBuffer);
+            let buffer: ArrayBuffer;
+            if (data instanceof ArrayBuffer) {
+                buffer = data;
+            } else if (data instanceof Uint8Array) {
+                buffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
+            } else if (data instanceof Blob) {
+                buffer = await data.arrayBuffer();
+            } else {
+                throw new Error('TTS non-binary');
+            }
+            await enqueue(buffer);
             onDone();
         } catch {
             if ('speechSynthesis' in window) {
@@ -579,15 +588,14 @@ export default function ActiveTraining() {
                 const recPath = recOrgId
                     ? `${recOrgId}/sessions/${sessionId}.webm`
                     : `sessions/${sessionId}.webm`; // fallback: org_id not yet in token
-                const { data: uploadData } = await supabase.storage
+                const { data: uploadData, error: uploadError } = await supabase.storage
                     .from('recordings')
                     .upload(recPath, blob, { upsert: true, contentType: 'audio/webm' });
-                if (uploadData) {
-                    // Bucket is private — generate a short-lived signed URL (1 hour)
-                    const { data: signedData } = await supabase.storage
-                        .from('recordings')
-                        .createSignedUrl(recPath, 3600);
-                    audioUrl = signedData?.signedUrl ?? null;
+                if (uploadError) {
+                    console.error('[ActiveTraining] recording upload failed:', uploadError);
+                } else if (uploadData) {
+                    // Store the storage path — training-api generates signed URLs on demand
+                    audioUrl = recPath;
                 }
             }
         }

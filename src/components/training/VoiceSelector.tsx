@@ -53,9 +53,15 @@ export default function VoiceSelector({ value, onChange, label }: VoiceSelectorP
         headers: { Accept: 'audio/mpeg' },
       });
       if (error) throw error;
-      if (!(data instanceof ArrayBuffer) && !(data instanceof Uint8Array)) throw new Error('non-binary response');
 
-      const blob = new Blob([data as BlobPart], { type: 'audio/mpeg' });
+      let blob: Blob;
+      if (data instanceof Blob) {
+        blob = data;
+      } else if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
+        blob = new Blob([data], { type: 'audio/mpeg' });
+      } else {
+        throw new Error('non-binary response');
+      }
       const url = URL.createObjectURL(blob);
       blobUrlRef.current = url;
 
