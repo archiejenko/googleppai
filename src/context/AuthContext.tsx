@@ -70,12 +70,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             try {
                 const { data: { session: initialSession } } = await supabase.auth.getSession();
 
-                setSession(initialSession);
-                if (initialSession?.user) {
-                    await fetchProfile(initialSession.user);
-                } else {
-                    setUser(null);
+                if (initialSession) {
+                    setSession(initialSession);
+                    if (initialSession.user) {
+                        await fetchProfile(initialSession.user);
+                    }
                 }
+                // If initialSession is null, do nothing — onAuthStateChange is the
+                // authoritative source and will set user/session/isLoading correctly.
             } catch (error: unknown) {
                 console.error('Error initializing auth:', error);
             } finally {
