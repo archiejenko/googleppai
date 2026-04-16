@@ -127,21 +127,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
         fetchingProfileFor.current = authUser.id;
-        try {
-            // Fetch public profile for role/name with timeout
+
+        type ProfileResponse = { data: { name: string; role: UserRole; onboarding_completed?: boolean; avatar_url?: string | null } | null, error: any };
+
+        const attemptFetch = (): Promise<ProfileResponse> => {
             const profilePromise = supabase
                 .from('profiles')
                 .select('name, role, onboarding_completed, avatar_url')
                 .eq('id', authUser.id)
                 .single();
 
-            const timeoutPromise = new Promise<{ data: { name: string; role: UserRole; onboarding_completed?: boolean; avatar_url?: string | null } | null, error: any }>((_, reject) =>
-                setTimeout(() => reject(new Error('Profile fetch timeout')), 30000)
+            const timeoutPromise = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
             );
 
-            // Type the race result
-            type ProfileResponse = { data: { name: string; role: UserRole; onboarding_completed?: boolean; avatar_url?: string | null } | null, error: any };
-            const result = await Promise.race([profilePromise, timeoutPromise]) as ProfileResponse;
+            return Promise.race([profilePromise, timeoutPromise]) as Promise<ProfileResponse>;
+        };
+
+        try {
+            let result: ProfileResponse;
+            try {
+                result = await attemptFetch();
+            } catch (firstError) {
+                // First attempt failed (timeout or network). Wait 2s and retry once.
+                // Never sign the user out — a slow cold start must not end the session.
+                console.warn('[Auth] Profile fetch failed, retrying in 2s...', firstError);
+                await new Promise(r => setTimeout(r, 2000));
+                result = await attemptFetch();
+            }
+
             const { data: profile, error } = result;
 
             if (error && error.code !== 'PGRST116') {
@@ -171,10 +185,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 });
             }
         } catch (error: unknown) {
-            console.error('Profile fetch error', error);
+            // Both attempts failed. Surface a graceful fallback — do NOT sign the user out.
+            // A Supabase cold start must never terminate an active auth session.
+            console.error('[Auth] Profile fetch failed after retry — using fallback user', error);
 
-            // Graceful Fallback — use real name from metadata or derive from email.
-            // Preserve onboarding_completed if we already knew it to be true.
             const fallbackUser: User = {
                 id: authUser.id,
                 email: authUser.email || '',
@@ -185,7 +199,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 onboarding_completed: userRef.current?.onboarding_completed ?? false,
             };
             setUser(fallbackUser);
-
         } finally {
             fetchingProfileFor.current = null;
             setIsLoading(false);
