@@ -1,7 +1,7 @@
 /**
  * Shared CORS headers for all OAST Edge Functions.
  *
- * IMPORTANT: ALLOWED_ORIGIN must be set to https://app.oasthq.com in both
+ * IMPORTANT: ALLOWED_ORIGIN must be set to https://oast-ai.com in both
  * the Vercel dashboard (Environment Variables) and the Supabase dashboard
  * (Edge Function secrets) before deploying. Never default to '*'.
  *
@@ -14,7 +14,7 @@ export function getCorsHeaders(req: Request): Record<string, string> {
   if (!allowedOrigin) {
     throw new Error(
       'ALLOWED_ORIGIN environment variable is not set. ' +
-      'Set it to https://app.oasthq.com in both the Vercel and Supabase dashboards before deploying.',
+      'Set it to https://oast-ai.com in both the Vercel and Supabase dashboards before deploying.',
     )
   }
 
