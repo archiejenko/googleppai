@@ -75,12 +75,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     if (initialSession.user) {
                         await fetchProfile(initialSession.user);
                     }
+                    setIsLoading(false);
                 }
-                // If initialSession is null, do nothing — onAuthStateChange is the
-                // authoritative source and will set user/session/isLoading correctly.
+                // If initialSession is null, onAuthStateChange is the authoritative
+                // source. Do not set isLoading false here — let onAuthStateChange do it.
             } catch (error: unknown) {
                 console.error('Error initializing auth:', error);
-            } finally {
                 setIsLoading(false);
             }
         };
@@ -92,6 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
             if (newSession?.user) {
                 await fetchProfile(newSession.user);
+                setIsLoading(false);
             } else {
                 setUser(null);
                 setIsLoading(false);
