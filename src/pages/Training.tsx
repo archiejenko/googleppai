@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { Play, Lock, Star, Crown, DollarSign, Shield, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { showError, showWarning } from '../utils/toast';
+import { showError } from '../utils/toast';
 
 import DealContextPanel, { type DealContext } from '../components/training/briefing/DealContextPanel';
 import ObjectivePanel from '../components/training/briefing/ObjectivePanel';
