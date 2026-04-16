@@ -7,21 +7,45 @@ import { validateBody } from '../_shared/validateBody.ts'
 const AI_ESTIMATED_TOKENS = 1500; // ~800 prompt (transcript) + 700 max output (gpt-4o-mini)
 
 serve(async (req: Request) => {
-    const corsHeaders = getCorsHeaders(req)
+    let corsHeaders: Record<string, string>
+    try {
+        corsHeaders = getCorsHeaders(req)
+    } catch (e) {
+        console.error('[training-api] CORS config error — ALLOWED_ORIGIN may not be set:', e)
+        return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+            headers: { 'Content-Type': 'application/json' },
+            status: 500,
+        })
+    }
+
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
     }
 
     try {
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) {
+            console.error('[training-api] Missing Authorization header')
+            return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 401,
+            })
+        }
+
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-            { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+            { global: { headers: { Authorization: authHeader } } }
         )
 
         const {
             data: { user },
+            error: authError,
         } = await supabaseClient.auth.getUser()
+
+        if (authError) {
+            console.error('[training-api] getUser error:', authError)
+        }
 
         if (!user) {
             return new Response(JSON.stringify({ error: 'Unauthorized' }), {

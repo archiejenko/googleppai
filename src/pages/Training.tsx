@@ -209,9 +209,7 @@ export default function Training() {
             }
 
             if (isAuthError) {
-                showWarning('Session expired — signing you out', detailedMsg);
-                await supabase.auth.signOut();
-                navigate('/login');
+                showError('Something went wrong, please try again.', detailedMsg);
                 return;
             }
             showError('Failed to start session', detailedMsg);

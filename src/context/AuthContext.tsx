@@ -70,27 +70,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             try {
                 const { data: { session: initialSession } } = await supabase.auth.getSession();
 
-                // === JWT INTEGRITY CHECK ===
-                // If we have a session, verify it belongs to this project
-                if (initialSession?.access_token) {
-                    try {
-                        const token = initialSession.access_token;
-                        const payload = JSON.parse(atob(token.split('.')[1]));
-                        const expectedRef = import.meta.env.VITE_SUPABASE_URL?.split('.')[0].split('//')[1];
-
-                        if (payload.ref && expectedRef && payload.ref !== expectedRef) {
-                            console.warn(`[Auth] JWT project mismatch detected. (Token: ${payload.ref} vs App: ${expectedRef}). Clearing session.`);
-                            await supabase.auth.signOut();
-                            setSession(null);
-                            setUser(null);
-                            setIsLoading(false);
-                            return;
-                        }
-                    } catch (e) {
-                        console.error('[Auth] Mismatch check failed', e);
-                    }
-                }
-
                 setSession(initialSession);
                 if (initialSession?.user) {
                     await fetchProfile(initialSession.user);
