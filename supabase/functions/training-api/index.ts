@@ -77,9 +77,18 @@ serve(async (req: Request) => {
             })
         }
 
-        // Extract org_id once — used by the AI spend check inside the complete branch.
-        const orgId: string | undefined =
+        // Extract org_id — prefer JWT app_metadata (fast), fall back to DB lookup
+        // to handle JWT propagation delays after create-organisation.
+        let orgId: string | undefined =
             user.app_metadata?.org_id ?? user.user_metadata?.org_id;
+        if (!orgId) {
+            const { data: profileRow } = await supabaseAdmin
+                .from('profiles')
+                .select('org_id')
+                .eq('id', user.id)
+                .single();
+            orgId = profileRow?.org_id ?? undefined;
+        }
 
         const rawBody = await req.json().catch(() => null)
         const v = validateBody<{ action?: string; sessionId?: string; messages?: unknown[]; scenario?: string; difficulty?: string; targetPersona?: string; pitchGoal?: string; timeLimit?: number; language?: string; industryId?: string; audioUrl?: string }>(rawBody, {

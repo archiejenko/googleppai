@@ -63,11 +63,22 @@ serve(async (req) => {
 
     const voiceId = voice_id ?? MODELS.ELEVENLABS_DEFAULT_VOICE_ID
 
+    // Guard: fail fast with a clear error rather than letting the request reach
+    // ElevenLabs with no key and silently triggering the browser TTS fallback.
+    const elevenLabsKey = Deno.env.get('ELEVENLABS_API_KEY')
+    if (!elevenLabsKey) {
+      console.error('[tts-generate] ELEVENLABS_API_KEY is not set')
+      return new Response(JSON.stringify({ error: 'ElevenLabs API key not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Call ElevenLabs
     const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
       headers: {
-        'xi-api-key': Deno.env.get('ELEVENLABS_API_KEY') ?? '',
+        'xi-api-key': elevenLabsKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

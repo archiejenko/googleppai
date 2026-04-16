@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Loader } from 'lucide-react';
@@ -10,8 +10,17 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     const { isAuthenticated, user, isLoading } = useAuth();
+    const [mountReady, setMountReady] = useState(false);
 
-    if (isLoading) {
+    useEffect(() => {
+        // Delay the unauthenticated redirect by 500 ms to absorb the race where
+        // initAuth briefly resolves with a null session before onAuthStateChange
+        // fires with the real session (e.g. immediately after login + navigate).
+        const t = setTimeout(() => setMountReady(true), 500);
+        return () => clearTimeout(t);
+    }, []);
+
+    if (isLoading || !mountReady) {
         return (
             <div className="min-h-screen bg-[rgb(var(--bg-canvas))] flex flex-col items-center justify-center gap-4">
                 <Loader className="w-8 h-8 text-[rgb(var(--accent-primary))] animate-spin" />

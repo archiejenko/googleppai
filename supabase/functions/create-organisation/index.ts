@@ -87,6 +87,17 @@ serve(async (req) => {
 
     if (profileError) throw profileError;
 
+    // Stamp org_id into the user's JWT app_metadata so edge functions that
+    // read user.app_metadata.org_id (training-api, drill-generation, etc.)
+    // get it without a DB round-trip. Requires service-role client.
+    const { error: metaError } = await supabase.auth.admin.updateUserById(user.id, {
+      app_metadata: { org_id: org.id },
+    });
+    if (metaError) {
+      console.error('[create-organisation] failed to set app_metadata.org_id:', metaError);
+      // Non-fatal: profile is linked; JWT will be refreshed on next sign-in.
+    }
+
     await writeAuditLog(supabase, {
       actor_id:    user.id,
       actor_role:  "user",
