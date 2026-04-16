@@ -109,17 +109,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         fetchingProfileFor.current = authUser.id;
 
-        type ProfileResponse = { data: { name: string; role: UserRole; onboarding_completed?: boolean; avatar_url?: string | null } | null, error: any };
+        type ProfileResponse = { data: { role: UserRole; onboarding_completed?: boolean; org_id?: string | null; preferred_voice_id?: string | null } | null, error: any };
 
         const attemptFetch = (): Promise<ProfileResponse> => {
             const profilePromise = supabase
                 .from('profiles')
-                .select('name, role, onboarding_completed, avatar_url')
+                .select('id, org_id, role, onboarding_completed, preferred_voice_id')
                 .eq('id', authUser.id)
                 .single();
 
             const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
+                setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
             );
 
             return Promise.race([profilePromise, timeoutPromise]) as Promise<ProfileResponse>;
@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const { data: profile, error } = result;
 
             if (error && error.code !== 'PGRST116') {
-                console.error('[Auth] Profile fetch error:', error);
+                console.error('[Auth] Profile fetch error (full):', JSON.stringify(error));
             }
 
             // Construct unified user object.
@@ -151,12 +151,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 id: authUser.id,
                 email: authUser.email!,
                 email_confirmed_at: authUser.email_confirmed_at || null,
-                name: profile?.name || authUser.user_metadata?.name,
+                name: authUser.user_metadata?.name,
                 role: profile?.role || 'user',
                 simulatedRole: null,
                 onboarding_completed: profile?.onboarding_completed
                     ?? (existingOnboardingCompleted === true ? true : false),
-                avatar_url: profile?.avatar_url ?? null,
+                avatar_url: null,
             };
 
             setUser(newUser);

@@ -6,6 +6,10 @@ import { validateBody } from '../_shared/validateBody.ts'
 
 const AI_ESTIMATED_TOKENS = 1500; // ~800 prompt (transcript) + 700 max output (gpt-4o-mini)
 
+// Startup diagnostics — log env var presence (never values)
+console.log('[training-api] env check — SUPABASE_URL length:', (Deno.env.get('SUPABASE_URL') ?? '').length,
+    'SUPABASE_ANON_KEY length:', (Deno.env.get('SUPABASE_ANON_KEY') ?? '').length)
+
 serve(async (req: Request) => {
     let corsHeaders: Record<string, string>
     try {
@@ -48,6 +52,8 @@ serve(async (req: Request) => {
         }
 
         if (!user) {
+            console.error('[training-api] getUser returned no user — authError:', JSON.stringify(authError),
+                '| Authorization header prefix:', authHeader?.slice(0, 27) ?? 'missing')
             return new Response(JSON.stringify({ error: 'Unauthorized' }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 401,
