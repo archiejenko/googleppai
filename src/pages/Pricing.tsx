@@ -14,6 +14,14 @@ const STANDARD_FEATURES: string[] = [
     'Performance Analytics',
     'Goal Tracking',
     'Leaderboards',
+    'Post-Call Session Review',
+    'Deal Outcomes',
+    'HubSpot Integration',
+    'Salesforce Integration',
+    'Automated CRM Updates',
+    'AI Coaching Digests',
+    'Manager Coaching Insights',
+    'Session Review and Scoring',
 ];
 
 const STANDARD_LOCKED_FEATURES: string[] = [
@@ -23,10 +31,13 @@ const STANDARD_LOCKED_FEATURES: string[] = [
 const REV_INTEL_FEATURES: string[] = [
     'Everything in Performance Infrastructure',
     'Meeting Intelligence',
-    'Transfer Gap Analysis',
-    'Deal Correlation',
-    'Pipeline Health Scoring',
-    'AI Revenue Coaching',
+    'Transfer Gap Analysis (NEW)',
+    'Deal Correlation (NEW)',
+    'AI Revenue Coaching (NEW)',
+    'Outcome Correlation',
+    'Competitive Intel',
+    'Business Synergies',
+    'CRM Automation',
 ];
 
 
@@ -170,7 +181,7 @@ export default function Pricing() {
             {/* Footer disclaimer */}
             <section className="pb-24 px-6 text-center">
                 <p className="text-xs tracking-widest text-[rgb(var(--text-muted))]">
-                    ALL PLANS REQUIRE A ONE-TIME £2,000 STRATEGIC DEPLOYMENT FEE · TOKEN USAGE CHARGES APPLY ON REVENUE INTELLIGENCE LAYER · ALL PRICES EXCLUDE VAT · ANNUAL PLANS BILLED AS A SINGLE PAYMENT
+                    ALL PLANS REQUIRE A ONE-TIME £2,000 STRATEGIC DEPLOYMENT FEE · ALL PRICES EXCLUDE VAT · ANNUAL PLANS BILLED AS A SINGLE PAYMENT
                 </p>
             </section>
 

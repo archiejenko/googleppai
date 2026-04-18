@@ -532,6 +532,15 @@ async function handleTrainingEfficacy(req: Request): Promise<Response> {
 
   const db = adminClient()
 
+  const { data: orgTier } = await db
+    .from('organisations')
+    .select('tier')
+    .eq('id', user.team_id)
+    .single()
+  if (orgTier?.tier !== 'revenue_intelligence') {
+    return new Response(JSON.stringify({ error: 'Revenue Intelligence tier required' }), { status: 403, headers: corsHeaders })
+  }
+
   // Latest snapshot per rep in the team: get distinct rep_ids then latest for each
   const { data: snapshots, error } = await db
     .from('rep_correlation_snapshots')
@@ -590,6 +599,15 @@ async function handleRepDetail(req: Request, repId: string): Promise<Response> {
   }
 
   const db = adminClient()
+
+  const { data: orgTierDetail } = await db
+    .from('organisations')
+    .select('tier')
+    .eq('id', user.team_id)
+    .single()
+  if (orgTierDetail?.tier !== 'revenue_intelligence') {
+    return new Response(JSON.stringify({ error: 'Revenue Intelligence tier required' }), { status: 403, headers: corsHeaders })
+  }
 
   // Fetch last 90 days of snapshots for this rep
   const since = new Date(Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString().split('T')[0]

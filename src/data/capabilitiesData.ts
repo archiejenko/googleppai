@@ -148,7 +148,6 @@ export const capabilitySections: CapabilitySectionData[] = [
         description:
           'Full call scoring delivered immediately after the session. Every metric. Every turning point. Coachable in minutes.',
         hoverValue: 'Make every call a coaching opportunity.',
-        tierBadge: 'Revenue Intelligence',
       },
     ],
     stats: [
@@ -209,6 +208,30 @@ export const capabilitySections: CapabilitySectionData[] = [
         description:
           'Instant view of deal velocity, risk concentration, and coverage ratio. Formatted for the Monday forecast meeting.',
         hoverValue: 'Forecast confidence built on call data.',
+        tierBadge: 'Revenue Intelligence',
+      },
+      {
+        icon: TrendingUp,
+        title: 'Transfer Gap Analysis',
+        description:
+          'Quantify the gap between training performance and live call execution. Identify which competencies degrade under real conditions.',
+        hoverValue: 'Know exactly where training does not transfer to live.',
+        tierBadge: 'Revenue Intelligence',
+      },
+      {
+        icon: TrendingUp,
+        title: 'Deal Correlation',
+        description:
+          'Correlate call quality scores and MEDDIC execution against won and lost deals. Surface which behaviours drive revenue outcomes.',
+        hoverValue: 'Connect rep behaviour to deal results.',
+        tierBadge: 'Revenue Intelligence',
+      },
+      {
+        icon: TrendingUp,
+        title: 'AI Revenue Coaching',
+        description:
+          'Personalised coaching plans generated from transfer gap scores, MEDDIC data, and win rate. Targeted recommendations per rep.',
+        hoverValue: 'Coaching grounded in outcome data.',
         tierBadge: 'Revenue Intelligence',
       },
     ],
@@ -422,7 +445,6 @@ export const capabilitySections: CapabilitySectionData[] = [
         description:
           'Two-way sync with HubSpot. Call data, training scores, and deal signals pushed automatically. CRM stays clean without rep effort.',
         hoverValue: 'The CRM reps actually keep up to date.',
-        tierBadge: 'Revenue Intelligence',
       },
       {
         icon: Database,
@@ -430,7 +452,6 @@ export const capabilitySections: CapabilitySectionData[] = [
         description:
           'Native Salesforce connector syncing OAST performance data to opportunity records, contact timelines, and activity logs.',
         hoverValue: 'Salesforce enriched with every call signal.',
-        tierBadge: 'Revenue Intelligence',
       },
       {
         icon: Database,
@@ -444,9 +465,8 @@ export const capabilitySections: CapabilitySectionData[] = [
         icon: Database,
         title: 'Automated CRM Updates',
         description:
-          'Contact notes, follow-up tasks, and deal stage changes written to CRM from every call — zero manual data entry.',
+          'Contact notes, follow-up tasks, and deal stage changes written to CRM from every call. Zero manual data entry.',
         hoverValue: 'Hours of admin. Reclaimed.',
-        tierBadge: 'Revenue Intelligence',
       },
     ],
     stats: [

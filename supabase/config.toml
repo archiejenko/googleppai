@@ -1,6 +1,12 @@
 
 # User-facing functions: JWT is verified manually in each function via auth.getUser().
 # Platform-level verify_jwt is disabled to avoid ES256/HS256 mismatch rejections.
+[functions.transfer-gap]
+verify_jwt = false
+
+[functions.ai-revenue-coaching]
+verify_jwt = false
+
 [functions.training-api]
 verify_jwt = false
 

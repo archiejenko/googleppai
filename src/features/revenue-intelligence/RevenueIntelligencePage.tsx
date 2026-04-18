@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, AlertCircle, BarChart3, Target, Layers, Zap, ArrowRight, RefreshCw } from 'lucide-react';
+import {
+    TrendingUp, AlertCircle, BarChart3, Target, Layers, Zap,
+    ArrowRight, RefreshCw, Mic, BarChart2,
+} from 'lucide-react';
 import TierGate from '../../components/shared/TierGate';
 import { useAuth } from '../../context/AuthContext';
 import { SUPABASE_FUNCTIONS_URL } from '../../utils/supabase';
 
-
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface OpportunityItem {
     id: string;
@@ -38,6 +41,37 @@ interface Summary {
     synergies?: SynergyItem[];
 }
 
+interface TransferGapData {
+    delivery_gap_score: number | null;
+    readiness_gap_score: number | null;
+    talk_ratio_training: number | null;
+    talk_ratio_live: number | null;
+    discovery_training: number | null;
+    discovery_live: number | null;
+    meddic_avg: number | null;
+    deal_win_rate: number | null;
+    sample_size_live: number;
+    sample_size_training: number;
+    insufficient_deal_data: boolean;
+    proxy_only: boolean;
+}
+
+interface CoachingRecommendation {
+    title: string;
+    detail: string;
+    drill_type: 'roleplay' | 'pitch' | 'meddic' | 'discovery';
+    priority: 1 | 2 | 3;
+}
+
+interface CoachingProfile {
+    primary_gap: 'delivery' | 'readiness' | 'both' | 'none';
+    top_recommendation: string;
+    recommendations: CoachingRecommendation[];
+    generated_at: string;
+    delivery_gap_score: number | null;
+    readiness_gap_score: number | null;
+}
+
 interface ModuleCard {
     key: string;
     label: string;
@@ -47,6 +81,8 @@ interface ModuleCard {
     statLabel: string;
     action?: string;
 }
+
+// ── Helper components ─────────────────────────────────────────────────────────
 
 function MetricCard({ card, onAction }: { card: ModuleCard; onAction: (key: string) => void }) {
     return (
@@ -81,6 +117,271 @@ function MetricCard({ card, onAction }: { card: ModuleCard; onAction: (key: stri
         </div>
     );
 }
+
+function GapScoreBadge({ score, label }: { score: number | null; label: string }) {
+    if (score === null) return null;
+    const color = score >= 70 ? 'text-status-error' : score >= 40 ? 'text-status-warning' : 'text-status-success';
+    return (
+        <div className="text-center">
+            <p className={`text-3xl font-mono ${color}`}>{Math.round(score)}</p>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">{label}</p>
+        </div>
+    );
+}
+
+function CompBar({ label, training, live }: { label: string; training: number | null; live: number | null }) {
+    const t = training ?? 0;
+    const l = live ?? 0;
+    return (
+        <div className="space-y-1">
+            <p className="text-[10px] uppercase tracking-widest text-text-muted">{label}</p>
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+                <span className="w-16 text-right">Training</span>
+                <div className="flex-1 bg-bg-raised h-2">
+                    <div className="bg-accent h-2" style={{ width: `${Math.min(100, t)}%` }} />
+                </div>
+                <span className="w-8 font-mono">{Math.round(t)}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+                <span className="w-16 text-right">Live</span>
+                <div className="flex-1 bg-bg-raised h-2">
+                    <div className="bg-text-muted h-2" style={{ width: `${Math.min(100, l)}%` }} />
+                </div>
+                <span className="w-8 font-mono">{Math.round(l)}</span>
+            </div>
+        </div>
+    );
+}
+
+function DrillTypeIcon({ type }: { type: CoachingRecommendation['drill_type'] }) {
+    if (type === 'roleplay' || type === 'pitch') return <Mic className="w-3.5 h-3.5" />;
+    return <BarChart2 className="w-3.5 h-3.5" />;
+}
+
+// ── Transfer Gap Section ──────────────────────────────────────────────────────
+
+function TransferGapSection({ authHeader }: { authHeader: string }) {
+    const [periodDays, setPeriodDays] = useState(30);
+    const [data, setData] = useState<TransferGapData | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    const fetchGap = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(
+                `${SUPABASE_FUNCTIONS_URL}/transfer-gap?period_days=${periodDays}`,
+                { headers: { Authorization: authHeader } },
+            );
+            const json = await res.json();
+            setData(json.data ?? null);
+        } catch (e) {
+            console.error('[TransferGap] fetch error:', e);
+        } finally {
+            setLoading(false);
+        }
+    }, [authHeader, periodDays]);
+
+    useEffect(() => { fetchGap(); }, [fetchGap]);
+
+    const isEmpty =
+        !loading &&
+        data !== null &&
+        ((data.sample_size_live ?? 0) < 3 || (data.sample_size_training ?? 0) < 3);
+
+    return (
+        <div className="card-os border border-border p-6 space-y-5">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-0.5">Transfer Gap Analysis</p>
+                    <p className="text-sm text-text-muted">Training performance vs live call execution</p>
+                </div>
+                <div className="flex gap-1">
+                    {[30, 60, 90].map((d) => (
+                        <button
+                            key={d}
+                            onClick={() => setPeriodDays(d)}
+                            className={`text-[10px] uppercase tracking-widest px-3 py-1.5 border transition-colors ${
+                                periodDays === d
+                                    ? 'border-accent text-accent'
+                                    : 'border-border text-text-muted hover:text-text-primary'
+                            }`}
+                        >
+                            {d}d
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {loading && (
+                <div className="grid grid-cols-2 gap-6">
+                    <div className="h-32 bg-bg-raised animate-pulse" />
+                    <div className="h-32 bg-bg-raised animate-pulse" />
+                </div>
+            )}
+
+            {isEmpty && (
+                <p className="text-sm text-text-muted py-4">
+                    Not enough data yet. Complete more training sessions and calls to generate your Transfer Gap.
+                </p>
+            )}
+
+            {!loading && !isEmpty && data && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                        <p className="text-xs uppercase tracking-widest text-text-muted border-b border-border pb-2">
+                            Delivery Gap
+                        </p>
+                        <CompBar
+                            label="Talk Ratio"
+                            training={data.talk_ratio_training}
+                            live={data.talk_ratio_live}
+                        />
+                        <CompBar
+                            label="Discovery"
+                            training={data.discovery_training}
+                            live={data.discovery_live}
+                        />
+                        <GapScoreBadge score={data.delivery_gap_score} label="Delivery Gap Score" />
+                    </div>
+
+                    <div className="space-y-4">
+                        <p className="text-xs uppercase tracking-widest text-text-muted border-b border-border pb-2">
+                            Readiness Gap
+                        </p>
+                        {data.meddic_avg !== null && (
+                            <div className="space-y-1">
+                                <p className="text-[10px] uppercase tracking-widest text-text-muted">MEDDIC Avg</p>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 bg-bg-raised h-2">
+                                        <div className="bg-accent h-2" style={{ width: `${Math.min(100, data.meddic_avg)}%` }} />
+                                    </div>
+                                    <span className="text-xs font-mono text-text-primary w-8">{Math.round(data.meddic_avg)}</span>
+                                </div>
+                            </div>
+                        )}
+                        {!data.insufficient_deal_data && data.deal_win_rate !== null && (
+                            <div className="space-y-1">
+                                <p className="text-[10px] uppercase tracking-widest text-text-muted">Win Rate</p>
+                                <p className="text-lg font-mono text-text-primary">{data.deal_win_rate.toFixed(1)}%</p>
+                            </div>
+                        )}
+                        <GapScoreBadge score={data.readiness_gap_score} label="Readiness Gap Score" />
+                        {data.insufficient_deal_data && (
+                            <p className="text-[10px] text-text-muted border-l-2 border-border pl-3">
+                                Win rate data requires 5+ logged deals. Showing MEDDIC readiness score only.
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── AI Revenue Coaching Section ───────────────────────────────────────────────
+
+function CoachingSection({ authHeader }: { authHeader: string }) {
+    const [profile, setProfile] = useState<CoachingProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchCoaching = useCallback(async () => {
+        try {
+            const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/ai-revenue-coaching`, {
+                headers: { Authorization: authHeader },
+            });
+            const json = await res.json();
+            setProfile(json.data ?? null);
+        } catch (e) {
+            console.error('[Coaching] fetch error:', e);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    }, [authHeader]);
+
+    useEffect(() => { fetchCoaching(); }, [fetchCoaching]);
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        fetchCoaching();
+    };
+
+    const GAP_LABELS: Record<string, string> = {
+        delivery: 'Delivery Gap',
+        readiness: 'Readiness Gap',
+        both: 'Delivery + Readiness',
+        none: 'No Gap Detected',
+    };
+
+    return (
+        <div className="card-os border border-border p-6 space-y-5">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-0.5">AI Revenue Coaching</p>
+                    {profile?.generated_at && (
+                        <p className="text-[10px] text-text-muted">
+                            Last generated: {new Date(profile.generated_at).toLocaleDateString('en-GB')}
+                        </p>
+                    )}
+                </div>
+                <button
+                    onClick={handleRefresh}
+                    disabled={refreshing || loading}
+                    className="btn-ghost flex items-center gap-2 text-xs py-2 px-3"
+                >
+                    <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+                    Refresh
+                </button>
+            </div>
+
+            {loading && <div className="h-24 bg-bg-raised animate-pulse" />}
+
+            {!loading && !profile && (
+                <p className="text-sm text-text-muted">No coaching profile yet. Click Refresh to generate.</p>
+            )}
+
+            {!loading && profile && (
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-widest bg-bg-raised text-accent px-2 py-1 border border-border">
+                            {GAP_LABELS[profile.primary_gap] ?? profile.primary_gap}
+                        </span>
+                    </div>
+
+                    {profile.top_recommendation && (
+                        <div className="border-l-2 border-accent pl-4">
+                            <p className="text-sm text-text-primary">{profile.top_recommendation}</p>
+                        </div>
+                    )}
+
+                    {(profile.recommendations ?? []).length > 0 && (
+                        <div className="space-y-3">
+                            {profile.recommendations.slice(0, 3).map((rec, i) => (
+                                <div key={i} className="card-os border border-border p-4 space-y-1">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-accent">
+                                                <DrillTypeIcon type={rec.drill_type} />
+                                            </span>
+                                            <p className="text-sm text-text-primary">{rec.title}</p>
+                                        </div>
+                                        <span className="text-[10px] uppercase tracking-widest bg-bg-raised text-text-muted px-2 py-0.5 border border-border">
+                                            P{rec.priority}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-text-muted pl-6">{rec.detail}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── Main dashboard ────────────────────────────────────────────────────────────
 
 function RevenueIntelDashboard() {
     const { session } = useAuth();
@@ -120,11 +421,20 @@ function RevenueIntelDashboard() {
 
     const cards: ModuleCard[] = [
         {
+            key: 'outcomes',
+            label: 'Deal Outcomes',
+            icon: Target,
+            description: 'Win/loss logging and correlation engine',
+            stat: null,
+            statLabel: '',
+            action: 'View outcomes',
+        },
+        {
             key: 'missed',
             label: 'Missed Revenue',
             icon: AlertCircle,
             description: 'Open opportunities with recovery potential',
-            stat: loading ? '…' : `£${Math.round(totalAtRisk / 1000)}k`,
+            stat: loading ? '...' : `£${Math.round(totalAtRisk / 1000)}k`,
             statLabel: 'ARR at risk',
             action: 'View opportunities',
         },
@@ -133,7 +443,7 @@ function RevenueIntelDashboard() {
             label: 'Pipeline Health',
             icon: BarChart3,
             description: 'Open pipeline with signal-adjusted probabilities',
-            stat: loading ? '…' : String(summary.pipeline?.open_deals_count ?? 0),
+            stat: loading ? '...' : String(summary.pipeline?.open_deals_count ?? 0),
             statLabel: 'Open deals',
             action: 'View pipeline',
         },
@@ -142,7 +452,7 @@ function RevenueIntelDashboard() {
             label: 'Competitive Intel',
             icon: Layers,
             description: 'Win rates and battlecard insights vs competitors',
-            stat: loading ? '…' : (topCompetitor?.competitor_name || '—'),
+            stat: loading ? '...' : (topCompetitor?.competitor_name || null),
             statLabel: 'Top competitor this month',
             action: 'View intel',
         },
@@ -160,18 +470,9 @@ function RevenueIntelDashboard() {
             label: 'Business Synergies',
             icon: TrendingUp,
             description: 'Cross-account co-sell and referral opportunities',
-            stat: loading ? '…' : String((summary.synergies ?? []).length),
+            stat: loading ? '...' : String((summary.synergies ?? []).length),
             statLabel: 'New synergies',
             action: 'View synergies',
-        },
-        {
-            key: 'outcomes',
-            label: 'Deal Outcomes',
-            icon: Target,
-            description: 'Win/loss logging and correlation engine',
-            stat: null,
-            statLabel: '',
-            action: 'View outcomes',
         },
         {
             key: 'automation',
@@ -201,6 +502,13 @@ function RevenueIntelDashboard() {
                 </button>
             </div>
 
+            {/* Section 1: Transfer Gap Analysis */}
+            {authHeader && <TransferGapSection authHeader={authHeader} />}
+
+            {/* Section 2: AI Revenue Coaching */}
+            {authHeader && <CoachingSection authHeader={authHeader} />}
+
+            {/* Sections 3-9: Deal Outcomes first, then remaining cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {cards.map(card => (
                     <MetricCard
@@ -225,7 +533,7 @@ function RevenueIntelDashboard() {
                         <p className="text-xs font-black uppercase tracking-widest text-text-muted">
                             {cards.find(c => c.key === detailKey)?.label}
                         </p>
-                        <button onClick={() => setDetailKey(null)} className="text-xs text-text-muted hover:text-text-primary">✕ Close</button>
+                        <button onClick={() => setDetailKey(null)} className="text-xs text-text-muted hover:text-text-primary">close</button>
                     </div>
 
                     {detailKey === 'competitive' && (
@@ -235,7 +543,7 @@ function RevenueIntelDashboard() {
                                 : (summary.competitive ?? []).map((c, i) => (
                                     <div key={i} className="flex items-center justify-between text-sm border-b border-border pb-2">
                                         <span className="text-text-primary">{c.competitor_name}</span>
-                                        <span className="text-text-muted">{c.mention_count} mentions · {c.win_rate ?? '—'}% win rate</span>
+                                        <span className="text-text-muted">{c.mention_count} mentions · {c.win_rate ?? 'n/a'}% win rate</span>
                                     </div>
                                 ))
                             }
@@ -248,7 +556,7 @@ function RevenueIntelDashboard() {
                                 ? <p className="text-sm text-text-muted">No synergies detected yet.</p>
                                 : (summary.synergies ?? []).map((s, i) => (
                                     <div key={i} className="flex items-center justify-between text-sm border-b border-border pb-2">
-                                        <span className="text-text-primary">{s.account_a} ↔ {s.account_b}</span>
+                                        <span className="text-text-primary">{s.account_a} + {s.account_b}</span>
                                         <span className="text-accent text-xs">{s.opportunity_type}</span>
                                     </div>
                                 ))
@@ -283,9 +591,9 @@ function RevenueIntelDashboard() {
                             <tbody className="divide-y divide-border">
                                 {(summary.opps ?? []).slice(0, 8).map((opp) => (
                                     <tr key={opp.id} className="hover:bg-bg-raised transition-colors">
-                                        <td className="px-5 py-3 text-text-primary">{opp.company_name || '—'}</td>
+                                        <td className="px-5 py-3 text-text-primary">{opp.company_name || 'n/a'}</td>
                                         <td className="px-5 py-3 text-right text-accent font-mono">
-                                            {opp.deal_value_gbp ? `£${Number(opp.deal_value_gbp).toLocaleString('en-GB')}` : '—'}
+                                            {opp.deal_value_gbp ? `£${Number(opp.deal_value_gbp).toLocaleString('en-GB')}` : 'n/a'}
                                         </td>
                                         <td className="px-5 py-3 text-center">
                                             <span className={`text-xs px-2 py-0.5 ${(opp.recovery_score || 0) >= 70 ? 'bg-status-success/10 text-status-success' :
@@ -295,7 +603,7 @@ function RevenueIntelDashboard() {
                                                 {Math.round(opp.recovery_score || 0)}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-3 text-text-muted text-xs">{opp.lost_reason_category || '—'}</td>
+                                        <td className="px-5 py-3 text-text-muted text-xs">{opp.lost_reason_category || 'n/a'}</td>
                                     </tr>
                                 ))}
                             </tbody>
