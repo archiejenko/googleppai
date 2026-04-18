@@ -11,7 +11,6 @@ import MEDDICReadiness, {
     type MEDDICReadinessState,
     type MEDDICKey,
 } from '../components/training/briefing/MEDDICReadiness';
-import ObjectionForecast from '../components/training/briefing/ObjectionForecast';
 import ConfidenceRating from '../components/training/briefing/ConfidenceRating';
 import VoiceSelector from '../components/training/VoiceSelector';
 
@@ -90,7 +89,6 @@ export default function Training() {
     });
     const [objective, setObjective] = useState(titleParam);
     const [meddicReadiness, setMeddicReadiness] = useState<MEDDICReadinessState>(DEFAULT_MEDDIC);
-    const [objectionForecast, setObjectionForecast] = useState<string[]>([]);
     const [confidenceRating, setConfidenceRating] = useState<number | null>(null);
 
     // ── Data fetch (unchanged) ─────────────────────────────────────────────
@@ -172,7 +170,6 @@ export default function Training() {
                     objective,
                     meddicReadiness,
                     confidenceRating,
-                    objectionForecast,
                 },
             };
 
@@ -268,16 +265,7 @@ export default function Training() {
                     {/* ── Row 2: MEDDIC Readiness ───────────────────────────── */}
                     <MEDDICReadiness value={meddicReadiness} onChange={setMeddicReadiness} />
 
-                    {/* ── Row 3: Objection Forecast ─────────────────────────── */}
-                    <ObjectionForecast
-                        objections={objectionForecast}
-                        onGenerate={setObjectionForecast}
-                        prospectName={dealContext.prospectName}
-                        prospectCompany={dealContext.prospectCompany}
-                        callPurpose={objective}
-                    />
-
-                    {/* ── Row 4: Session Config ─────────────────────────────── */}
+                    {/* ── Row 3: Session Config ─────────────────────────────── */}
                     <div className="bg-bg-surface border border-[#2a2a2e] p-5 space-y-5">
                         <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-text-muted">
                             Session Configuration
