@@ -172,7 +172,7 @@ export default function PitchAnalysis() {
                 rows.push([k.replace(/_/g, ' '), v]);
             });
         }
-        pitch.analysis.improvements.forEach((imp, i) => rows.push([`Improvement ${i + 1}`, imp]));
+        (pitch.analysis.improvements ?? []).forEach((imp, i) => rows.push([`Improvement ${i + 1}`, imp]));
         const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -393,12 +393,12 @@ export default function PitchAnalysis() {
                                 <div>
                                     <div className="text-[10px] font-black text-[rgb(var(--text-muted))] uppercase tracking-widest mb-2">Mandatory Topics Covered</div>
                                     <div className="flex flex-wrap gap-2">
-                                        {pitch.analysis.playbookAlignment.covered_questions.map((q: string, i: number) => (
+                                        {(pitch.analysis.playbookAlignment.covered_questions ?? []).map((q: string, i: number) => (
                                             <span key={i} className="px-2 py-1 bg-status-success/10 text-status-success rounded text-[10px] font-bold border border-status-success/20">
                                                 ✓ {q}
                                             </span>
                                         ))}
-                                        {pitch.analysis.playbookAlignment.missed_questions.map((q: string, i: number) => (
+                                        {(pitch.analysis.playbookAlignment.missed_questions ?? []).map((q: string, i: number) => (
                                             <span key={i} className="px-2 py-1 bg-status-danger/10 text-status-danger rounded text-[10px] font-bold border border-status-danger/20">
                                                 ✕ {q}
                                             </span>
@@ -539,7 +539,7 @@ export default function PitchAnalysis() {
                         <div className="mt-8">
                             <h3 className="font-display font-bold text-[rgb(var(--text-primary))] mb-4">Key Improvements</h3>
                             <ul className="space-y-2">
-                                {pitch.analysis.improvements.map((imp: string, i: number) => (
+                                {(pitch.analysis.improvements ?? []).map((imp: string, i: number) => (
                                     <li key={i} className="text-sm text-[rgb(var(--text-secondary))] flex items-start gap-2 bg-[rgb(var(--bg-canvas))] p-3 rounded border border-[rgb(var(--border-subtle))]">
                                         <span className="text-status-warning transform translate-y-0.5">→</span>
                                         {imp}
