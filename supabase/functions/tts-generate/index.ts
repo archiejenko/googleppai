@@ -8,7 +8,7 @@ serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
-  // Keepwarm — return immediately without hitting ElevenLabs
+  // Keepwarm — return immediately without hitting Deepgram
   if (req.headers.get('x-keepwarm') === 'true') return new Response('ok', { headers: corsHeaders })
 
   try {
@@ -62,8 +62,7 @@ serve(async (req) => {
     const { text, voice_id } = v.body
 
     // Resolve voice: explicit request param wins; otherwise read from profile.
-    // Validate against the approved set and fall back to Julian on any miss.
-    const APPROVED_VOICE_IDS = MODELS.ELEVENLABS_VOICES.map(v => v.id)
+    const APPROVED_VOICE_IDS = MODELS.DEEPGRAM_VOICES.map(v => v.id)
     let voiceId = voice_id && APPROVED_VOICE_IDS.includes(voice_id)
       ? voice_id
       : null
@@ -77,49 +76,39 @@ serve(async (req) => {
       const preferred = profile?.preferred_voice_id ?? null
       voiceId = preferred && APPROVED_VOICE_IDS.includes(preferred)
         ? preferred
-        : MODELS.ELEVENLABS_DEFAULT_VOICE_ID
+        : MODELS.DEEPGRAM_DEFAULT_VOICE_ID
     }
 
-    // Guard: fail fast with a clear error rather than letting the request reach
-    // ElevenLabs with no key and silently triggering the browser TTS fallback.
-    const elevenLabsKey = Deno.env.get('ELEVENLABS_API_KEY')
-    if (!elevenLabsKey) {
-      console.error('[tts-generate] ELEVENLABS_API_KEY is not set')
-      return new Response(JSON.stringify({ error: 'ElevenLabs API key not configured' }), {
+    const deepgramKey = Deno.env.get('DEEPGRAM_API_KEY')
+    if (!deepgramKey) {
+      console.error('[tts-generate] DEEPGRAM_API_KEY is not set')
+      return new Response(JSON.stringify({ error: 'Deepgram API key not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // Call ElevenLabs
-    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    // Call Deepgram TTS
+    const res = await fetch(`https://api.deepgram.com/v1/speak?model=${voiceId}`, {
       method: 'POST',
       headers: {
-        'xi-api-key': elevenLabsKey,
+        'Authorization': `Token ${deepgramKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        text,
-        model_id: 'eleven_turbo_v2',
-        output_format: 'mp3_44100_128',
-      }),
+      body: JSON.stringify({ text }),
     })
 
     if (!res.ok) {
       const errText = await res.text()
-      console.error('[tts-generate] ElevenLabs error:', res.status, errText)
+      console.error('[tts-generate] Deepgram error:', res.status, errText)
       return new Response(JSON.stringify({ error: 'TTS generation failed' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Resolved-Voice-Id': voiceId },
       })
     }
 
-    // Stream binary response back to client.
-    // Content-Type is set to application/octet-stream so the Supabase JS client
-    // SDK auto-detects binary and returns a Blob rather than decoding as text.
-    // X-Resolved-Voice-Id lets the client log which voice actually rendered.
     return new Response(res.body, {
-      headers: { ...corsHeaders, 'Content-Type': 'application/octet-stream', 'X-Resolved-Voice-Id': voiceId },
+      headers: { ...corsHeaders, 'Content-Type': 'audio/mpeg', 'X-Resolved-Voice-Id': voiceId },
     })
   } catch (err) {
     console.error('[tts-generate] unhandled error:', err)

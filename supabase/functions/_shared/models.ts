@@ -9,13 +9,11 @@ export const MODELS = {
   // Text-to-speech
   OPENAI_TTS: "tts-1",
   OPENAI_TTS_VOICE: "onyx",
-  DEEPGRAM_TTS: "aura-asteria-en",
 
-  // ElevenLabs voices
-  ELEVENLABS_VOICES: [
-    { id: '5PEXwsADjqmz7GO58o3B', name: 'Julian', gender: 'male',   accent: 'British', style: 'Raspy, dramatic'      },
-    { id: 'rfkTsdZrVWEVhDycUYn9', name: 'Shelby', gender: 'female', accent: 'British', style: 'Clear, conversational' },
-    { id: 'jRAAK67SEFE9m7ci5DhD', name: 'Ollie',  gender: 'male',   accent: 'British', style: 'Natural, relaxed'      },
+  // Deepgram Aura-2 voices
+  DEEPGRAM_VOICES: [
+    { id: 'aura-2-draco-en',   name: 'Draco',   gender: 'male',   accent: 'British', style: 'Deep, authoritative' },
+    { id: 'aura-2-pandora-en', name: 'Pandora', gender: 'female', accent: 'British', style: 'Clear, professional'  },
   ] as const,
-  ELEVENLABS_DEFAULT_VOICE_ID: '5PEXwsADjqmz7GO58o3B', // Julian
+  DEEPGRAM_DEFAULT_VOICE_ID: 'aura-2-draco-en',
 } as const;

@@ -93,7 +93,7 @@ export default function ActiveTraining() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const sessionId = searchParams.get('sessionId');
-    const voiceId   = searchParams.get('voice_id') ?? '5PEXwsADjqmz7GO58o3B';
+    const voiceId   = searchParams.get('voice_id') ?? 'aura-2-draco-en';
 
     // ── Session & conversation state (unchanged) ───────────────────────────
     const [sessionData, setSessionData]         = useState<SessionData | null>(null);

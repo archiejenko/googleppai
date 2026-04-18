@@ -3,9 +3,8 @@ import { Play, Square, Loader2 } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
 
 const VOICES = [
-  { id: '5PEXwsADjqmz7GO58o3B', name: 'Julian', gender: 'Male',   accent: 'British', style: 'Raspy, dramatic'      },
-  { id: 'rfkTsdZrVWEVhDycUYn9', name: 'Shelby', gender: 'Female', accent: 'British', style: 'Clear, conversational' },
-  { id: 'jRAAK67SEFE9m7ci5DhD', name: 'Ollie',  gender: 'Male',   accent: 'British', style: 'Natural, relaxed'      },
+  { id: 'aura-2-draco-en',   name: 'Draco',   gender: 'Male',   accent: 'British', style: 'Deep, authoritative' },
+  { id: 'aura-2-pandora-en', name: 'Pandora', gender: 'Female', accent: 'British', style: 'Clear, professional'  },
 ] as const;
 
 const PREVIEW_TEXT = "Hi, I'm looking at a few options right now";
@@ -100,7 +99,7 @@ export default function VoiceSelector({ value, onChange, label }: VoiceSelectorP
           {label}
         </label>
       )}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {VOICES.map(voice => {
           const isSelected  = value === voice.id;
           const isPreviewing = previewingId === voice.id;

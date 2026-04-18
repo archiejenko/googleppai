@@ -78,7 +78,7 @@ export default function Training() {
         methodology: 'MEDDIC' as 'MEDDIC' | 'BANT',
         personaCategory: 'Executive' as PersonaCategory,
         isMultiPersona: false,
-        voice_id: '5PEXwsADjqmz7GO58o3B',
+        voice_id: 'aura-2-draco-en',
     });
     const [isEliteUnlocked, setIsEliteUnlocked] = useState(false);
     const [loading, setLoading] = useState(false);

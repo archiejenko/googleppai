@@ -36,7 +36,7 @@ export default function Profile() {
         name: '',
         industry: '',
         experienceLevel: 'beginner',
-        preferred_voice_id: '5PEXwsADjqmz7GO58o3B',
+        preferred_voice_id: 'aura-2-draco-en',
     });
 
     // Password State
@@ -80,7 +80,7 @@ export default function Profile() {
                 name: profileData.name || '',
                 industry: profileData.industry || '',
                 experienceLevel: profileData.experience_level || 'beginner',
-                preferred_voice_id: profileData.preferred_voice_id || '5PEXwsADjqmz7GO58o3B',
+                preferred_voice_id: profileData.preferred_voice_id || 'aura-2-draco-en',
             });
             setStats({
                 totalXP: profileData.total_xp || 0,
