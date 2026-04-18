@@ -124,6 +124,7 @@ export default function ActiveTraining() {
     const [prevScore, setPrevScore]             = useState(70);
     const [showScorecard, setShowScorecard]     = useState(false);
     const [finalPitchId, setFinalPitchId]       = useState<string | undefined>();
+    const [sessionStarted, setSessionStarted]   = useState(false);
 
     // ── Refs (unchanged) ────────────────────────────────────────────────────
     const recognitionRef        = useRef<SpeechRecognition | null>(null);
@@ -253,7 +254,7 @@ export default function ActiveTraining() {
     // ── Initial AI greeting (unchanged) ────────────────────────────────────
     useEffect(() => {
         const triggerGreeting = async () => {
-            if (!loading && messages.length === 0 && sessionData && sessionId) {
+            if (!loading && sessionStarted && messages.length === 0 && sessionData && sessionId) {
                 setIsProcessing(true);
                 try {
                     const { data, error } = await supabase.functions.invoke('unified-ai', {
@@ -286,7 +287,7 @@ export default function ActiveTraining() {
         };
         triggerGreeting();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [loading, messages.length, sessionData, sessionId]);
+    }, [loading, sessionStarted, messages.length, sessionData, sessionId]);
 
     // ── Speech recognition init (unchanged — one-time, uses refs) ──────────
     useEffect(() => {
@@ -681,6 +682,30 @@ export default function ActiveTraining() {
                         className="w-full py-3 bg-accent text-white text-xs font-black uppercase tracking-widest"
                     >
                         Return to Dashboard
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!sessionStarted) {
+        return (
+            <div className="h-screen w-full flex flex-col items-center justify-center text-text-primary"
+                 style={{ background: '#0a0a0b' }}>
+                <div className="max-w-sm w-full text-center px-6">
+                    <h2 className="text-sm font-black uppercase tracking-[0.3em] mb-2">Ready to begin?</h2>
+                    <p className="text-[11px] text-text-muted tracking-wide mb-8">
+                        {sessionData?.scenario || 'Sales simulation'}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            initContext();
+                            setSessionStarted(true);
+                        }}
+                        className="w-full py-3 bg-accent text-white text-[11px] font-black uppercase tracking-[0.3em] hover:bg-accent/90 transition-colors"
+                    >
+                        Begin Simulation
                     </button>
                 </div>
             </div>
