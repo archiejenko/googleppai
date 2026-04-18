@@ -82,6 +82,17 @@ serve(async (req) => {
       return err("Forbidden: no org_id resolved for user", 403);
     }
 
+    // Enforce Revenue Intelligence tier
+    const { data: org } = await supabase
+      .from("organisations")
+      .select("tier")
+      .eq("id", orgId)
+      .single();
+
+    if (org?.tier !== "revenue_intelligence") {
+      return err("Revenue Intelligence tier required", 403);
+    }
+
     // Route on URL path: /revenue-intelligence/<sub-path>
     const url = new URL(req.url);
     const subPath = url.pathname.split("/").pop(); // last segment

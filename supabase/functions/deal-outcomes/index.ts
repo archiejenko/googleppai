@@ -37,6 +37,22 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
 
+    // Enforce Revenue Intelligence tier
+    if (profile?.org_id) {
+      const { data: org } = await supabase
+        .from("organisations")
+        .select("tier")
+        .eq("id", profile.org_id)
+        .single();
+
+      if (org?.tier !== "revenue_intelligence") {
+        return new Response(
+          JSON.stringify({ error: "Revenue Intelligence tier required" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     const rawBody = await req.json().catch(() => null);
     const v = validateBody<{ action: string; limit?: number; deal_name?: string; outcome?: string; deal_value_gbp?: number; closed_at?: string; notes?: string; associated_pitch_ids?: unknown[]; id?: string }>(rawBody, {
       action:               { type: 'string',  required: true },
