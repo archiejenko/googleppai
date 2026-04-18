@@ -69,9 +69,22 @@ serve(async (req) => {
         }
 
         // ── Per-org AI spend check ────────────────────────────────────────────
-        const orgId: string | undefined =
+        let orgId: string | undefined =
             user.app_metadata?.org_id ?? user.user_metadata?.org_id;
-        if (!orgId) throw new Error("Forbidden: no org_id in token");
+        if (!orgId) {
+            const { data: profileRow } = await supabaseAdmin
+                .from('profiles')
+                .select('org_id')
+                .eq('id', user.id)
+                .single();
+            orgId = profileRow?.org_id ?? undefined;
+        }
+        if (!orgId) {
+            return new Response(JSON.stringify({ error: 'Forbidden: no org resolved' }), {
+                status: 403,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+        }
 
         const orgLimit = await checkOrgAiLimit(supabaseAdmin, orgId, 'unified-ai', ESTIMATED_TOKENS);
         if (!orgLimit.allowed) {
