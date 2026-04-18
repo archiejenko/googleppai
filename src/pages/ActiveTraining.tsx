@@ -551,7 +551,7 @@ export default function ActiveTraining() {
             } else if (data instanceof ArrayBuffer) {
                 blob = new Blob([data], { type: 'audio/mpeg' });
             } else if (data instanceof Uint8Array) {
-                blob = new Blob([data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)], { type: 'audio/mpeg' });
+                blob = new Blob([data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer], { type: 'audio/mpeg' });
             } else {
                 throw new Error('TTS non-binary');
             }
