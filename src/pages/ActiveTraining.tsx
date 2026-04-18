@@ -556,12 +556,9 @@ export default function ActiveTraining() {
             }
             await enqueue(buffer);
             onDone();
-        } catch {
-            if ('speechSynthesis' in window) {
-                const u = new SpeechSynthesisUtterance(text);
-                u.onend = onDone; u.onerror = onDone;
-                window.speechSynthesis.speak(u);
-            } else { onDone(); }
+        } catch (error) {
+            console.error('[TTS] Failed:', error);
+            onDone();
         }
     };
 
@@ -570,7 +567,7 @@ export default function ActiveTraining() {
         sessionEndedRef.current = true;
         stopListening();
         flush();
-        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
         setIsProcessing(true);
 
         let audioUrl: string | null = null;

@@ -108,7 +108,7 @@ serve(async (req) => {
     }
 
     return new Response(res.body, {
-      headers: { ...corsHeaders, 'Content-Type': 'audio/mpeg', 'X-Resolved-Voice-Id': voiceId },
+      headers: { ...corsHeaders, 'Content-Type': 'application/octet-stream', 'X-Resolved-Voice-Id': voiceId },
     })
   } catch (err) {
     console.error('[tts-generate] unhandled error:', err)

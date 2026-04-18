@@ -6,10 +6,6 @@ export const MODELS = {
   // High-volume / lower-complexity: drill evaluation, commodity tasks
   OPENAI_DEFAULT: "gpt-4o-mini",
 
-  // Text-to-speech
-  OPENAI_TTS: "tts-1",
-  OPENAI_TTS_VOICE: "onyx",
-
   // Deepgram Aura-2 voices
   DEEPGRAM_VOICES: [
     { id: 'aura-2-draco-en',   name: 'Draco',   gender: 'male',   accent: 'British', style: 'Deep, authoritative' },
