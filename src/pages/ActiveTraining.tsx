@@ -544,16 +544,18 @@ export default function ActiveTraining() {
                 headers: { Accept: 'audio/mpeg' },
             });
             if (error) throw error;
-            let buffer: ArrayBuffer;
-            if (data instanceof ArrayBuffer) {
-                buffer = data;
+            console.log('[TTS] data type:', typeof data, data?.constructor?.name);
+            let blob: Blob;
+            if (data instanceof Blob) {
+                blob = data;
+            } else if (data instanceof ArrayBuffer) {
+                blob = new Blob([data], { type: 'audio/mpeg' });
             } else if (data instanceof Uint8Array) {
-                buffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
-            } else if (data instanceof Blob) {
-                buffer = await data.arrayBuffer();
+                blob = new Blob([data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)], { type: 'audio/mpeg' });
             } else {
                 throw new Error('TTS non-binary');
             }
+            const buffer = await blob.arrayBuffer();
             await enqueue(buffer);
             onDone();
         } catch (error) {
