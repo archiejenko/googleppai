@@ -1,4 +1,54 @@
 
+# User-facing functions: JWT is verified manually in each function via auth.getUser().
+# Platform-level verify_jwt is disabled to avoid ES256/HS256 mismatch rejections.
+[functions.training-api]
+verify_jwt = false
+
+[functions.tts-generate]
+verify_jwt = false
+
+[functions.unified-ai]
+verify_jwt = false
+
+[functions.drill-generation]
+verify_jwt = false
+
+[functions.drill-analysis]
+verify_jwt = false
+
+[functions.revenue-intelligence]
+verify_jwt = false
+
+[functions.correlation-engine]
+verify_jwt = false
+
+[functions.call-prep]
+verify_jwt = false
+
+[functions.chat-ai]
+verify_jwt = false
+
+[functions.deal-outcomes]
+verify_jwt = false
+
+[functions.pitch-api]
+verify_jwt = false
+
+[functions.create-organisation]
+verify_jwt = false
+
+[functions.admin-delete-user]
+verify_jwt = false
+
+[functions.gdpr-erasure]
+verify_jwt = false
+
+[functions.stripe-checkout]
+verify_jwt = false
+
+[functions.stripe-portal]
+verify_jwt = false
+
 [functions.deepgram-token]
 enabled = true
 verify_jwt = true

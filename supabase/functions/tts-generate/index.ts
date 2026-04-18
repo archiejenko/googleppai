@@ -61,7 +61,24 @@ serve(async (req) => {
     })
     const { text, voice_id } = v.body
 
-    const voiceId = voice_id ?? MODELS.ELEVENLABS_DEFAULT_VOICE_ID
+    // Resolve voice: explicit request param wins; otherwise read from profile.
+    // Validate against the approved set and fall back to Julian on any miss.
+    const APPROVED_VOICE_IDS = MODELS.ELEVENLABS_VOICES.map(v => v.id)
+    let voiceId = voice_id && APPROVED_VOICE_IDS.includes(voice_id)
+      ? voice_id
+      : null
+
+    if (!voiceId) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('preferred_voice_id')
+        .eq('id', user.id)
+        .single()
+      const preferred = profile?.preferred_voice_id ?? null
+      voiceId = preferred && APPROVED_VOICE_IDS.includes(preferred)
+        ? preferred
+        : MODELS.ELEVENLABS_DEFAULT_VOICE_ID
+    }
 
     // Guard: fail fast with a clear error rather than letting the request reach
     // ElevenLabs with no key and silently triggering the browser TTS fallback.
@@ -93,15 +110,16 @@ serve(async (req) => {
       console.error('[tts-generate] ElevenLabs error:', res.status, errText)
       return new Response(JSON.stringify({ error: 'TTS generation failed' }), {
         status: 502,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Resolved-Voice-Id': voiceId },
       })
     }
 
     // Stream binary response back to client.
     // Content-Type is set to application/octet-stream so the Supabase JS client
     // SDK auto-detects binary and returns a Blob rather than decoding as text.
+    // X-Resolved-Voice-Id lets the client log which voice actually rendered.
     return new Response(res.body, {
-      headers: { ...corsHeaders, 'Content-Type': 'application/octet-stream' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/octet-stream', 'X-Resolved-Voice-Id': voiceId },
     })
   } catch (err) {
     console.error('[tts-generate] unhandled error:', err)
