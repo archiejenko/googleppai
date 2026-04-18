@@ -422,6 +422,7 @@ export const capabilitySections: CapabilitySectionData[] = [
         description:
           'Two-way sync with HubSpot. Call data, training scores, and deal signals pushed automatically. CRM stays clean without rep effort.',
         hoverValue: 'The CRM reps actually keep up to date.',
+        tierBadge: 'Revenue Intelligence',
       },
       {
         icon: Database,
@@ -429,6 +430,7 @@ export const capabilitySections: CapabilitySectionData[] = [
         description:
           'Native Salesforce connector syncing OAST performance data to opportunity records, contact timelines, and activity logs.',
         hoverValue: 'Salesforce enriched with every call signal.',
+        tierBadge: 'Revenue Intelligence',
       },
       {
         icon: Database,
@@ -436,6 +438,7 @@ export const capabilitySections: CapabilitySectionData[] = [
         description:
           'Map OAST training metrics directly to closed/won rate, average deal size, and cycle length. Prove the ROI with your own data.',
         hoverValue: 'Training investment proven in pipeline terms.',
+        tierBadge: 'Revenue Intelligence',
       },
       {
         icon: Database,
@@ -443,6 +446,7 @@ export const capabilitySections: CapabilitySectionData[] = [
         description:
           'Contact notes, follow-up tasks, and deal stage changes written to CRM from every call — zero manual data entry.',
         hoverValue: 'Hours of admin. Reclaimed.',
+        tierBadge: 'Revenue Intelligence',
       },
     ],
     stats: [
