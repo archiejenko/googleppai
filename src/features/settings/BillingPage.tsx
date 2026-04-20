@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CreditCard, Users, TrendingUp, Clock, CheckCircle, AlertCircle, ExternalLink, Loader2 } from 'lucide-react';
+import { CreditCard, Users, TrendingUp, Clock, CheckCircle, AlertCircle, ExternalLink, Loader2, Activity } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
+import { useAuth } from '../../context/AuthContext';
 import { useTier } from '../../context/TierContext';
 import { PRICING } from '../../constants/pricing';
 import UpgradeModal from '../../components/shared/UpgradeModal';
@@ -21,6 +22,16 @@ interface BillingHistoryRow {
     created_at: string;
 }
 
+interface TokenUsageByFunction {
+    function_name: string;
+    total_tokens: number;
+}
+
+interface MonthlyTokenUsage {
+    month: string;
+    total_tokens: number;
+}
+
 // Fields added by stripe_billing migration
 interface OrgBillingExt {
     subscription_status?: string;
@@ -29,6 +40,7 @@ interface OrgBillingExt {
 }
 
 export default function BillingPage() {
+    const { isAdmin } = useAuth();
     const { org, isRevIntel, isTrialActive, trialDaysRemaining } = useTier();
     const [usage, setUsage] = useState<UsageSummary[]>([]);
     const [history, setHistory] = useState<BillingHistoryRow[]>([]);
@@ -37,6 +49,9 @@ export default function BillingPage() {
     const [upgrading, setUpgrading] = useState(false);
     const [togglingPortal, setTogglingPortal] = useState(false);
     const [stripeError, setStripeError] = useState('');
+
+    const [tokenUsage, setTokenUsage] = useState<{ total: number; byFunction: TokenUsageByFunction[]; history: MonthlyTokenUsage[] } | null>(null);
+    const [loadingTokens, setLoadingTokens] = useState(true);
 
     const orgExt = org as (typeof org & OrgBillingExt) | null;
 
@@ -77,6 +92,51 @@ export default function BillingPage() {
             setLoadingUsage(false);
         })();
     }, [org?.id]);
+
+    useEffect(() => {
+        if (!org || !isAdmin) { setLoadingTokens(false); return; }
+        (async () => {
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+            const { data: rows } = await supabase
+                .from('token_usage_log')
+                .select('function_name, total_tokens, logged_at')
+                .eq('org_id', org.id)
+                .order('logged_at', { ascending: false })
+                .limit(5000);
+
+            if (!rows) { setLoadingTokens(false); return; }
+
+            let currentTotal = 0;
+            const fnMap: Record<string, number> = {};
+            const monthMap: Record<string, number> = {};
+
+            for (const r of rows) {
+                const t = r.total_tokens ?? 0;
+                const month = (r.logged_at as string)?.slice(0, 7) ?? 'unknown';
+                monthMap[month] = (monthMap[month] ?? 0) + t;
+
+                if (r.logged_at >= monthStart) {
+                    currentTotal += t;
+                    const fn = r.function_name ?? 'unknown';
+                    fnMap[fn] = (fnMap[fn] ?? 0) + t;
+                }
+            }
+
+            const byFunction = Object.entries(fnMap)
+                .map(([function_name, total_tokens]) => ({ function_name, total_tokens }))
+                .sort((a, b) => b.total_tokens - a.total_tokens);
+
+            const historyMonths = Object.entries(monthMap)
+                .map(([month, total_tokens]) => ({ month, total_tokens }))
+                .sort((a, b) => b.month.localeCompare(a.month))
+                .slice(0, 3);
+
+            setTokenUsage({ total: currentTotal, byFunction, history: historyMonths });
+            setLoadingTokens(false);
+        })();
+    }, [org?.id, isAdmin]);
 
     const handleUpgrade = async () => {
         setUpgrading(true);
@@ -338,6 +398,97 @@ export default function BillingPage() {
                     )}
                 </div>
             </div>
+
+            {/* AI Token Usage (admin only) */}
+            {isAdmin && isRevIntel && (
+                <div>
+                    <h2 className="text-sm text-text-muted uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Activity className="w-4 h-4" /> AI Token Usage
+                    </h2>
+                    {loadingTokens ? (
+                        <p className="text-text-muted text-sm">Loading token usage...</p>
+                    ) : !tokenUsage ? (
+                        <p className="text-text-muted text-sm">No token usage data available.</p>
+                    ) : (
+                        <div className="space-y-4">
+                            {/* Allowance and progress bar */}
+                            {(() => {
+                                const allowance = org!.tokenAllowanceOverride ?? org!.monthlyTokenAllowance * org!.seatsLicensed;
+                                const pct = allowance > 0 ? Math.min(100, (tokenUsage.total / allowance) * 100) : 0;
+                                const barColor = pct >= 90 ? 'bg-status-danger' : pct >= 75 ? 'bg-status-warning' : 'bg-accent';
+                                return (
+                                    <div className="card-os border border-border p-5 space-y-3">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-text-secondary">Current month</span>
+                                            <span className="text-text-primary font-mono">
+                                                {(tokenUsage.total).toLocaleString('en-GB')} / {allowance.toLocaleString('en-GB')} tokens
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-bg-raised h-3 border border-border">
+                                            <div className={`${barColor} h-full transition-all`} style={{ width: `${pct}%` }} />
+                                        </div>
+                                        <p className="text-[10px] text-text-muted uppercase tracking-widest">
+                                            {pct.toFixed(1)}% of monthly allowance
+                                        </p>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Breakdown by function */}
+                            {tokenUsage.byFunction.length > 0 && (
+                                <div className="card-os border border-border overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-border text-text-muted text-xs uppercase tracking-widest">
+                                                <th className="px-5 py-3 text-left">Function</th>
+                                                <th className="px-5 py-3 text-right">Tokens</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border">
+                                            {tokenUsage.byFunction.map(fn => (
+                                                <tr key={fn.function_name} className="hover:bg-bg-raised transition-colors">
+                                                    <td className="px-5 py-3 text-text-secondary capitalize">
+                                                        {fn.function_name.replace(/[-_]/g, ' ')}
+                                                    </td>
+                                                    <td className="px-5 py-3 text-right text-text-primary font-mono">
+                                                        {fn.total_tokens.toLocaleString('en-GB')}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            {/* Last 3 months history */}
+                            {tokenUsage.history.length > 0 && (
+                                <div className="card-os border border-border p-5 space-y-3">
+                                    <p className="text-[10px] uppercase tracking-widest text-text-muted">Monthly History</p>
+                                    <div className="space-y-2">
+                                        {(() => {
+                                            const maxTokens = Math.max(...tokenUsage.history.map(m => m.total_tokens), 1);
+                                            return tokenUsage.history.map(m => (
+                                                <div key={m.month} className="flex items-center gap-3">
+                                                    <span className="text-xs text-text-muted font-mono w-16">{m.month}</span>
+                                                    <div className="flex-1 bg-bg-raised h-4 border border-border">
+                                                        <div
+                                                            className="bg-accent h-full transition-all"
+                                                            style={{ width: `${(m.total_tokens / maxTokens) * 100}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-xs text-text-primary font-mono w-24 text-right">
+                                                        {m.total_tokens.toLocaleString('en-GB')}
+                                                    </span>
+                                                </div>
+                                            ));
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
 
             <UpgradeModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
         </div>

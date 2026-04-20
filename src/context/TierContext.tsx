@@ -14,6 +14,8 @@ interface OrgInfo {
     weeklyTarget: number;
     industry: string | null;
     companySize: string | null;
+    monthlyTokenAllowance: number;
+    tokenAllowanceOverride: number | null;
 }
 
 interface TierContextType {
@@ -46,7 +48,7 @@ export const TierProvider = ({ children }: { children: ReactNode }) => {
 
             const { data: orgData } = await supabase
                 .from('organisations')
-                .select('id, name, tier, seats_licensed, price_per_seat_gbp, onboarding_fee_paid, trial_ends_at, weekly_target, industry, company_size')
+                .select('id, name, tier, seats_licensed, price_per_seat_gbp, onboarding_fee_paid, trial_ends_at, weekly_target, industry, company_size, monthly_token_allowance, token_allowance_override')
                 .eq('id', profile.org_id)
                 .single();
 
@@ -62,6 +64,8 @@ export const TierProvider = ({ children }: { children: ReactNode }) => {
                     weeklyTarget: orgData.weekly_target ?? 10,
                     industry: orgData.industry ?? null,
                     companySize: orgData.company_size ?? null,
+                    monthlyTokenAllowance: orgData.monthly_token_allowance ?? 4_000_000,
+                    tokenAllowanceOverride: orgData.token_allowance_override ?? null,
                 });
             }
         } catch (err) {
