@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, PhoneOff, ChevronUp, ChevronDown, Minimize2, ExternalLink, Loader2 } from 'lucide-react';
+import { Phone, PhoneOff, ChevronUp, ChevronDown, Minimize2, ExternalLink, Loader2, MicOff } from 'lucide-react';
 import { useLiveCall } from '../../context/LiveCallContext';
 import { useTier } from '../../context/TierContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useDeepgramSTT } from '../../hooks/useDeepgramSTT';
 import { supabase } from '../../utils/supabase';
+import PreCallConsent from '../PreCallConsent';
 
 interface InterimScores {
     talk_ratio_score: number | null;
@@ -89,7 +90,7 @@ function FillerRateIndicator({ rate }: { rate: number }) {
 }
 
 export default function OastLiveWidget() {
-    const { activeCall, endCall, pushTranscriptChunk } = useLiveCall();
+    const { activeCall, endCall, activateSession, abandonSession, pushTranscriptChunk } = useLiveCall();
     const { isRevIntel } = useTier();
     const { session } = useAuth();
     const navigate = useNavigate();
@@ -97,6 +98,8 @@ export default function OastLiveWidget() {
     const [elapsedSecs, setElapsedSecs] = useState(0);
     const [processingFinal, setProcessingFinal] = useState(false);
     const [interimScores, setInterimScores] = useState<InterimScores | null>(null);
+    const [confirmingWithdrawal, setConfirmingWithdrawal] = useState(false);
+    const [recordingStopped, setRecordingStopped] = useState(false);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const realtimeScoreAtRef = useRef<number>(0);
 
@@ -110,19 +113,19 @@ export default function OastLiveWidget() {
 
     const { start: startSTT, stop: stopSTT } = useDeepgramSTT({
         authToken: session?.access_token,
-        consentConfirmed: !!activeCall,
+        consentConfirmed: activeCall?.consentConfirmed ?? false,
         onFinalTranscript,
         onInterimTranscript,
         onError: (err) => console.error('[OastLiveWidget] Deepgram error:', err),
     });
 
-    // Start/stop Deepgram STT with the active call
+    // Start/stop Deepgram STT — only after consent confirmed and session active
     useEffect(() => {
-        if (activeCall && !activeCall.ended) {
+        if (activeCall && !activeCall.ended && activeCall.status === 'active' && activeCall.consentConfirmed) {
             startSTT();
         }
         return () => { stopSTT(); };
-    }, [activeCall?.callId, activeCall?.ended, startSTT, stopSTT]);
+    }, [activeCall?.callId, activeCall?.ended, activeCall?.status, activeCall?.consentConfirmed, startSTT, stopSTT]);
 
     // Update interim scores from the 30s snapshot response (fallback)
     useEffect(() => {
@@ -175,6 +178,19 @@ export default function OastLiveWidget() {
         await endCall();
     };
 
+    const handleWithdrawConsent = async () => {
+        if (!activeCall) return;
+        stopSTT();
+        await supabase
+            .from('call_consent_log')
+            .update({ withdrawn_at: new Date().toISOString() })
+            .eq('session_id', activeCall.callId)
+            .eq('user_id', session?.user?.id);
+        await endCall();
+        setRecordingStopped(true);
+        setConfirmingWithdrawal(false);
+    };
+
     // Reset processing state when call ends
     useEffect(() => {
         if (activeCall?.ended) {
@@ -183,6 +199,18 @@ export default function OastLiveWidget() {
     }, [activeCall?.ended]);
 
     if (!isRevIntel || !activeCall) return null;
+
+    // Show consent modal when session is pending consent
+    if (activeCall.status === 'pending_consent') {
+        return (
+            <PreCallConsent
+                sessionId={activeCall.callId}
+                orgId={activeCall.orgId ?? ''}
+                onConsentGiven={activateSession}
+                onConsentDeclined={abandonSession}
+            />
+        );
+    }
 
     const snap = activeCall.latestSnapshot;
     const latestNudges = snap?.coaching_nudges?.slice(-3) ?? [];
@@ -308,9 +336,25 @@ export default function OastLiveWidget() {
                                 </div>
                             )}
 
-                            {activeCall.ended && (
+                            {recordingStopped && (
+                                <div className="text-center py-2">
+                                    <p className="text-xs text-status-warning">Recording stopped. No further audio is being captured.</p>
+                                </div>
+                            )}
+
+                            {activeCall.ended && !recordingStopped && (
                                 <div className="text-center py-2">
                                     <p className="text-xs text-status-success">Call complete, score committed</p>
+                                </div>
+                            )}
+
+                            {confirmingWithdrawal && (
+                                <div className="border border-status-danger/30 p-3 space-y-2">
+                                    <p className="text-xs text-text-secondary">Are you sure you want to stop recording? Your session will end and no further audio will be captured.</p>
+                                    <div className="flex gap-2">
+                                        <button onClick={handleWithdrawConsent} className="text-[10px] uppercase tracking-widest text-status-danger hover:bg-status-danger/10 px-3 py-1 border border-status-danger/30">Confirm</button>
+                                        <button onClick={() => setConfirmingWithdrawal(false)} className="text-[10px] uppercase tracking-widest text-text-muted hover:text-text-secondary px-3 py-1 border border-border">Cancel</button>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -328,6 +372,15 @@ export default function OastLiveWidget() {
                             >
                                 Full analysis <ExternalLink className="w-3 h-3" />
                             </button>
+                            {!activeCall.ended && !recordingStopped && (
+                                <button
+                                    onClick={() => setConfirmingWithdrawal(true)}
+                                    className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-text-muted hover:text-status-warning px-2 py-1.5 transition-colors"
+                                    title="Stop Recording"
+                                >
+                                    <MicOff className="w-3 h-3" />
+                                </button>
+                            )}
                             {!activeCall.ended && (
                                 <button
                                     onClick={handleEndCall}

@@ -29,20 +29,24 @@ interface ActiveCall {
     startedAt: Date;
     prospectName?: string;
     companyName?: string;
+    orgId?: string;
     qualified: boolean;
     snapshots: ScoreSnapshot[];
     latestSnapshot: ScoreSnapshot | null;
     ended: boolean;
+    status: 'pending_consent' | 'active' | 'completed' | 'abandoned' | 'failed';
+    consentConfirmed: boolean;
 }
 
 interface LiveCallContextType {
     activeCall: ActiveCall | null;
     startCall: (opts: { prospectName?: string; companyName?: string; crmContactId?: string }) => Promise<string>;
     endCall: () => Promise<void>;
+    activateSession: () => Promise<void>;
+    abandonSession: () => Promise<void>;
     submitTextSnapshot: (text: string) => Promise<void>;
     pushTranscriptChunk: (text: string) => void;
     isLoading: boolean;
-    // Audio queue — pre-warmed at call start; use enqueueAudio in TTS callbacks
     enqueueAudio: (arrayBuffer: ArrayBuffer) => Promise<void>;
     flushAudio: () => void;
 }
@@ -177,15 +181,49 @@ export const LiveCallProvider = ({ children }: { children: ReactNode }) => {
                 startedAt: new Date(),
                 prospectName: opts.prospectName,
                 companyName: opts.companyName,
+                orgId: data.org_id,
                 qualified: false,
                 snapshots: [],
                 latestSnapshot: null,
                 ended: false,
+                status: 'pending_consent',
+                consentConfirmed: false,
             });
             return callId;
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const activateSession = async () => {
+        if (!activeCall || !authHeader) return;
+        try {
+            const res = await fetch(`${SUPABASE_FUNCTIONS_URL_INTERNAL}/telephony-webhook/activate-session`, {
+                method: 'POST',
+                headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: activeCall.callId }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to activate session');
+            setActiveCall(prev => prev ? { ...prev, status: 'active', consentConfirmed: true } : prev);
+        } catch (err) {
+            console.error('[LiveCallContext] activateSession error:', err);
+            toast.error('Failed to activate session after consent.');
+        }
+    };
+
+    const abandonSession = async () => {
+        if (!activeCall || !authHeader) return;
+        try {
+            await fetch(`${SUPABASE_FUNCTIONS_URL_INTERNAL}/telephony-webhook/update-status`, {
+                method: 'POST',
+                headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: activeCall.callId, status: 'abandoned' }),
+            });
+        } catch (err) {
+            console.error('[LiveCallContext] abandonSession error:', err);
+        }
+        setActiveCall(null);
     };
 
     const endCall = async () => {
@@ -223,7 +261,7 @@ export const LiveCallProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <LiveCallContext.Provider value={{ activeCall, startCall, endCall, submitTextSnapshot, pushTranscriptChunk, isLoading, enqueueAudio, flushAudio }}>
+        <LiveCallContext.Provider value={{ activeCall, startCall, endCall, activateSession, abandonSession, submitTextSnapshot, pushTranscriptChunk, isLoading, enqueueAudio, flushAudio }}>
             {children}
         </LiveCallContext.Provider>
     );
