@@ -8,6 +8,7 @@ import TierGate from '../../components/shared/TierGate';
 import { useAuth } from '../../context/AuthContext';
 import { useTier } from '../../context/TierContext';
 import { supabase, SUPABASE_FUNCTIONS_URL } from '../../utils/supabase';
+import PreCallBrief from './PreCallBrief';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -725,6 +726,7 @@ function RevenueIntelDashboard() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [detailKey, setDetailKey] = useState<string | null>(null);
+    const [briefOpen, setBriefOpen] = useState(false);
 
     const authHeader = session?.access_token ? `Bearer ${session.access_token}` : '';
 
@@ -836,6 +838,24 @@ function RevenueIntelDashboard() {
                     Refresh
                 </button>
             </div>
+
+            {/* Pre-Call Brief (collapsible) */}
+            {session?.user?.id && (
+                <div className="card-os border border-border">
+                    <button
+                        onClick={() => setBriefOpen(!briefOpen)}
+                        className="w-full flex items-center justify-between p-4 text-left"
+                    >
+                        <span className="text-[10px] uppercase tracking-widest text-text-muted">Pre-Call Brief</span>
+                        <ChevronDown className={`w-4 h-4 text-text-muted transition-transform ${briefOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {briefOpen && (
+                        <div className="px-4 pb-4">
+                            <PreCallBrief userId={session.user.id} />
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Alert Banners */}
             <AlertBanners />
