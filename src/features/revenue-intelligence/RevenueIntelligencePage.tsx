@@ -663,6 +663,80 @@ function WinLossSection({ authHeader }: { authHeader: string }) {
     );
 }
 
+// ── Token Usage Warning Banner (admin only) ─────────────────────────────────
+
+interface TokenWarning {
+    id: string;
+    threshold: number;
+    tokens_used: number;
+    tokens_allowed: number;
+    sent_at: string;
+    acknowledged_at: string | null;
+}
+
+function TokenUsageBanner() {
+    const { session, isAdmin } = useAuth();
+    const { org } = useTier();
+    const [warning, setWarning] = useState<TokenWarning | null>(null);
+
+    useEffect(() => {
+        if (!isAdmin || !org?.id) return;
+        (async () => {
+            const { data } = await supabase
+                .from('token_usage_warnings')
+                .select('id, threshold, tokens_used, tokens_allowed, sent_at, acknowledged_at')
+                .eq('org_id', org.id)
+                .is('acknowledged_at', null)
+                .order('sent_at', { ascending: false })
+                .limit(1);
+            if (data && data.length > 0) setWarning(data[0]);
+        })();
+    }, [isAdmin, org?.id]);
+
+    if (!warning) return null;
+
+    const acknowledge = async () => {
+        if (!session?.user?.id) return;
+        await supabase
+            .from('token_usage_warnings')
+            .update({ acknowledged_at: new Date().toISOString(), acknowledged_by: session.user.id })
+            .eq('id', warning.id);
+        setWarning(null);
+    };
+
+    const bannerConfig: Record<number, { cls: string; text: string }> = {
+        75: {
+            cls: 'border-status-warning/40 bg-status-warning/5',
+            text: 'Your team has used 75% of your monthly AI allowance. No action needed, plenty of headroom remains.',
+        },
+        90: {
+            cls: 'border-accent/40 bg-accent/5',
+            text: 'Your team has used 90% of your monthly AI allowance. Usage continues uninterrupted. Contact us if you expect consistently high usage.',
+        },
+        100: {
+            cls: 'border-status-danger/40 bg-status-danger/5',
+            text: 'Your team has exceeded the monthly fair use allowance. Access continues. We will be in touch.',
+        },
+    };
+
+    const config = bannerConfig[warning.threshold] ?? bannerConfig[100];
+
+    return (
+        <div className={`card-os p-4 border ${config.cls} flex items-start justify-between gap-3`}>
+            <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-text-muted flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-text-primary">{config.text}</p>
+            </div>
+            <button
+                onClick={acknowledge}
+                className="text-[10px] uppercase tracking-widest text-text-muted hover:text-text-primary border border-border px-3 py-1.5 flex-shrink-0"
+            >
+                Acknowledge
+            </button>
+        </div>
+    );
+}
+
 // ── Alert Banners ────────────────────────────────────────────────────────────
 
 const ALERT_MESSAGES: Record<string, (delta_d: number | null, delta_r: number | null) => string> = {
@@ -857,6 +931,9 @@ function RevenueIntelDashboard() {
                     )}
                 </div>
             )}
+
+            {/* Token Usage Warning (admin only) */}
+            <TokenUsageBanner />
 
             {/* Alert Banners */}
             <AlertBanners />
