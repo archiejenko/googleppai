@@ -21,6 +21,7 @@ import RepDNACard from '../features/rep-dna/RepDNACard';
 import DailyDrillWidget from '../features/daily-drill/DailyDrillWidget';
 import DealPrepModal from '../features/deal-prep/DealPrepModal';
 import PeerBenchmarkingCard from '../features/peer-benchmarking/PeerBenchmarkingCard';
+import { StartLiveSessionButton } from '../components/live/OastLiveWidget';
 
 function TransferGapWidget() {
     const navigate = useNavigate();
@@ -175,7 +176,10 @@ export default function Dashboard() {
 
     return (
         <div className="pb-12 space-y-10">
-            <DashboardHeader userName={user?.name || user?.email?.split('@')[0] || 'User'} streakCount={momentum?.streak_count} />
+            <div className="flex items-center justify-between">
+                <DashboardHeader userName={user?.name || user?.email?.split('@')[0] || 'User'} streakCount={momentum?.streak_count} />
+                {isRevIntel && <StartLiveSessionButton />}
+            </div>
             <AssignedPlaybookCard />
             <RepNudgeBanner />
 

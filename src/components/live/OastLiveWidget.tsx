@@ -1,9 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, PhoneOff, ChevronUp, ChevronDown, Minimize2, ExternalLink } from 'lucide-react';
+import { Phone, PhoneOff, ChevronUp, ChevronDown, Minimize2, ExternalLink, Loader2 } from 'lucide-react';
 import { useLiveCall } from '../../context/LiveCallContext';
 import { useTier } from '../../context/TierContext';
+import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useDeepgramSTT } from '../../hooks/useDeepgramSTT';
+
+interface InterimScores {
+    talk_ratio_score: number | null;
+    engagement_score: number | null;
+    question_quality_score: number | null;
+    filler_rate_per_min: number | null;
+}
 
 function ScoreBar({ label, value }: { label: string; value: number }) {
     const color = value >= 75 ? 'bg-status-success' : value >= 55 ? 'bg-status-warning' : 'bg-status-danger';
@@ -62,20 +71,70 @@ function SignalTag({ label, active }: { label: string; active: boolean }) {
     );
 }
 
-/** Formats seconds as mm:ss */
 function formatTime(secs: number): string {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+function FillerRateIndicator({ rate }: { rate: number }) {
+    const color = rate <= 2 ? 'text-status-success' : rate <= 5 ? 'text-status-warning' : 'text-status-danger';
+    return (
+        <div className="flex justify-between text-[10px] text-text-muted uppercase tracking-widest">
+            <span>Filler Rate</span>
+            <span className={`font-mono ${color}`}>{rate.toFixed(1)}/min</span>
+        </div>
+    );
+}
+
 export default function OastLiveWidget() {
-    const { activeCall, endCall } = useLiveCall();
+    const { activeCall, endCall, pushTranscriptChunk } = useLiveCall();
     const { isRevIntel } = useTier();
+    const { session } = useAuth();
     const navigate = useNavigate();
     const [expanded, setExpanded] = useState(false);
     const [elapsedSecs, setElapsedSecs] = useState(0);
+    const [processingFinal, setProcessingFinal] = useState(false);
+    const [interimScores, setInterimScores] = useState<InterimScores | null>(null);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const onFinalTranscript = useCallback((text: string) => {
+        pushTranscriptChunk(text);
+    }, [pushTranscriptChunk]);
+
+    const onInterimTranscript = useCallback((_text: string) => {
+        // Interim display handled by the 30s auto-scoring interval in LiveCallContext
+    }, []);
+
+    const { start: startSTT, stop: stopSTT } = useDeepgramSTT({
+        authToken: session?.access_token,
+        consentConfirmed: !!activeCall,
+        onFinalTranscript,
+        onInterimTranscript,
+        onError: (err) => console.error('[OastLiveWidget] Deepgram error:', err),
+    });
+
+    // Start/stop Deepgram STT with the active call
+    useEffect(() => {
+        if (activeCall && !activeCall.ended) {
+            startSTT();
+        }
+        return () => { stopSTT(); };
+    }, [activeCall?.callId, activeCall?.ended, startSTT, stopSTT]);
+
+    // Update interim scores from the 30s snapshot response
+    // LiveCallContext's auto-interval handles sending to /live-scoring/snapshot;
+    // we also listen for latestSnapshot updates from the Realtime channel
+    useEffect(() => {
+        if (!activeCall?.latestSnapshot) return;
+        const snap = activeCall.latestSnapshot;
+        setInterimScores({
+            talk_ratio_score: snap.talk_ratio_score,
+            engagement_score: snap.engagement_score,
+            question_quality_score: snap.objection_handling_score,
+            filler_rate_per_min: null,
+        });
+    }, [activeCall?.latestSnapshot]);
 
     useEffect(() => {
         if (!activeCall) { setElapsedSecs(0); return; }
@@ -85,16 +144,39 @@ export default function OastLiveWidget() {
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, [activeCall?.callId]);
 
-    // Expand automatically when call qualifies
     useEffect(() => {
         if (activeCall?.qualified) setExpanded(true);
     }, [activeCall?.qualified]);
+
+    const handleEndCall = async () => {
+        setProcessingFinal(true);
+        await endCall();
+    };
+
+    // Reset processing state when call ends
+    useEffect(() => {
+        if (activeCall?.ended) {
+            setProcessingFinal(false);
+        }
+    }, [activeCall?.ended]);
 
     if (!isRevIntel || !activeCall) return null;
 
     const snap = activeCall.latestSnapshot;
     const latestNudges = snap?.coaching_nudges?.slice(-3) ?? [];
     const signals = snap?.signals;
+
+    const displayScores = snap ? {
+        talk_ratio: snap.talk_ratio_score,
+        discovery: snap.discovery_score,
+        engagement: snap.engagement_score,
+        objections: snap.objection_handling_score,
+    } : interimScores ? {
+        talk_ratio: interimScores.talk_ratio_score ?? 0,
+        discovery: 0,
+        engagement: interimScores.engagement_score ?? 0,
+        objections: interimScores.question_quality_score ?? 0,
+    } : null;
 
     return (
         <AnimatePresence>
@@ -109,7 +191,6 @@ export default function OastLiveWidget() {
                 className="fixed bottom-6 right-6 z-[9000] select-none"
                 style={{ width: expanded ? 320 : 'auto' }}
             >
-                {/* ── Collapsed Pill ── */}
                 {!expanded && (
                     <button
                         onClick={() => setExpanded(true)}
@@ -129,10 +210,8 @@ export default function OastLiveWidget() {
                     </button>
                 )}
 
-                {/* ── Expanded Panel ── */}
                 {expanded && (
                     <div className="bg-bg-surface border border-border shadow-brutal shadow-accent/20 flex flex-col">
-                        {/* Header */}
                         <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
                             <div className="flex items-center gap-2">
                                 <span className="relative flex h-2 w-2">
@@ -147,7 +226,6 @@ export default function OastLiveWidget() {
                         </div>
 
                         <div className="p-4 space-y-4">
-                            {/* Prospect + Timer */}
                             <div className="flex items-start gap-3">
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm text-text-primary truncate">
@@ -160,22 +238,24 @@ export default function OastLiveWidget() {
                                 </div>
                                 {snap ? <ScoreRing score={snap.overall_score} /> : (
                                     <div className="w-20 h-20 flex items-center justify-center text-text-muted text-[10px] uppercase tracking-widest">
-                                        {activeCall.qualified ? 'Scoring…' : 'Waiting…'}
+                                        {activeCall.qualified ? 'Scoring...' : 'Listening...'}
                                     </div>
                                 )}
                             </div>
 
-                            {/* Score Bars */}
-                            {snap && (
+                            {displayScores && (
                                 <div className="space-y-2">
-                                    <ScoreBar label="Talk Ratio" value={snap.talk_ratio_score} />
-                                    <ScoreBar label="Discovery" value={snap.discovery_score} />
-                                    <ScoreBar label="Engagement" value={snap.engagement_score} />
-                                    <ScoreBar label="Objections" value={snap.objection_handling_score} />
+                                    <ScoreBar label="Talk Ratio" value={displayScores.talk_ratio} />
+                                    <ScoreBar label="Discovery" value={displayScores.discovery} />
+                                    <ScoreBar label="Engagement" value={displayScores.engagement} />
+                                    <ScoreBar label="Objections" value={displayScores.objections} />
                                 </div>
                             )}
 
-                            {/* Signal Tags */}
+                            {interimScores?.filler_rate_per_min != null && (
+                                <FillerRateIndicator rate={interimScores.filler_rate_per_min} />
+                            )}
+
                             {signals && (
                                 <div className="flex flex-wrap gap-1">
                                     <SignalTag label="Budget" active={signals.budget} />
@@ -186,7 +266,6 @@ export default function OastLiveWidget() {
                                 </div>
                             )}
 
-                            {/* Coaching Feed */}
                             {latestNudges.length > 0 && (
                                 <div className="space-y-1.5">
                                     <p className="text-[9px] uppercase tracking-[0.2em] text-text-muted">Coaching</p>
@@ -200,15 +279,20 @@ export default function OastLiveWidget() {
                                 </div>
                             )}
 
-                            {/* Ended state */}
+                            {processingFinal && !activeCall.ended && (
+                                <div className="text-center py-2 flex items-center justify-center gap-2">
+                                    <Loader2 className="w-3.5 h-3.5 text-accent animate-spin" />
+                                    <p className="text-xs text-text-muted">Processing final scores</p>
+                                </div>
+                            )}
+
                             {activeCall.ended && (
                                 <div className="text-center py-2">
-                                    <p className="text-xs text-status-success">Call complete — score committed</p>
+                                    <p className="text-xs text-status-success">Call complete, score committed</p>
                                 </div>
                             )}
                         </div>
 
-                        {/* Footer */}
                         <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 gap-2">
                             <button
                                 onClick={() => setExpanded(false)}
@@ -222,12 +306,20 @@ export default function OastLiveWidget() {
                             >
                                 Full analysis <ExternalLink className="w-3 h-3" />
                             </button>
-                            <button
-                                onClick={endCall}
-                                className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-status-danger hover:bg-status-danger/10 px-3 py-1.5 border border-status-danger/30 transition-colors"
-                            >
-                                <PhoneOff className="w-3 h-3" /> End
-                            </button>
+                            {!activeCall.ended && (
+                                <button
+                                    onClick={handleEndCall}
+                                    disabled={processingFinal}
+                                    className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-status-danger hover:bg-status-danger/10 px-3 py-1.5 border border-status-danger/30 transition-colors disabled:opacity-50"
+                                >
+                                    {processingFinal ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                        <PhoneOff className="w-3 h-3" />
+                                    )}
+                                    {processingFinal ? 'Ending...' : 'End'}
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
@@ -236,7 +328,6 @@ export default function OastLiveWidget() {
     );
 }
 
-/** Start Live Session button — place anywhere in the app */
 export function StartLiveSessionButton({ prospectName, companyName, crmContactId }: {
     prospectName?: string;
     companyName?: string;
@@ -255,7 +346,7 @@ export function StartLiveSessionButton({ prospectName, companyName, crmContactId
             className="flex items-center gap-2 btn-primary text-xs py-1.5 px-3 disabled:opacity-50"
         >
             <Phone className="w-3.5 h-3.5" />
-            {isLoading ? 'Starting…' : 'Start Live Session'}
+            {isLoading ? 'Starting...' : 'Start Live Session'}
         </button>
     );
 }

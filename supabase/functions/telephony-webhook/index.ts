@@ -49,7 +49,10 @@ serve(async (req) => {
     if (!orgId) return err("Forbidden: no org_id resolved for user", 403);
 
     const body = await req.json().catch(() => ({}));
-    const action = body.action ?? new URL(req.url).searchParams.get("action");
+    const url = new URL(req.url);
+    const pathSegments = url.pathname.split("/").filter(Boolean);
+    const pathAction = pathSegments[pathSegments.length - 1];
+    const action = body.action ?? url.searchParams.get("action") ?? (pathAction !== "telephony-webhook" ? pathAction : null);
 
     if (action === "manual-start") {
       const sessionId = crypto.randomUUID();
