@@ -11,6 +11,7 @@ interface LiveScore {
     company_name: string | null;
     call_started_at: string;
     duration_secs: number;
+    overall_score: number | null;
     final_score: number | null;
     signals_detected: Record<string, boolean> | null;
     coaching_events: { nudge: string; category: string }[] | null;
@@ -21,6 +22,10 @@ interface LiveScore {
     objection_handling_score: number | null;
     sentiment_curve: { t: number; sentiment: number }[] | null;
     objection_log: { t: number; text: string; handled: boolean }[] | null;
+}
+
+function displayScore(s: LiveScore): number | null {
+    return s.overall_score ?? s.final_score;
 }
 
 function ScoreChip({ value }: { value: number | null }) {
@@ -168,11 +173,12 @@ function LiveScoresTable() {
     };
 
     const filtered = scores.filter(s => {
+        const score = displayScore(s) ?? 0;
         const scoreMatch =
             filterScore === 'all' ||
-            (filterScore === 'high' && (s.final_score ?? 0) >= 75) ||
-            (filterScore === 'mid' && (s.final_score ?? 0) >= 55 && (s.final_score ?? 0) < 75) ||
-            (filterScore === 'low' && (s.final_score ?? 0) < 55);
+            (filterScore === 'high' && score >= 75) ||
+            (filterScore === 'mid' && score >= 55 && score < 75) ||
+            (filterScore === 'low' && score < 55);
         const signalMatch =
             filterSignal === 'all' ||
             (s.signals_detected as any)?.[filterSignal] === true;
@@ -187,7 +193,7 @@ function LiveScoresTable() {
                 s.prospect_name || '',
                 s.company_name || '',
                 formatDuration(s.duration_secs),
-                Math.round(s.final_score ?? 0),
+                Math.round(displayScore(s) ?? 0),
                 Math.round(s.talk_ratio_score ?? 0),
                 Math.round(s.discovery_score ?? 0),
                 Math.round(s.engagement_score ?? 0),
@@ -280,7 +286,7 @@ function LiveScoresTable() {
                                         {formatDuration(score.duration_secs)}
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <ScoreChip value={score.final_score} />
+                                        <ScoreChip value={displayScore(score)} />
                                     </td>
                                     <td className="px-4 py-3">
                                         {topSignal && (
