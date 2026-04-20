@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTier } from '../../context/TierContext';
 import { supabase, SUPABASE_FUNCTIONS_URL } from '../../utils/supabase';
 import PreCallBrief from './PreCallBrief';
+import ManagerCoachingView from './ManagerCoachingView';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -972,6 +973,9 @@ function RevenueIntelDashboard() {
                     </div>
                 </div>
             )}
+
+            {/* Manager Coaching (admin only) */}
+            <ManagerCoachingView />
         </div>
     );
 }
