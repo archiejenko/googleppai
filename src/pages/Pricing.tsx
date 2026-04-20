@@ -38,6 +38,10 @@ const REV_INTEL_FEATURES: string[] = [
     'Competitive Intel',
     'Business Synergies',
     'CRM Automation',
+    'Win/Loss Analysis (NEW)',
+    'Transfer Gap Benchmarking (NEW)',
+    'Pre-call Brief (NEW)',
+    'Manager Coaching Workflow (NEW)',
 ];
 
 

@@ -6,6 +6,7 @@ import {
   BarChart2,
   MessageSquare,
   Database,
+  Target,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -234,6 +235,38 @@ export const capabilitySections: CapabilitySectionData[] = [
         hoverValue: 'Coaching grounded in outcome data.',
         tierBadge: 'Revenue Intelligence',
       },
+      {
+        icon: TrendingUp,
+        title: 'Pre-call Brief',
+        description:
+          'AI-generated briefing packs for each prospect, built from CRM data, prior call history, and competitive intelligence.',
+        hoverValue: 'Walk into every call fully prepared.',
+        tierBadge: 'Revenue Intelligence',
+      },
+      {
+        icon: TrendingUp,
+        title: 'Manager Coaching Workflow',
+        description:
+          'Structured coaching queue surfacing the reps who need attention most, with AI-recommended focus areas and session plans.',
+        hoverValue: 'Coach the right rep on the right skill at the right time.',
+        tierBadge: 'Revenue Intelligence',
+      },
+      {
+        icon: TrendingUp,
+        title: 'Win/Loss Analysis',
+        description:
+          'Pattern analysis across won and lost deals. Surface the behaviours, timing, and qualification gaps that drive outcomes.',
+        hoverValue: 'Learn from every deal, won or lost.',
+        tierBadge: 'Revenue Intelligence',
+      },
+      {
+        icon: TrendingUp,
+        title: 'Transfer Gap Benchmarking',
+        description:
+          'Benchmark transfer gap scores across teams, roles, and time periods. Identify where training investment yields the highest return.',
+        hoverValue: 'Benchmark the gap between practice and performance.',
+        tierBadge: 'Revenue Intelligence',
+      },
     ],
     stats: [
       { number: '2.1x', label: 'Pipeline visibility' },
@@ -264,6 +297,7 @@ export const capabilitySections: CapabilitySectionData[] = [
     },
     cards: [
       {
+        // PARTIAL: UI only, backend webhook processor added but no live Recall.ai integration yet
         icon: Video,
         title: 'Automatic Meeting Capture',
         description:
@@ -293,6 +327,22 @@ export const capabilitySections: CapabilitySectionData[] = [
         description:
           'Commitments, follow-ups, and blockers extracted automatically and pushed to CRM. No more post-call admin.',
         hoverValue: 'Every commitment tracked. None forgotten.',
+        tierBadge: 'Revenue Intelligence',
+      },
+      {
+        icon: Video,
+        title: 'Call vs Meeting Performance Comparison',
+        description:
+          'Radar chart comparing phone call and video meeting performance across scoring dimensions. Spot format-specific weaknesses.',
+        hoverValue: 'Know which format each rep excels in.',
+        tierBadge: 'Revenue Intelligence',
+      },
+      {
+        icon: Video,
+        title: 'Presence Score Trend',
+        description:
+          'Track presence and engagement scores across your last 30 sessions. Identify trends before they become habits.',
+        hoverValue: 'Presence is the first thing prospects judge.',
         tierBadge: 'Revenue Intelligence',
       },
     ],
