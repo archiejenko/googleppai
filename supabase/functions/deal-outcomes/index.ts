@@ -150,9 +150,13 @@ serve(async (req) => {
 
     // ── INGEST FROM CRM ───────────────────────────────────────────────────────
     if (action === "ingest_from_crm") {
-      // Placeholder — CRM webhook integration would populate deal_outcomes table
+      // CRM sync blocked: no OAuth token storage found.
+      // When HubSpot/Salesforce OAuth infrastructure is added, this action should:
+      // 1. Fetch closed deals (HubSpot closedwon/closedlost, Salesforce IsWon+IsClosed)
+      // 2. Map to deal_outcomes rows
+      // 3. Deduplicate via crm_deal_id unique index
       return new Response(
-        JSON.stringify({ ok: true, data: { ingested: 0, message: "CRM integration not yet configured." } }),
+        JSON.stringify({ ok: true, data: { ingested: 0, message: "CRM sync blocked: no OAuth token infrastructure. Add HubSpot/Salesforce credential storage to enable." } }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
