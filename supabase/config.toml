@@ -73,6 +73,9 @@ verify_jwt = false
 [functions.stripe-portal]
 verify_jwt = false
 
+[functions.telephony-webhook]
+verify_jwt = false
+
 [functions.deepgram-token]
 enabled = true
 verify_jwt = true
