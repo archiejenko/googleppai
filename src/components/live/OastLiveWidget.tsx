@@ -181,11 +181,16 @@ export default function OastLiveWidget() {
     const handleWithdrawConsent = async () => {
         if (!activeCall) return;
         stopSTT();
-        await supabase
-            .from('call_consent_log')
-            .update({ withdrawn_at: new Date().toISOString() })
-            .eq('session_id', activeCall.callId)
-            .eq('user_id', session?.user?.id);
+        // Route withdrawal through telephony-webhook (service role) since
+        // call_consent_log has no authenticated UPDATE policy by design.
+        const token = session?.access_token;
+        if (token) {
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telephony-webhook/withdraw-consent`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: activeCall.callId }),
+            }).catch(() => {});
+        }
         await endCall();
         setRecordingStopped(true);
         setConfirmingWithdrawal(false);

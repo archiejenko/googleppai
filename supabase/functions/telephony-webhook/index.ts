@@ -150,6 +150,25 @@ serve(async (req) => {
       return ok({ session_id: sessionId, status: newStatus });
     }
 
+    if (action === "withdraw-consent") {
+      const sessionId = body.session_id;
+      if (!sessionId) return err("session_id required", 400);
+
+      await supabase
+        .from("call_consent_log")
+        .update({ withdrawn_at: new Date().toISOString() })
+        .eq("session_id", sessionId)
+        .eq("user_id", user.id);
+
+      await supabase
+        .from("live_scores")
+        .update({ status: "abandoned" })
+        .eq("session_id", sessionId)
+        .eq("user_id", user.id);
+
+      return ok({ session_id: sessionId, withdrawn: true });
+    }
+
     if (action === "manual-end") {
       const sessionId = body.session_id ?? body.call_id;
       if (!sessionId) return err("session_id or call_id required", 400);
