@@ -29,6 +29,27 @@ serve(async (req) => {
       throw new Error("RECALL_API_KEY and ANTHROPIC_API_KEY must be configured");
     }
 
+    const { data: session } = await supabase
+      .from("meeting_sessions")
+      .select("org_id")
+      .eq("id", meeting_session_id)
+      .single();
+
+    if (session?.org_id) {
+      const { data: org } = await supabase
+        .from("organisations")
+        .select("tier")
+        .eq("id", session.org_id)
+        .single();
+
+      if (org?.tier !== "revenue_intelligence") {
+        return new Response(
+          JSON.stringify({ error: "Revenue Intelligence tier required" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     await supabase
       .from("meeting_sessions")
       .update({ transcript_status: "processing" })

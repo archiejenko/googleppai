@@ -71,6 +71,19 @@ serve(async (req) => {
         user.app_metadata?.org_id ?? user.user_metadata?.org_id;
       if (!orgId) throw new Error("Forbidden: no org_id in token");
 
+      const { data: tierOrg } = await supabase
+        .from("organisations")
+        .select("tier")
+        .eq("id", orgId)
+        .single();
+
+      if (tierOrg?.tier !== "revenue_intelligence") {
+        return new Response(
+          JSON.stringify({ error: "Revenue Intelligence tier required" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
       const rateLimit = await checkOrgAiLimit(supabase, orgId, "call-prep", ESTIMATED_TOKENS);
       if (!rateLimit.allowed) {
         return new Response(

@@ -47,6 +47,17 @@ serve(async (req) => {
       }
     };
 
+    const requireRevIntel = async (orgId: string) => {
+      const { data: org } = await supabaseAdmin
+        .from("organisations")
+        .select("tier")
+        .eq("id", orgId)
+        .single();
+      if (org?.tier !== "revenue_intelligence") {
+        throw new Error("Revenue Intelligence tier required");
+      }
+    };
+
     // ── CONNECT: build OAuth redirect URL ──────────────────────────────────
     if (action === "connect" && req.method === "GET") {
       if (!provider || !["hubspot", "salesforce"].includes(provider)) {
@@ -57,8 +68,9 @@ serve(async (req) => {
       }
 
       const user = await resolveUser();
-      const { role } = await resolveOrgId(user.id);
+      const { orgId, role } = await resolveOrgId(user.id);
       requireAdmin(role);
+      await requireRevIntel(orgId);
 
       let redirectUrl: string;
 
@@ -99,6 +111,7 @@ serve(async (req) => {
 
       const user = await resolveUser();
       const { orgId } = await resolveOrgId(user.id);
+      await requireRevIntel(orgId);
 
       let accessToken: string;
       let refreshToken: string;
@@ -185,6 +198,7 @@ serve(async (req) => {
       const user = await resolveUser();
       const { orgId, role } = await resolveOrgId(user.id);
       requireAdmin(role);
+      await requireRevIntel(orgId);
 
       const { error } = await supabaseAdmin
         .from("crm_connections")
@@ -204,6 +218,7 @@ serve(async (req) => {
     if (action === "status" && req.method === "GET") {
       const user = await resolveUser();
       const { orgId } = await resolveOrgId(user.id);
+      await requireRevIntel(orgId);
 
       const { data: connections, error } = await supabaseAdmin
         .from("crm_connections")
@@ -226,7 +241,7 @@ serve(async (req) => {
     console.error("[crm-oauth] error:", error);
     const message = error instanceof Error ? error.message : "An unexpected error occurred.";
     const status = message.includes("Unauthorized") || message.includes("authorization") ? 401
-      : message.includes("admin") ? 403
+      : message.includes("admin") || message.includes("tier required") ? 403
       : 500;
     return new Response(
       JSON.stringify({ error: message }),
