@@ -6,6 +6,7 @@ import { useTier } from '../../context/TierContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useDeepgramSTT } from '../../hooks/useDeepgramSTT';
+import { supabase } from '../../utils/supabase';
 
 interface InterimScores {
     talk_ratio_score: number | null;
@@ -97,6 +98,7 @@ export default function OastLiveWidget() {
     const [processingFinal, setProcessingFinal] = useState(false);
     const [interimScores, setInterimScores] = useState<InterimScores | null>(null);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const realtimeScoreAtRef = useRef<number>(0);
 
     const onFinalTranscript = useCallback((text: string) => {
         pushTranscriptChunk(text);
@@ -122,11 +124,11 @@ export default function OastLiveWidget() {
         return () => { stopSTT(); };
     }, [activeCall?.callId, activeCall?.ended, startSTT, stopSTT]);
 
-    // Update interim scores from the 30s snapshot response
-    // LiveCallContext's auto-interval handles sending to /live-scoring/snapshot;
-    // we also listen for latestSnapshot updates from the Realtime channel
+    // Update interim scores from the 30s snapshot response (fallback)
     useEffect(() => {
         if (!activeCall?.latestSnapshot) return;
+        // Don't override a more recent Realtime push
+        if (realtimeScoreAtRef.current > Date.now() - 5_000) return;
         const snap = activeCall.latestSnapshot;
         setInterimScores({
             talk_ratio_score: snap.talk_ratio_score,
@@ -135,6 +137,26 @@ export default function OastLiveWidget() {
             filler_rate_per_min: null,
         });
     }, [activeCall?.latestSnapshot]);
+
+    // Subscribe to Realtime broadcast for immediate interim score updates
+    useEffect(() => {
+        if (!activeCall?.callId || activeCall.ended) return;
+
+        const channel = supabase.channel('live-scores-widget')
+            .on('broadcast', { event: 'score.snapshot' }, ({ payload }) => {
+                if (payload.session_id !== activeCall.callId) return;
+                realtimeScoreAtRef.current = Date.now();
+                setInterimScores({
+                    talk_ratio_score: payload.talk_ratio_score,
+                    engagement_score: payload.engagement_score,
+                    question_quality_score: payload.question_quality_score,
+                    filler_rate_per_min: payload.filler_rate_per_min,
+                });
+            })
+            .subscribe();
+
+        return () => { channel.unsubscribe(); };
+    }, [activeCall?.callId, activeCall?.ended]);
 
     useEffect(() => {
         if (!activeCall) { setElapsedSecs(0); return; }

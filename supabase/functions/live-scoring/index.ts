@@ -154,6 +154,20 @@ Return ONLY valid JSON:
       return err("Failed to update scores");
     }
 
+    // Broadcast interim scores via Realtime so OastLiveWidget receives push updates
+    await supabase.channel('live-scores').send({
+      type: 'broadcast',
+      event: 'score.snapshot',
+      payload: {
+        session_id: sessionId,
+        talk_ratio_score: scores.talk_ratio_score,
+        engagement_score: scores.engagement_score,
+        question_quality_score: scores.question_quality_score,
+        filler_rate_per_min: scores.filler_rate_per_min,
+        snapshot_count: newSnapshotCount,
+      },
+    });
+
     return ok({
       session_id: sessionId,
       scores,
