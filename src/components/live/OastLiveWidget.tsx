@@ -408,25 +408,82 @@ export default function OastLiveWidget() {
     );
 }
 
-export function StartLiveSessionButton({ prospectName, companyName, crmContactId }: {
+export function StartLiveSessionButton({ prospectName: defaultProspect, companyName: defaultCompany, crmContactId }: {
     prospectName?: string;
     companyName?: string;
     crmContactId?: string;
 }) {
     const { startCall, activeCall, isLoading } = useLiveCall();
     const { isRevIntel } = useTier();
+    const [showModal, setShowModal] = useState(false);
+    const [prospect, setProspect] = useState(defaultProspect ?? '');
+    const [company, setCompany] = useState(defaultCompany ?? '');
 
     if (!isRevIntel) return null;
     if (activeCall) return null;
 
+    const handleStart = () => {
+        startCall({ prospectName: prospect || undefined, companyName: company || undefined, crmContactId });
+        setShowModal(false);
+    };
+
     return (
-        <button
-            onClick={() => startCall({ prospectName, companyName, crmContactId })}
-            disabled={isLoading}
-            className="flex items-center gap-2 btn-primary text-xs py-1.5 px-3 disabled:opacity-50"
-        >
-            <Phone className="w-3.5 h-3.5" />
-            {isLoading ? 'Starting...' : 'Start Live Session'}
-        </button>
+        <>
+            <button
+                onClick={() => setShowModal(true)}
+                disabled={isLoading}
+                className="flex items-center gap-2 btn-primary text-xs py-1.5 px-3 disabled:opacity-50"
+            >
+                <Phone className="w-3.5 h-3.5" />
+                Start Live Session
+            </button>
+
+            {showModal && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60">
+                    <div className="bg-bg-surface border border-border shadow-brutal p-6 max-w-sm w-full mx-4 space-y-4">
+                        <h2 className="text-sm uppercase tracking-[0.2em] text-text-primary">New Session</h2>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-[10px] uppercase tracking-widest text-text-muted block mb-1">Prospect Name</label>
+                                <input
+                                    type="text"
+                                    value={prospect}
+                                    onChange={e => setProspect(e.target.value)}
+                                    placeholder="Optional"
+                                    className="w-full bg-bg-raised border border-border px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase tracking-widest text-text-muted block mb-1">Company</label>
+                                <input
+                                    type="text"
+                                    value={company}
+                                    onChange={e => setCompany(e.target.value)}
+                                    placeholder="Optional"
+                                    className="w-full bg-bg-raised border border-border px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-1">
+                            <button
+                                onClick={handleStart}
+                                disabled={isLoading}
+                                className="btn-primary flex-1 py-2 text-xs uppercase tracking-widest disabled:opacity-50"
+                            >
+                                {isLoading ? 'Starting...' : 'Start Session'}
+                            </button>
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="btn-ghost flex-1 py-2 text-xs uppercase tracking-widest"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }

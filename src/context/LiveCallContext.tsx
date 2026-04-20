@@ -170,6 +170,8 @@ export const LiveCallProvider = ({ children }: { children: ReactNode }) => {
                 headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     crm_contact_id: opts.crmContactId,
+                    prospect_name: opts.prospectName,
+                    company_name: opts.companyName,
                 }),
             });
             const data = await res.json();
