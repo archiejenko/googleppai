@@ -71,7 +71,7 @@ module.exports = {
             },
             fontFamily: {
                 sans: ['"Neue Haas Grotesk Display Pro"', '"Neue Haas Grotesk Text Pro"', '"Neue Haas Grotesk"', '"NeueHaasGroteskDisp"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'system-ui', '-apple-system', 'sans-serif'],
-                display: ['"Neue Haas Grotesk Display Pro"', '"Neue Haas Grotesk Text Pro"', '"Neue Haas Grotesk"', '"NeueHaasGroteskDisp"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'system-ui', '-apple-system', 'sans-serif'],
+                display: ['Oswald', 'sans-serif'],
                 mono: ['"Neue Haas Grotesk Display Pro"', '"Neue Haas Grotesk Text Pro"', '"Neue Haas Grotesk"', '"NeueHaasGroteskDisp"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'system-ui', '-apple-system', 'sans-serif'],
             },
             borderRadius: {
