@@ -76,6 +76,9 @@ verify_jwt = false
 [functions.telephony-webhook]
 verify_jwt = false
 
+[functions.live-scoring]
+verify_jwt = false
+
 [functions.deepgram-token]
 enabled = true
 verify_jwt = true
