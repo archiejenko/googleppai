@@ -58,6 +58,9 @@ verify_jwt = false
 [functions.usage-summary]
 verify_jwt = false
 
+[functions.token-usage-checker]
+verify_jwt = false
+
 [functions.pitch-api]
 verify_jwt = false
 
