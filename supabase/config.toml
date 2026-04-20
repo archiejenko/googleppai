@@ -37,6 +37,9 @@ verify_jwt = false
 [functions.benchmark-aggregator]
 verify_jwt = false
 
+[functions.win-loss-analysis]
+verify_jwt = false
+
 [functions.deal-outcomes]
 verify_jwt = false
 
