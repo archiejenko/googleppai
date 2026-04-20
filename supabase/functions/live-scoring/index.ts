@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { logTokenUsage } from "../_shared/tokenUsage.ts";
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -111,6 +112,18 @@ Return ONLY valid JSON:
 
         if (aiResp.ok) {
           const aiJson = await aiResp.json();
+
+          if (aiJson.usage) {
+            await logTokenUsage(supabase, {
+              org_id: orgId,
+              user_id: user.id,
+              function_name: "live-scoring",
+              model: "claude-sonnet-4-6",
+              input_tokens: aiJson.usage.input_tokens ?? 0,
+              output_tokens: aiJson.usage.output_tokens ?? 0,
+            });
+          }
+
           const content = aiJson.content?.[0]?.text ?? "";
           const parsed = JSON.parse(content);
           scores = {

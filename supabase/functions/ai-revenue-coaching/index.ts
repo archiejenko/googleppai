@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { logTokenUsage } from "../_shared/tokenUsage.ts";
 
 const MODEL = "claude-sonnet-4-6";
 
@@ -202,6 +203,18 @@ Maximum 3 recommendations. Priority 1 is highest. Return ONLY valid JSON.`;
     }
 
     const anthropicData = await anthropicRes.json();
+
+    if (anthropicData.usage) {
+      await logTokenUsage(supabase, {
+        org_id: orgId,
+        user_id: user.id,
+        function_name: "ai-revenue-coaching",
+        model: MODEL,
+        input_tokens: anthropicData.usage.input_tokens ?? 0,
+        output_tokens: anthropicData.usage.output_tokens ?? 0,
+      });
+    }
+
     let coaching: CoachingResponse;
     try {
       coaching = JSON.parse(anthropicData.content[0].text);

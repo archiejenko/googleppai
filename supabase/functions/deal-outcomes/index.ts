@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { validateBody } from "../_shared/validateBody.ts";
 import { checkOrgAiLimit } from "../_shared/orgRateLimit.ts";
+import { logTokenUsage } from "../_shared/tokenUsage.ts";
 
 const MODEL = "claude-sonnet-4-5"; // Pattern analysis across deals
 // Estimated tokens per get_correlation call: ~1000 prompt + 1024 max output
@@ -379,6 +380,17 @@ Return ONLY the JSON, no markdown.`;
           JSON.stringify({ ok: false, error: "AI provider returned an error. Please try again.", retryable: true }),
           { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
+      }
+
+      if (aiData.usage && profile?.org_id) {
+        await logTokenUsage(supabase, {
+          org_id: profile.org_id,
+          user_id: user.id,
+          function_name: "deal-outcomes",
+          model: MODEL,
+          input_tokens: aiData.usage.input_tokens ?? 0,
+          output_tokens: aiData.usage.output_tokens ?? 0,
+        });
       }
 
       let result: { correlations: unknown[]; insights: string[] };

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
+import { logTokenUsage } from "../_shared/tokenUsage.ts";
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -31,7 +32,7 @@ serve(async (req) => {
 
     const { data: session } = await supabase
       .from("meeting_sessions")
-      .select("org_id")
+      .select("org_id, user_id")
       .eq("id", meeting_session_id)
       .single();
 
@@ -111,6 +112,18 @@ serve(async (req) => {
     }
 
     const aiData = await aiRes.json();
+
+    if (aiData.usage && session?.org_id && session?.user_id) {
+      await logTokenUsage(supabase, {
+        org_id: session.org_id,
+        user_id: session.user_id,
+        function_name: "meeting-transcript-processor",
+        model: "claude-sonnet-4-6",
+        input_tokens: aiData.usage.input_tokens ?? 0,
+        output_tokens: aiData.usage.output_tokens ?? 0,
+      });
+    }
+
     let parsed: { summary: string; action_items: Array<{ owner: string; action: string; due_date_hint: string }> };
     try {
       parsed = JSON.parse(aiData.content[0].text);

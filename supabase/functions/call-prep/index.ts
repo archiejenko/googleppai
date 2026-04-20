@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { checkOrgAiLimit } from "../_shared/orgRateLimit.ts";
 import { validateBody } from "../_shared/validateBody.ts";
+import { logTokenUsage } from "../_shared/tokenUsage.ts";
 
 const MODEL = "claude-sonnet-4-5"; // Contextual reasoning over historical data
 // Estimated tokens per generate_brief call: ~950 prompt + 2048 max output
@@ -188,6 +189,17 @@ Tailor everything to a ${session_type ?? "discovery"} call. Return ONLY the JSON
           JSON.stringify({ ok: false, error: "AI provider returned an error. Please try again.", retryable: true }),
           { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
+      }
+
+      if (aiData.usage) {
+        await logTokenUsage(supabase, {
+          org_id: orgId,
+          user_id: user.id,
+          function_name: "call-prep",
+          model: MODEL,
+          input_tokens: aiData.usage.input_tokens ?? 0,
+          output_tokens: aiData.usage.output_tokens ?? 0,
+        });
       }
 
       let briefContent: Record<string, unknown>;
