@@ -12,6 +12,8 @@ interface OrgInfo {
     onboardingFeePaid: boolean;
     trialEndsAt: string | null;
     weeklyTarget: number;
+    industry: string | null;
+    companySize: string | null;
 }
 
 interface TierContextType {
@@ -44,7 +46,7 @@ export const TierProvider = ({ children }: { children: ReactNode }) => {
 
             const { data: orgData } = await supabase
                 .from('organisations')
-                .select('id, name, tier, seats_licensed, price_per_seat_gbp, onboarding_fee_paid, trial_ends_at, weekly_target')
+                .select('id, name, tier, seats_licensed, price_per_seat_gbp, onboarding_fee_paid, trial_ends_at, weekly_target, industry, company_size')
                 .eq('id', profile.org_id)
                 .single();
 
@@ -58,6 +60,8 @@ export const TierProvider = ({ children }: { children: ReactNode }) => {
                     onboardingFeePaid: orgData.onboarding_fee_paid,
                     trialEndsAt: orgData.trial_ends_at,
                     weeklyTarget: orgData.weekly_target ?? 10,
+                    industry: orgData.industry ?? null,
+                    companySize: orgData.company_size ?? null,
                 });
             }
         } catch (err) {
