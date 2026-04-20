@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import TierGate from '../../components/shared/TierGate';
 import { useAuth } from '../../context/AuthContext';
-import { SUPABASE_FUNCTIONS_URL } from '../../utils/supabase';
+import { useTier } from '../../context/TierContext';
+import { supabase, SUPABASE_FUNCTIONS_URL } from '../../utils/supabase';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -54,6 +55,41 @@ interface TransferGapData {
     sample_size_training: number;
     insufficient_deal_data: boolean;
     proxy_only: boolean;
+}
+
+interface BenchmarkRow {
+    metric: string;
+    industry: string | null;
+    company_size: string | null;
+    p25: number;
+    p50: number;
+    p75: number;
+    p90: number;
+    sample_size: number;
+}
+
+interface WinLossData {
+    insufficient_data?: boolean;
+    sample_size_won: number;
+    sample_size_lost: number;
+    won_avg_discovery: number | null;
+    lost_avg_discovery: number | null;
+    won_avg_objection_handling: number | null;
+    lost_avg_objection_handling: number | null;
+    won_avg_engagement: number | null;
+    lost_avg_engagement: number | null;
+    won_avg_talk_ratio: number | null;
+    lost_avg_talk_ratio: number | null;
+    won_avg_meddic: number | null;
+    lost_avg_meddic: number | null;
+}
+
+interface TransferGapAlert {
+    id: string;
+    alert_type: 'delivery_gap_widened' | 'readiness_gap_widened' | 'both_widened';
+    delta_delivery: number | null;
+    delta_readiness: number | null;
+    created_at: string;
 }
 
 interface CoachingRecommendation {
@@ -274,6 +310,124 @@ function TransferGapSection({ authHeader }: { authHeader: string }) {
                     </div>
                 </div>
             )}
+
+            {!loading && !isEmpty && data && (
+                <BenchmarkPanel authHeader={authHeader} periodDays={periodDays} gapData={data} />
+            )}
+        </div>
+    );
+}
+
+// ── Benchmark Panel ──────────────────────────────────────────────────────────
+
+const BENCHMARK_METRIC_MAP: Record<string, { label: string; dataKey: keyof TransferGapData }> = {
+    delivery_gap: { label: 'Delivery Gap', dataKey: 'delivery_gap_score' },
+    readiness_gap: { label: 'Readiness Gap', dataKey: 'readiness_gap_score' },
+    talk_ratio_gap: { label: 'Talk Ratio Gap', dataKey: 'talk_ratio_training' },
+    discovery_gap: { label: 'Discovery Gap', dataKey: 'discovery_training' },
+};
+
+function PercentileBar({ userScore, p25, p50, p75 }: { userScore: number; p25: number; p50: number; p75: number }) {
+    const clamp = (v: number) => Math.max(0, Math.min(100, v));
+    const userPos = clamp(userScore);
+    return (
+        <div className="relative h-6 bg-bg-raised border border-border">
+            <div className="absolute top-0 bottom-0 border-r border-border" style={{ left: `${clamp(p75)}%` }} />
+            <div className="absolute top-0 bottom-0 border-r border-accent/40" style={{ left: `${clamp(p50)}%` }} />
+            <div className="absolute top-0 bottom-0 border-r border-border" style={{ left: `${clamp(p25)}%` }} />
+            <div
+                className="absolute top-0 bottom-0 w-1 bg-accent"
+                style={{ left: `${userPos}%` }}
+            />
+            <div className="absolute -bottom-4 flex justify-between w-full text-[8px] text-text-muted">
+                <span style={{ left: `${clamp(p75)}%`, position: 'absolute', transform: 'translateX(-50%)' }}>Top 25%</span>
+                <span style={{ left: `${clamp(p50)}%`, position: 'absolute', transform: 'translateX(-50%)' }}>Median</span>
+                <span style={{ left: `${clamp(p25)}%`, position: 'absolute', transform: 'translateX(-50%)' }}>Bottom 25%</span>
+            </div>
+        </div>
+    );
+}
+
+function BenchmarkPanel({ authHeader, periodDays, gapData }: { authHeader: string; periodDays: number; gapData: TransferGapData | null }) {
+    const { org } = useTier();
+    const [benchmarks, setBenchmarks] = useState<BenchmarkRow[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        (async () => {
+            setLoading(true);
+            try {
+                const { data, error } = await supabase
+                    .from('transfer_gap_benchmarks')
+                    .select('*')
+                    .order('computed_at', { ascending: false })
+                    .limit(50);
+                if (!error && data) setBenchmarks(data);
+            } catch (e) {
+                console.error('[Benchmarks] fetch error:', e);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, [authHeader, periodDays]);
+
+    if (loading) return <div className="h-16 bg-bg-raised animate-pulse" />;
+    if (benchmarks.length === 0) {
+        return <p className="text-sm text-text-muted">Benchmarks will appear once enough platform data is available.</p>;
+    }
+
+    const orgIndustry = (org as Record<string, unknown> | null)?.industry as string | null ?? null;
+    const orgCompanySize = (org as Record<string, unknown> | null)?.company_size as string | null ?? null;
+
+    const getBenchmark = (metric: string): BenchmarkRow | null => {
+        if (orgIndustry) {
+            const byIndustry = benchmarks.find(b => b.metric === metric && b.industry === orgIndustry);
+            if (byIndustry && byIndustry.sample_size >= 10) return byIndustry;
+        }
+        if (orgCompanySize) {
+            const bySize = benchmarks.find(b => b.metric === metric && b.company_size === orgCompanySize);
+            if (bySize && bySize.sample_size >= 10) return bySize;
+        }
+        const global = benchmarks.find(b => b.metric === metric && !b.industry && !b.company_size);
+        return global && global.sample_size >= 10 ? global : null;
+    };
+
+    const benchmarkSource = orgIndustry ? 'Industry benchmark' : 'Platform benchmark';
+
+    return (
+        <div className="space-y-4 pt-4 border-t border-border">
+            <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted">How You Compare</p>
+                <span className="text-[10px] text-text-muted">{benchmarkSource}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {Object.entries(BENCHMARK_METRIC_MAP).map(([metric, { label, dataKey }]) => {
+                    const bm = getBenchmark(metric);
+                    if (!bm) {
+                        return (
+                            <div key={metric} className="space-y-1">
+                                <p className="text-xs text-text-primary">{label}</p>
+                                <p className="text-[10px] text-text-muted">Not enough platform data yet to benchmark this metric.</p>
+                            </div>
+                        );
+                    }
+                    const userScore = gapData ? (gapData[dataKey] as number | null) : null;
+                    if (userScore === null) {
+                        return (
+                            <div key={metric} className="space-y-1">
+                                <p className="text-xs text-text-primary">{label}</p>
+                                <p className="text-[10px] text-text-muted">Complete more sessions to see your position.</p>
+                            </div>
+                        );
+                    }
+                    return (
+                        <div key={metric} className="space-y-1 pb-4">
+                            <p className="text-xs text-text-primary">{label}: <span className="text-accent font-mono">{Math.round(userScore)}</span></p>
+                            <PercentileBar userScore={userScore} p25={bm.p25} p50={bm.p50} p75={bm.p75} />
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 }
