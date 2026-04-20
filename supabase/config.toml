@@ -46,6 +46,12 @@ verify_jwt = false
 [functions.deal-outcomes]
 verify_jwt = false
 
+[functions.crm-oauth]
+verify_jwt = false
+
+[functions.crm-token-refresh]
+verify_jwt = false
+
 [functions.pitch-api]
 verify_jwt = false
 

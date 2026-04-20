@@ -150,13 +150,141 @@ serve(async (req) => {
 
     // ── INGEST FROM CRM ───────────────────────────────────────────────────────
     if (action === "ingest_from_crm") {
-      // CRM sync blocked: no OAuth token storage found.
-      // When HubSpot/Salesforce OAuth infrastructure is added, this action should:
-      // 1. Fetch closed deals (HubSpot closedwon/closedlost, Salesforce IsWon+IsClosed)
-      // 2. Map to deal_outcomes rows
-      // 3. Deduplicate via crm_deal_id unique index
+      const { data: connections } = await supabase
+        .from("crm_connections")
+        .select("org_id, provider");
+
+      if (!connections || connections.length === 0) {
+        return new Response(
+          JSON.stringify({ ok: true, data: { ingested: 0, message: "No CRM connections configured." } }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      let totalIngested = 0;
+
+      for (const conn of connections) {
+        try {
+          const tokenRes = await fetch(
+            `${Deno.env.get("SUPABASE_URL")}/functions/v1/crm-token-refresh`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({ org_id: conn.org_id, provider: conn.provider }),
+            },
+          );
+          const tokenData = await tokenRes.json();
+          if (!tokenRes.ok) throw new Error(tokenData.error);
+
+          const { access_token, instance_url } = tokenData;
+          const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+          let deals: Array<{ crm_deal_id: string; deal_name: string; outcome: string; deal_value: number; close_date: string; owner_email: string }> = [];
+
+          if (conn.provider === "hubspot") {
+            const searchRes = await fetch("https://api.hubapi.com/crm/v3/objects/deals/search", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                filterGroups: [{
+                  filters: [
+                    { propertyName: "closedate", operator: "GTE", value: new Date(ninetyDaysAgo).getTime() },
+                    { propertyName: "dealstage", operator: "IN", values: ["closedwon", "closedlost"] },
+                  ],
+                }],
+                properties: ["dealname", "dealstage", "amount", "closedate", "hubspot_owner_id"],
+                limit: 100,
+              }),
+            });
+            const searchData = await searchRes.json();
+            if (!searchRes.ok) throw new Error(`HubSpot search failed: ${JSON.stringify(searchData)}`);
+
+            const ownerIds = [...new Set((searchData.results ?? []).map((d: { properties: { hubspot_owner_id: string } }) => d.properties.hubspot_owner_id).filter(Boolean))];
+            const ownerEmails: Record<string, string> = {};
+            for (const ownerId of ownerIds) {
+              const ownerRes = await fetch(`https://api.hubapi.com/crm/v3/owners/${ownerId}`, {
+                headers: { Authorization: `Bearer ${access_token}` },
+              });
+              if (ownerRes.ok) {
+                const ownerData = await ownerRes.json();
+                ownerEmails[ownerId as string] = ownerData.email;
+              }
+            }
+
+            deals = (searchData.results ?? []).map((d: { id: string; properties: { dealname: string; dealstage: string; amount: string; closedate: string; hubspot_owner_id: string } }) => ({
+              crm_deal_id: `hubspot_${d.id}`,
+              deal_name: d.properties.dealname,
+              outcome: d.properties.dealstage === "closedwon" ? "won" : "lost",
+              deal_value: parseFloat(d.properties.amount) || 0,
+              close_date: d.properties.closedate,
+              owner_email: ownerEmails[d.properties.hubspot_owner_id] ?? "",
+            }));
+          } else {
+            const query = encodeURIComponent(
+              `SELECT Id, Name, StageName, Amount, CloseDate, Owner.Email FROM Opportunity WHERE IsClosed = true AND CloseDate >= ${ninetyDaysAgo} LIMIT 100`
+            );
+            const sfRes = await fetch(`${instance_url}/services/data/v60.0/query?q=${query}`, {
+              headers: { Authorization: `Bearer ${access_token}` },
+            });
+            const sfData = await sfRes.json();
+            if (!sfRes.ok) throw new Error(`Salesforce query failed: ${JSON.stringify(sfData)}`);
+
+            deals = (sfData.records ?? []).map((r: { Id: string; Name: string; StageName: string; Amount: number; CloseDate: string; Owner: { Email: string } }) => ({
+              crm_deal_id: `salesforce_${r.Id}`,
+              deal_name: r.Name,
+              outcome: r.StageName === "Closed Won" ? "won" : "lost",
+              deal_value: r.Amount ?? 0,
+              close_date: r.CloseDate,
+              owner_email: r.Owner?.Email ?? "",
+            }));
+          }
+
+          for (const deal of deals) {
+            const { data: matchedProfile } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("org_id", conn.org_id)
+              .ilike("email", deal.owner_email)
+              .single();
+
+            if (!matchedProfile) continue;
+
+            await supabase
+              .from("deal_outcomes")
+              .upsert({
+                user_id: matchedProfile.id,
+                crm_deal_id: deal.crm_deal_id,
+                deal_name: deal.deal_name,
+                outcome: deal.outcome,
+                deal_value: deal.deal_value,
+                close_date: deal.close_date,
+              }, { onConflict: "crm_deal_id" });
+
+            totalIngested++;
+          }
+
+          await supabase
+            .from("crm_connections")
+            .update({ last_synced_at: new Date().toISOString(), sync_error: null })
+            .eq("org_id", conn.org_id)
+            .eq("provider", conn.provider);
+        } catch (syncErr: unknown) {
+          console.error(`[deal-outcomes] CRM sync error for ${conn.org_id}/${conn.provider}:`, syncErr);
+          await supabase
+            .from("crm_connections")
+            .update({ sync_error: syncErr instanceof Error ? syncErr.message : "Unknown error" })
+            .eq("org_id", conn.org_id)
+            .eq("provider", conn.provider);
+        }
+      }
+
       return new Response(
-        JSON.stringify({ ok: true, data: { ingested: 0, message: "CRM sync blocked: no OAuth token infrastructure. Add HubSpot/Salesforce credential storage to enable." } }),
+        JSON.stringify({ ok: true, data: { ingested: totalIngested } }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
