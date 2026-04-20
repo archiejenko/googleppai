@@ -52,6 +52,9 @@ verify_jwt = false
 [functions.crm-token-refresh]
 verify_jwt = false
 
+[functions.meeting-transcript-processor]
+verify_jwt = false
+
 [functions.pitch-api]
 verify_jwt = false
 
