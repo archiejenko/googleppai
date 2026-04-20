@@ -535,6 +535,132 @@ function CoachingSection({ authHeader }: { authHeader: string }) {
     );
 }
 
+// ── Win/Loss Analysis Section ────────────────────────────────────────────────
+
+const WIN_LOSS_DIMENSIONS: Array<{ key: string; label: string; wonKey: keyof WinLossData; lostKey: keyof WinLossData }> = [
+    { key: 'discovery', label: 'Discovery', wonKey: 'won_avg_discovery', lostKey: 'lost_avg_discovery' },
+    { key: 'objection', label: 'Objection Handling', wonKey: 'won_avg_objection_handling', lostKey: 'lost_avg_objection_handling' },
+    { key: 'engagement', label: 'Engagement', wonKey: 'won_avg_engagement', lostKey: 'lost_avg_engagement' },
+    { key: 'talk_ratio', label: 'Talk Ratio', wonKey: 'won_avg_talk_ratio', lostKey: 'lost_avg_talk_ratio' },
+    { key: 'meddic', label: 'MEDDIC', wonKey: 'won_avg_meddic', lostKey: 'lost_avg_meddic' },
+];
+
+function WinLossSection({ authHeader }: { authHeader: string }) {
+    const { isAdmin } = useAuth();
+    const [scope, setScope] = useState<'rep' | 'team'>('rep');
+    const [periodDays, setPeriodDays] = useState(90);
+    const [data, setData] = useState<WinLossData | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    const fetchWinLoss = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(
+                `${SUPABASE_FUNCTIONS_URL}/win-loss-analysis?period_days=${periodDays}&scope=${scope}`,
+                { headers: { Authorization: authHeader } },
+            );
+            const json = await res.json();
+            setData(json.data ?? null);
+        } catch (e) {
+            console.error('[WinLoss] fetch error:', e);
+        } finally {
+            setLoading(false);
+        }
+    }, [authHeader, periodDays, scope]);
+
+    useEffect(() => { fetchWinLoss(); }, [fetchWinLoss]);
+
+    return (
+        <div className="card-os border border-border p-6 space-y-5">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                    <h2 className="font-display text-lg text-text-primary uppercase tracking-wider">Win/Loss Analysis</h2>
+                </div>
+                <div className="flex gap-2">
+                    <div className="flex gap-1">
+                        {(['rep', 'team'] as const).map(s => (
+                            <button
+                                key={s}
+                                onClick={() => setScope(s)}
+                                className={`btn-ghost text-[10px] uppercase tracking-widest px-3 py-1.5 ${
+                                    scope === s ? 'border-accent text-accent' : ''
+                                }`}
+                            >
+                                {s === 'rep' ? 'Rep' : 'Team'}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex gap-1">
+                        {[30, 60, 90].map(d => (
+                            <button
+                                key={d}
+                                onClick={() => setPeriodDays(d)}
+                                className={`text-[10px] uppercase tracking-widest px-3 py-1.5 border transition-colors ${
+                                    periodDays === d
+                                        ? 'border-accent text-accent'
+                                        : 'border-border text-text-muted hover:text-text-primary'
+                                }`}
+                            >
+                                {d}d
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {loading && <div className="h-32 bg-bg-raised animate-pulse" />}
+
+            {!loading && scope === 'team' && !isAdmin && (
+                <p className="text-sm text-text-muted py-4">Team view is available to managers only.</p>
+            )}
+
+            {!loading && data?.insufficient_data && (
+                <p className="text-sm text-text-muted py-4">
+                    Not enough won and lost deals to generate analysis. Log at least 3 deals in each outcome to unlock this view.
+                </p>
+            )}
+
+            {!loading && data && !data.insufficient_data && !(scope === 'team' && !isAdmin) && (
+                <div className="space-y-4">
+                    {WIN_LOSS_DIMENSIONS.map(({ key, label, wonKey, lostKey }) => {
+                        const won = data[wonKey] as number | null;
+                        const lost = data[lostKey] as number | null;
+                        if (won === null && lost === null) return null;
+                        const delta = (won ?? 0) - (lost ?? 0);
+                        const deltaLabel = delta >= 0
+                            ? `+${Math.round(delta)} on won deals`
+                            : `${Math.round(delta)} on lost deals`;
+                        return (
+                            <div key={key} className="space-y-1">
+                                <p className="text-xs text-text-primary">{label}</p>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1 space-y-1">
+                                        <div className="flex items-center gap-2 text-[10px] text-text-muted">
+                                            <span className="w-8">Won</span>
+                                            <div className="flex-1 bg-bg-raised h-3">
+                                                <div className="bg-accent h-3" style={{ width: `${Math.min(100, won ?? 0)}%` }} />
+                                            </div>
+                                            <span className="w-8 font-mono text-accent">{Math.round(won ?? 0)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-[10px] text-text-muted">
+                                            <span className="w-8">Lost</span>
+                                            <div className="flex-1 bg-bg-raised h-3">
+                                                <div className="bg-text-muted h-3" style={{ width: `${Math.min(100, lost ?? 0)}%` }} />
+                                            </div>
+                                            <span className="w-8 font-mono">{Math.round(lost ?? 0)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p className="text-[10px] text-text-muted">{deltaLabel}</p>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
 function RevenueIntelDashboard() {
@@ -661,6 +787,9 @@ function RevenueIntelDashboard() {
 
             {/* Section 2: AI Revenue Coaching */}
             {authHeader && <CoachingSection authHeader={authHeader} />}
+
+            {/* Section 2.5: Win/Loss Analysis */}
+            {authHeader && <WinLossSection authHeader={authHeader} />}
 
             {/* Sections 3-9: Deal Outcomes first, then remaining cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
