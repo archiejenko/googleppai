@@ -57,6 +57,17 @@ const CORS = { 'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
+function normaliseSpeaker(label: string): string {
+  const l = label.toLowerCase()
+  if (['b','speaker_0','agent'].includes(l)) return 'rep'
+  if (['prospect','speaker_1','customer'].includes(l)) return 'prospect'
+  return l
+}
+
+function normaliseSpeakers(words: TranscriptWord[]): TranscriptWord[] {
+  return words.map(w => ({ ...w, speaker: normaliseSpeaker(w.speaker) }))
+}
+
 function buildUtterances(words: TranscriptWord[]): Utterance[] {
   if (!words.length) return []
   const sorted = [...words].sort((a,b) => a.start-b.start)
@@ -244,7 +255,7 @@ serve(async (req:Request) => {
       return new Response(JSON.stringify({skipped:true,reason:'already scored'}),{status:200,headers:{...CORS,'Content-Type':'application/json'}})
     }
 
-    const words=transcript??[]
+    const words=normaliseSpeakers(transcript??[])
     const duration=call_duration_secs||Math.ceil(words.length ? Math.max(...words.map(w=>w.end)) : 0)
 
     if(!words.length) {
@@ -272,7 +283,7 @@ serve(async (req:Request) => {
 
     // L-R2: Sentiment scoring (prospect segments only)
     if(!sentimentAlreadySet&&utterances.length>0){
-      const prospectUtterances=utterances.filter((u:{speaker:string})=>u.speaker==='B'||u.speaker==='PROSPECT')
+      const prospectUtterances=utterances.filter((u:{speaker:string})=>u.speaker==='prospect')
       const sampleText=prospectUtterances.map((u:{text:string})=>u.text).join(' ').slice(0,2000)
       if(sampleText.length>50){
         try{
