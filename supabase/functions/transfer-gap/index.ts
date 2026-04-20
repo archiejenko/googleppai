@@ -50,7 +50,7 @@ serve(async (req) => {
 
     const { data: org } = await supabase
       .from("organisations")
-      .select("tier")
+      .select("tier, meddic_weightings")
       .eq("id", orgId)
       .single();
 
@@ -138,16 +138,26 @@ serve(async (req) => {
       "champion",
     ] as const;
 
+    const weightings = (org?.meddic_weightings as Record<string, number> | null) ?? null;
+
     let meddicAvg: number | null = null;
     if (sampleSizeTraining > 0) {
       const perPitch: number[] = [];
       for (const p of validPitches) {
         if (!p.meddic_scores || typeof p.meddic_scores !== "object") continue;
         const scores = p.meddic_scores as Record<string, unknown>;
-        const vals = MEDDIC_KEYS.map((k) => scores[k])
-          .filter((v): v is number => typeof v === "number");
-        if (vals.length > 0) {
-          perPitch.push(vals.reduce((a, b) => a + b, 0) / vals.length);
+        const available = MEDDIC_KEYS
+          .map((k) => ({ key: k, value: scores[k] }))
+          .filter((e): e is { key: string; value: number } => typeof e.value === "number");
+        if (available.length > 0) {
+          let total = 0;
+          let weightSum = 0;
+          for (const { key, value } of available) {
+            const w = weightings?.[key] ?? 1;
+            total += value * w;
+            weightSum += w;
+          }
+          perPitch.push(total / weightSum);
         }
       }
       if (perPitch.length > 0) {
