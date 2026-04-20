@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     TrendingUp, AlertCircle, BarChart3, Target, Layers, Zap,
-    ArrowRight, RefreshCw, Mic, BarChart2,
+    ArrowRight, RefreshCw, Mic, BarChart2, X, ChevronDown,
 } from 'lucide-react';
 import TierGate from '../../components/shared/TierGate';
 import { useAuth } from '../../context/AuthContext';
@@ -661,6 +661,61 @@ function WinLossSection({ authHeader }: { authHeader: string }) {
     );
 }
 
+// ── Alert Banners ────────────────────────────────────────────────────────────
+
+const ALERT_MESSAGES: Record<string, (delta_d: number | null, delta_r: number | null) => string> = {
+    delivery_gap_widened: (d) =>
+        `Your Delivery Gap widened by ${Math.round(Math.abs(d ?? 0))} points this week. Your live call scores are falling further from your training scores.`,
+    readiness_gap_widened: (_, r) =>
+        `Your Readiness Gap widened by ${Math.round(Math.abs(r ?? 0))} points this week. MEDDIC execution or win rate has dropped.`,
+    both_widened: () =>
+        'Both your Delivery Gap and Readiness Gap widened this week. Review your AI coaching recommendations.',
+};
+
+function AlertBanners() {
+    const { session } = useAuth();
+    const [alerts, setAlerts] = useState<TransferGapAlert[]>([]);
+
+    useEffect(() => {
+        if (!session?.user?.id) return;
+        (async () => {
+            const { data } = await supabase
+                .from('transfer_gap_alerts')
+                .select('id, alert_type, delta_delivery, delta_readiness, created_at')
+                .eq('user_id', session.user.id)
+                .is('notified_at', null)
+                .order('created_at', { ascending: false })
+                .limit(3);
+            if (data) setAlerts(data);
+        })();
+    }, [session?.user?.id]);
+
+    const dismiss = async (alertId: string) => {
+        await supabase
+            .from('transfer_gap_alerts')
+            .update({ notified_at: new Date().toISOString() })
+            .eq('id', alertId);
+        setAlerts(prev => prev.filter(a => a.id !== alertId));
+    };
+
+    if (alerts.length === 0) return null;
+
+    return (
+        <div className="space-y-2">
+            {alerts.map(alert => (
+                <div key={alert.id} className="card-os border border-border border-l-4 border-l-accent p-4 flex items-start justify-between gap-3">
+                    <p className="text-sm text-text-primary">
+                        {ALERT_MESSAGES[alert.alert_type]?.(alert.delta_delivery, alert.delta_readiness) ?? 'Gap alert detected.'}
+                    </p>
+                    <button onClick={() => dismiss(alert.id)} className="text-text-muted hover:text-text-primary shrink-0">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
 function RevenueIntelDashboard() {
@@ -781,6 +836,9 @@ function RevenueIntelDashboard() {
                     Refresh
                 </button>
             </div>
+
+            {/* Alert Banners */}
+            <AlertBanners />
 
             {/* Section 1: Transfer Gap Analysis */}
             {authHeader && <TransferGapSection authHeader={authHeader} />}
