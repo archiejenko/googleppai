@@ -64,7 +64,7 @@ serve(async (req) => {
         org_id: orgId,
         session_id: sessionId,
         call_id: callId,
-        status: "active",
+        status: "pending_consent",
         call_started_at: new Date().toISOString(),
       };
 
@@ -86,7 +86,68 @@ serve(async (req) => {
         session_id: sessionId,
         call_id: callId,
         live_score_id: row.id,
+        org_id: orgId,
       });
+    }
+
+    if (action === "activate-session") {
+      const sessionId = body.session_id;
+      if (!sessionId) return err("session_id required", 400);
+
+      // Verify consent record exists
+      const { data: consent } = await supabase
+        .from("call_consent_log")
+        .select("id, consent_given, consented_at")
+        .eq("session_id", sessionId)
+        .eq("user_id", user.id)
+        .eq("consent_given", true)
+        .single();
+
+      if (!consent) {
+        return err("Consent not recorded. Session cannot start.", 403);
+      }
+
+      // Backfill server-side IP on the consent record
+      await supabase
+        .from("call_consent_log")
+        .update({ ip_address: req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip") })
+        .eq("session_id", sessionId)
+        .eq("user_id", user.id);
+
+      // Activate the session
+      const { error: activateError } = await supabase
+        .from("live_scores")
+        .update({ status: "active" })
+        .eq("session_id", sessionId)
+        .eq("user_id", user.id)
+        .eq("status", "pending_consent");
+
+      if (activateError) {
+        console.error("[telephony-webhook] activate error:", activateError);
+        return err("Failed to activate session");
+      }
+
+      return ok({ session_id: sessionId, status: "active" });
+    }
+
+    if (action === "update-status") {
+      const sessionId = body.session_id;
+      const newStatus = body.status;
+      if (!sessionId) return err("session_id required", 400);
+      if (!newStatus || !["abandoned"].includes(newStatus)) return err("Invalid status", 400);
+
+      const { error: updateErr } = await supabase
+        .from("live_scores")
+        .update({ status: newStatus })
+        .eq("session_id", sessionId)
+        .eq("user_id", user.id);
+
+      if (updateErr) {
+        console.error("[telephony-webhook] update-status error:", updateErr);
+        return err("Failed to update status");
+      }
+
+      return ok({ session_id: sessionId, status: newStatus });
     }
 
     if (action === "manual-end") {
@@ -130,7 +191,7 @@ serve(async (req) => {
       });
     }
 
-    return err("Unknown action. Use 'manual-start' or 'manual-end'.", 400);
+    return err("Unknown action. Use 'manual-start', 'activate-session', 'update-status', or 'manual-end'.", 400);
   } catch (error) {
     console.error("[telephony-webhook] unhandled error:", error);
     return err("An unexpected error occurred.");
