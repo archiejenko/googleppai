@@ -6,7 +6,6 @@ import {
   BarChart2,
   MessageSquare,
   Database,
-  Target,
   type LucideIcon,
 } from 'lucide-react';
 
