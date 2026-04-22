@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
-import { Users, Building2, TrendingUp, Award, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Building2, TrendingUp, Award, Trash2, ChevronLeft, ChevronRight, Phone, Link2, CheckCircle2, Clock } from 'lucide-react';
 import { showSuccess, showError, showInfo } from '../utils/toast';
 
 const PAGE_SIZE = 25;
@@ -24,6 +24,34 @@ interface Team {
     _count: { members: number };
 }
 
+interface RealCallRecording {
+    id: string;
+    org_id: string;
+    account_id: string | null;
+    persona_id: string | null;
+    recall_bot_id: string | null;
+    transcript: string | null;
+    duration_seconds: number | null;
+    meeting_url: string | null;
+    processed: boolean;
+    recorded_at: string | null;
+    created_at: string;
+    company?: { id: string; name: string } | null;
+    persona?: { id: string; name: string; title: string } | null;
+}
+
+interface SimCompany {
+    id: string;
+    name: string;
+}
+
+interface SimPersona {
+    id: string;
+    name: string;
+    title: string;
+    company_id: string;
+}
+
 interface PlatformAnalytics {
     totalUsers: number;
     totalTeams: number;
@@ -42,7 +70,7 @@ export default function AdminDashboard() {
     const [teams, setTeams] = useState<Team[]>([]);
     const [analytics, setAnalytics] = useState<PlatformAnalytics | null>(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'teams'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'teams' | 'real-calls'>('overview');
     const [page, setPage] = useState(0);
     const [totalUserCount, setTotalUserCount] = useState(0);
     const [newTeamName, setNewTeamName] = useState('');
@@ -52,6 +80,15 @@ export default function AdminDashboard() {
     const [newUserPassword, setNewUserPassword] = useState('');
     const [newUserTeamId, setNewUserTeamId] = useState('');
     const [growthBadge, setGrowthBadge] = useState<string>('—');
+
+    const [recordings, setRecordings] = useState<RealCallRecording[]>([]);
+    const [meetingUrl, setMeetingUrl] = useState('');
+    const [sendingBot, setSendingBot] = useState(false);
+    const [companies, setCompanies] = useState<SimCompany[]>([]);
+    const [personas, setPersonas] = useState<SimPersona[]>([]);
+    const [linkingId, setLinkingId] = useState<string | null>(null);
+    const [linkAccountId, setLinkAccountId] = useState('');
+    const [linkPersonaId, setLinkPersonaId] = useState('');
 
     useEffect(() => {
         fetchData();
@@ -175,6 +212,89 @@ export default function AdminDashboard() {
         }
     };
 
+    const fetchRealCalls = async () => {
+        const [recordingsRes, companiesRes, personasRes] = await Promise.all([
+            supabase
+                .from('real_call_recordings')
+                .select('*, company:simulated_companies(id, name), persona:simulated_personas(id, name, title)')
+                .order('recorded_at', { ascending: false }),
+            supabase.from('simulated_companies').select('id, name'),
+            supabase.from('simulated_personas').select('id, name, title, company_id'),
+        ]);
+        if (recordingsRes.data) setRecordings(recordingsRes.data);
+        if (companiesRes.data) setCompanies(companiesRes.data);
+        if (personasRes.data) setPersonas(personasRes.data);
+    };
+
+    useEffect(() => {
+        if (activeTab === 'real-calls') fetchRealCalls();
+    }, [activeTab]);
+
+    const sendBot = async () => {
+        if (!meetingUrl.trim()) return;
+        setSendingBot(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Not authenticated');
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('org_id')
+                .eq('id', session.user.id)
+                .single();
+            if (!profile?.org_id) throw new Error('No organisation found');
+
+            const resp = await supabase.functions.invoke('recall-webhook', {
+                body: { action: 'bot-join', meetingUrl: meetingUrl.trim(), orgId: profile.org_id },
+            });
+            if (resp.error) throw resp.error;
+            showSuccess('Bot sent', 'Recording bot is joining the meeting');
+            setMeetingUrl('');
+            await fetchRealCalls();
+        } catch (err: any) {
+            showError('Failed to send bot', err.message);
+        } finally {
+            setSendingBot(false);
+        }
+    };
+
+    const linkRecording = async (recordingId: string) => {
+        if (!linkAccountId || !linkPersonaId) {
+            showError('Select both a company and persona');
+            return;
+        }
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Not authenticated');
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('org_id')
+                .eq('id', session.user.id)
+                .single();
+            if (!profile?.org_id) throw new Error('No organisation found');
+
+            const resp = await supabase.functions.invoke('recall-webhook', {
+                body: {
+                    action: 'link-recording',
+                    recordingId,
+                    accountId: linkAccountId,
+                    personaId: linkPersonaId,
+                    orgId: profile.org_id,
+                    userId: session.user.id,
+                },
+            });
+            if (resp.error) throw resp.error;
+            showSuccess('Call linked', 'Transcript is being processed into the retrieval pool');
+            setLinkingId(null);
+            setLinkAccountId('');
+            setLinkPersonaId('');
+            await fetchRealCalls();
+        } catch (err: any) {
+            showError('Failed to link recording', err.message);
+        }
+    };
+
     const updateUserRole = async (userId: string, role: string) => {
         try {
             const { error } = await supabase.rpc('admin_set_user_role', {
@@ -295,7 +415,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex gap-2 mb-8 animate-in-up p-1 bg-[rgb(var(--bg-surface-raised))] rounded-[var(--radius-lg)] w-fit border border-[rgb(var(--border-default))]" style={{ animationDelay: '0.1s' }}>
-                    {(['overview', 'users', 'teams'] as const).map(tab => (
+                    {(['overview', 'users', 'teams', 'real-calls'] as const).map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -304,7 +424,7 @@ export default function AdminDashboard() {
                                 : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface))]'
                                 }`}
                         >
-                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                            {{ overview: 'Overview', users: 'Users', teams: 'Teams', 'real-calls': 'Real Calls' }[tab]}
                         </button>
                     ))}
                 </div>
@@ -564,6 +684,148 @@ export default function AdminDashboard() {
                                     )}
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Real Calls Tab */}
+                {activeTab === 'real-calls' && (
+                    <div className="space-y-6 animate-in-up" style={{ animationDelay: '0.2s' }}>
+                        <div className="card-os p-6">
+                            <h3 className="text-lg font-display font-bold text-[rgb(var(--text-primary))] mb-4">Record a Call</h3>
+                            <p className="text-[rgb(var(--text-muted))] text-sm mb-4">Paste a meeting URL to send a recording bot. The bot will join the call and transcribe it automatically.</p>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <input
+                                    type="url"
+                                    value={meetingUrl}
+                                    onChange={(e) => setMeetingUrl(e.target.value)}
+                                    placeholder="https://meet.google.com/... or https://zoom.us/j/..."
+                                    className="flex-1 input-os"
+                                    onKeyDown={(e) => e.key === 'Enter' && sendBot()}
+                                />
+                                <button
+                                    onClick={sendBot}
+                                    disabled={sendingBot || !meetingUrl.trim()}
+                                    className="btn-primary whitespace-nowrap flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    <Phone className="h-4 w-4" />
+                                    {sendingBot ? 'Sending...' : 'Send Bot'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="card-os p-0 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-[rgb(var(--border-default))]">
+                                <h3 className="text-lg font-display font-bold text-[rgb(var(--text-primary))]">Recorded Calls</h3>
+                            </div>
+                            {recordings.length === 0 ? (
+                                <div className="p-12 text-center">
+                                    <Phone className="h-8 w-8 text-[rgb(var(--text-muted))] mx-auto mb-3" />
+                                    <p className="text-[rgb(var(--text-muted))]">No recorded calls yet. Send a bot to a meeting to get started.</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] font-medium border-b border-[rgb(var(--border-default))]">
+                                            <tr>
+                                                <th className="p-4">Date</th>
+                                                <th className="p-4">Duration</th>
+                                                <th className="p-4">Account</th>
+                                                <th className="p-4">Persona</th>
+                                                <th className="p-4">Status</th>
+                                                <th className="p-4 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-[rgb(var(--border-subtle))]">
+                                            {recordings.map(rec => (
+                                                <tr key={rec.id} className="hover:bg-[rgb(var(--bg-surface-raised))] transition-colors">
+                                                    <td className="p-4 text-[rgb(var(--text-primary))]">
+                                                        {rec.recorded_at
+                                                            ? new Date(rec.recorded_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                                            : '—'}
+                                                    </td>
+                                                    <td className="p-4 text-[rgb(var(--text-secondary))] font-mono">
+                                                        {rec.duration_seconds
+                                                            ? `${Math.floor(rec.duration_seconds / 60)}:${String(rec.duration_seconds % 60).padStart(2, '0')}`
+                                                            : '—'}
+                                                    </td>
+                                                    <td className="p-4 text-[rgb(var(--text-secondary))]">
+                                                        {rec.company?.name || <span className="text-[rgb(var(--text-muted))] italic">Unlinked</span>}
+                                                    </td>
+                                                    <td className="p-4 text-[rgb(var(--text-secondary))]">
+                                                        {rec.persona
+                                                            ? <span>{rec.persona.name} <span className="text-[rgb(var(--text-muted))] text-xs">({rec.persona.title})</span></span>
+                                                            : <span className="text-[rgb(var(--text-muted))] italic">Unlinked</span>}
+                                                    </td>
+                                                    <td className="p-4">
+                                                        {rec.processed ? (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-status-success/10 text-status-success">
+                                                                <CheckCircle2 className="h-3 w-3" /> Processed
+                                                            </span>
+                                                        ) : rec.transcript ? (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-status-warning/10 text-status-warning">
+                                                                <Clock className="h-3 w-3" /> Transcribed
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-[rgb(var(--bg-canvas))] text-[rgb(var(--text-muted))]">
+                                                                <Clock className="h-3 w-3" /> Pending
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-4 text-right">
+                                                        {!rec.account_id || !rec.persona_id ? (
+                                                            linkingId === rec.id ? (
+                                                                <div className="flex items-center gap-2 justify-end flex-wrap">
+                                                                    <select
+                                                                        value={linkAccountId}
+                                                                        onChange={(e) => { setLinkAccountId(e.target.value); setLinkPersonaId(''); }}
+                                                                        className="bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded px-2 py-1 text-[rgb(var(--text-secondary))] text-xs focus:border-[rgb(var(--accent-primary))] focus:outline-none"
+                                                                    >
+                                                                        <option value="">Company...</option>
+                                                                        {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                                    </select>
+                                                                    <select
+                                                                        value={linkPersonaId}
+                                                                        onChange={(e) => setLinkPersonaId(e.target.value)}
+                                                                        className="bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded px-2 py-1 text-[rgb(var(--text-secondary))] text-xs focus:border-[rgb(var(--accent-primary))] focus:outline-none"
+                                                                        disabled={!linkAccountId}
+                                                                    >
+                                                                        <option value="">Persona...</option>
+                                                                        {personas
+                                                                            .filter(p => p.company_id === linkAccountId)
+                                                                            .map(p => <option key={p.id} value={p.id}>{p.name} ({p.title})</option>)}
+                                                                    </select>
+                                                                    <button
+                                                                        onClick={() => linkRecording(rec.id)}
+                                                                        className="px-3 py-1 text-xs font-medium bg-[rgb(var(--accent-primary))] text-white rounded hover:opacity-90 transition-opacity"
+                                                                    >
+                                                                        Save
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => { setLinkingId(null); setLinkAccountId(''); setLinkPersonaId(''); }}
+                                                                        className="px-3 py-1 text-xs font-medium text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-secondary))] transition-colors"
+                                                                    >
+                                                                        Cancel
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => setLinkingId(rec.id)}
+                                                                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-[rgb(var(--accent-primary))] hover:bg-[rgb(var(--accent-primary))]/10 rounded transition-colors"
+                                                                >
+                                                                    <Link2 className="h-3 w-3" /> Link
+                                                                </button>
+                                                            )
+                                                        ) : (
+                                                            <span className="text-xs text-[rgb(var(--text-muted))]">Linked</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
