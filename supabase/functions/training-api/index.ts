@@ -282,20 +282,45 @@ serve(async (req: Request) => {
                     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
                     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-                    fetch(`${supabaseUrl}/functions/v1/call-summariser`, {
-                        method: 'POST',
-                        headers: {
-                            Authorization: `Bearer ${serviceKey}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            transcript: summaryTranscript,
-                            accountStateId: accountState.id,
-                            orgId,
-                            callNumber: (accountState.call_count || 0) + 1,
-                            priorCommitments: existingCommitments,
-                        }),
-                    }).catch((e) => console.error(`[training-api] call-summariser failed for account_state_id=${accountState.id}:`, e));
+                    // Await summariser to get callSummaryId, then fire-and-forget embedder
+                    try {
+                        const sumResp = await fetch(`${supabaseUrl}/functions/v1/call-summariser`, {
+                            method: 'POST',
+                            headers: {
+                                Authorization: `Bearer ${serviceKey}`,
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                transcript: summaryTranscript,
+                                accountStateId: accountState.id,
+                                orgId,
+                                callNumber: (accountState.call_count || 0) + 1,
+                                priorCommitments: existingCommitments,
+                            }),
+                        });
+
+                        if (sumResp.ok) {
+                            const sumBody = await sumResp.json();
+                            if (sumBody.callSummaryId) {
+                                fetch(`${supabaseUrl}/functions/v1/embed-transcript`, {
+                                    method: 'POST',
+                                    headers: {
+                                        Authorization: `Bearer ${serviceKey}`,
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        transcript: summaryTranscript,
+                                        callSummaryId: sumBody.callSummaryId,
+                                        orgId,
+                                    }),
+                                }).catch((e) => console.error(`[training-api] embed-transcript failed for call_summary_id=${sumBody.callSummaryId}:`, e));
+                            }
+                        } else {
+                            console.error(`[training-api] call-summariser returned ${sumResp.status} for account_state_id=${accountState.id}`);
+                        }
+                    } catch (e) {
+                        console.error(`[training-api] call-summariser failed for account_state_id=${accountState.id}:`, e);
+                    }
                 } else {
                     console.error(`[training-api] no account_state found for company=${session.company_id} persona=${session.persona_id} user=${user.id}`);
                 }

@@ -19,6 +19,48 @@ interface AssembleOpts {
   callStage?: string;
   difficulty?: string;
   callFocus?: string;
+  openaiApiKey?: string;
+}
+
+const EMBEDDING_TIMEOUT_MS = 2000;
+const EMBEDDING_MODEL = "text-embedding-3-small";
+const _focusEmbeddingCache = new Map<string, number[]>();
+
+async function embedWithTimeout(text: string, apiKey: string): Promise<number[] | null> {
+  const cached = _focusEmbeddingCache.get(text);
+  if (cached) return cached;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), EMBEDDING_TIMEOUT_MS);
+
+  try {
+    const resp = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({ model: EMBEDDING_MODEL, input: [text] }),
+      signal: controller.signal,
+    });
+
+    if (!resp.ok) {
+      console.error("[prompt-assembly] embedding API returned", resp.status);
+      return null;
+    }
+
+    const json = await resp.json();
+    const embedding = json.data?.[0]?.embedding as number[] | undefined;
+    if (embedding) {
+      _focusEmbeddingCache.set(text, embedding);
+    }
+    return embedding ?? null;
+  } catch (e) {
+    console.error("[prompt-assembly] embedding failed (timeout or network):", e);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ─── Layer 1: Agent identity ──────────────────────────────────────────────────
@@ -302,6 +344,7 @@ export async function assembleCallPrompt(opts: AssembleOpts): Promise<string> {
     callStage,
     difficulty,
     callFocus,
+    openaiApiKey,
   } = opts;
 
   const stage = callStage || 'cold_call';
@@ -360,6 +403,7 @@ export async function assembleCallPrompt(opts: AssembleOpts): Promise<string> {
   }
 
   // Layer 5: Relationship state
+  let accountStateId: string | null = null;
   if (companyId && personaId) {
     const { data: accountState } = await supabaseClient
       .from('account_states')
@@ -371,6 +415,7 @@ export async function assembleCallPrompt(opts: AssembleOpts): Promise<string> {
       .single();
 
     if (accountState) {
+      accountStateId = accountState.id as string;
       const { data: recentCalls } = await supabaseClient
         .from('call_summaries')
         .select('*')
@@ -380,6 +425,32 @@ export async function assembleCallPrompt(opts: AssembleOpts): Promise<string> {
         .limit(5);
 
       layers.push(buildRelationshipLayer(accountState, recentCalls || []));
+    }
+  }
+
+  // Layer 5b: Semantic transcript retrieval
+  if (callFocus && openaiApiKey && accountStateId) {
+    try {
+      const focusEmbedding = await embedWithTimeout(callFocus, openaiApiKey);
+      if (focusEmbedding) {
+        const { data: chunks } = await supabaseClient.rpc('match_transcript_chunks', {
+          query_embedding: JSON.stringify(focusEmbedding),
+          p_org_id: orgId,
+          p_account_state_id: accountStateId,
+          match_count: 3,
+        });
+
+        if (chunks && chunks.length > 0) {
+          const chunkTexts = chunks.map((c: { chunk_text: string }) => `"${s(c.chunk_text, 2000)}"`).join('\n\n');
+          layers.push(`<context>
+SPECIFIC MOMENTS YOU REMEMBER FROM PREVIOUS CALLS:
+${chunkTexts}
+You can reference these naturally if relevant. Do not force them into conversation.
+</context>`);
+        }
+      }
+    } catch (e) {
+      console.error('[prompt-assembly] semantic retrieval failed, proceeding without it:', e);
     }
   }
 

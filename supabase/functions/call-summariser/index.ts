@@ -156,7 +156,7 @@ async function updateAccountState(
   summary: CallSummary,
   callNumber: number,
   orgId: string,
-): Promise<void> {
+): Promise<string | null> {
   const { data: state, error: fetchErr } = await supabase
     .from("account_states")
     .select("*")
@@ -263,8 +263,8 @@ async function updateAccountState(
     return
   }
 
-  // Write call_summaries row
-  const { error: insertErr } = await supabase
+  // Write call_summaries row — return id for downstream embedding
+  const { data: insertedSummary, error: insertErr } = await supabase
     .from("call_summaries")
     .insert({
       org_id: orgId,
@@ -279,10 +279,15 @@ async function updateAccountState(
       key_takeaways: summary.key_takeaways,
       call_quality_signals: summary.call_quality_signals,
     })
+    .select("id")
+    .single()
 
   if (insertErr) {
     console.error(`${FN} failed to insert call_summary for account_state_id=${accountStateId}:`, insertErr)
+    return null
   }
+
+  return insertedSummary?.id ?? null
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
@@ -424,9 +429,9 @@ serve(async (req: Request) => {
       }
     }
 
-    await updateAccountState(supabase, accountStateId, summary, callNumber, orgId)
+    const callSummaryId = await updateAccountState(supabase, accountStateId, summary, callNumber, orgId)
 
-    return new Response(JSON.stringify({ success: true, summary }), {
+    return new Response(JSON.stringify({ success: true, summary, callSummaryId }), {
       status: 200,
       headers: { ...CORS, "Content-Type": "application/json" },
     })

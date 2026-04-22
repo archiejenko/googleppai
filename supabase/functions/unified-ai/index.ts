@@ -140,6 +140,7 @@ serve(async (req) => {
                 callStage: session.call_stage ?? undefined,
                 difficulty: session.difficulty ?? undefined,
                 callFocus: session.call_focus ?? undefined,
+                openaiApiKey: Deno.env.get('OPENAI_API_KEY'),
             });
 
             systemInstruction = `${assembledPrompt}
