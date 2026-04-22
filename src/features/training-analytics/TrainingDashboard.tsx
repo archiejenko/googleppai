@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import TransferGapHero from './TransferGapHero';
+import SimPerformanceCard from './SimPerformanceCard';
 import SkillCompetencyBreakdown from './SkillCompetencyBreakdown';
 import RepPerformanceMatrix from './RepPerformanceMatrix';
 import RetentionDecayCurve from './RetentionDecayCurve';
@@ -15,6 +16,7 @@ import RoleReadinessScores from './RoleReadinessScores';
 import TeamPeerBenchmarking from './TeamPeerBenchmarking';
 import LowTransferIndexAlert from './LowTransferIndexAlert';
 import { useCoachingTriggers } from '../../hooks/useCoachingTriggers';
+import { useTransferGapTeam } from '../../hooks/useTransferGap';
 
 /**
  * /dashboard/training — Manager-only training analytics hub.
@@ -46,10 +48,12 @@ type Period = 30 | 60 | 90
 
 export default function TrainingDashboard() {
   const [days, setDays] = useState<Period>(30)
+  const [selectedRepId, setSelectedRepId] = useState<string>('')
 
   // Coaching trigger count badge — React Query deduplicates with CoachingQueue's query
   const { data: triggers } = useCoachingTriggers()
   const criticalCount = triggers?.filter(t => t.severity === 'critical').length ?? 0
+  const { data: teamReps } = useTransferGapTeam()
 
   return (
     <div className="space-y-10">
@@ -99,6 +103,23 @@ export default function TrainingDashboard() {
       {/* T1 — Transfer Gap (no period dependency — uses its own 90d window) */}
       <section>
         <TransferGapHero />
+      </section>
+
+      {/* T1.5 — Simulation Performance (v2 metrics) */}
+      <section>
+        <div className="flex items-center gap-3 mb-4">
+          <select
+            value={selectedRepId}
+            onChange={(e) => setSelectedRepId(e.target.value)}
+            className="bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded px-3 py-1.5 text-sm text-[rgb(var(--text-secondary))] focus:border-[rgb(var(--accent-primary))] focus:outline-none"
+          >
+            <option value="">Select rep...</option>
+            {(teamReps || []).map((r) => (
+              <option key={r.rep_id} value={r.rep_id}>{r.rep_name}</option>
+            ))}
+          </select>
+        </div>
+        {selectedRepId && <SimPerformanceCard userId={selectedRepId} />}
       </section>
 
       {/* T2 — Skill Competency Breakdown */}

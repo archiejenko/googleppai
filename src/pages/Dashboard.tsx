@@ -20,6 +20,7 @@ import ErrorMessage from '../components/common/ErrorMessage';
 import RepDNACard from '../features/rep-dna/RepDNACard';
 import DailyDrillWidget from '../features/daily-drill/DailyDrillWidget';
 import DealPrepModal from '../features/deal-prep/DealPrepModal';
+import SimPerformanceCard from '../features/training-analytics/SimPerformanceCard';
 import PeerBenchmarkingCard from '../features/peer-benchmarking/PeerBenchmarkingCard';
 import { StartLiveSessionButton } from '../components/live/OastLiveWidget';
 
@@ -220,6 +221,9 @@ export default function Dashboard() {
                     delay={0.3}
                 />
             </div>
+
+            {/* Simulation Performance (compact) */}
+            <SimPerformanceCard userId={user?.id} compact />
 
             {/* Rep DNA + Daily Drill + Deal Prep Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

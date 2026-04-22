@@ -287,6 +287,67 @@ async function updateAccountState(
     return null
   }
 
+  // Win/Loss event emission on terminal stage transitions
+  const TERMINAL_STAGES = new Set(["closed_won", "closed_lost", "ghosted"])
+  if (TERMINAL_STAGES.has(newStage)) {
+    try {
+      const { count: existingCount } = await supabase
+        .from("win_loss_events")
+        .select("id", { count: "exact", head: true })
+        .eq("account_state_id", accountStateId)
+
+      if ((existingCount ?? 0) === 0) {
+        const { data: allSummaries } = await supabase
+          .from("call_summaries")
+          .select("call_number, sentiment_delta, stage_transition, key_takeaways, call_type, created_at")
+          .eq("account_state_id", accountStateId)
+          .order("call_number", { ascending: true })
+
+        const trajectory = (allSummaries || []).map((cs: any) => ({
+          call_number: cs.call_number,
+          sentiment_delta: cs.sentiment_delta,
+          stage_transition: cs.stage_transition,
+          key_takeaways: cs.key_takeaways,
+          call_type: cs.call_type,
+        }))
+
+        const firstCall = allSummaries?.[0]?.created_at
+        const lastCall = allSummaries?.[allSummaries.length - 1]?.created_at
+        const totalDurationDays = firstCall && lastCall
+          ? Math.max(1, Math.round((new Date(lastCall).getTime() - new Date(firstCall).getTime()) / 86400000))
+          : 1
+
+        const outcomeMap: Record<string, string> = {
+          closed_won: "won",
+          closed_lost: "lost",
+          ghosted: "ghosted",
+        }
+
+        const { error: wlErr } = await supabase
+          .from("win_loss_events")
+          .insert({
+            org_id: orgId,
+            user_id: state.user_id,
+            account_state_id: accountStateId,
+            outcome: outcomeMap[newStage],
+            trajectory,
+            total_calls: (state.call_count || 0) + 1,
+            total_duration_days: totalDurationDays,
+            final_sentiment: newSentiment,
+            final_credibility: credibilityScore,
+          })
+
+        if (wlErr) {
+          console.error(`${FN} failed to insert win_loss_event for account_state_id=${accountStateId}:`, wlErr)
+        } else {
+          console.log(`${FN} win_loss_event emitted: ${outcomeMap[newStage]} for account_state_id=${accountStateId}`)
+        }
+      }
+    } catch (e) {
+      console.error(`${FN} win_loss_event emission failed for account_state_id=${accountStateId}:`, e)
+    }
+  }
+
   return insertedSummary?.id ?? null
 }
 
