@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import {
   useSimPerformanceSnapshots,
   useOrgSimPerformanceAvg,
