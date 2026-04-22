@@ -38,7 +38,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ collapsed, setCollapsed, onOpenPrep }: SidebarProps & { onOpenPrep?: () => void }) {
-    const { user, signOut, isManager } = useAuth();
+    const { user, signOut, isManager, isAdmin } = useAuth();
     const { isRevIntel } = useTier();
     const { data: notifications = [] } = useNotifications(user?.id);
     const unreadNotifications = notifications.filter(n => n.unread).length;
@@ -82,6 +82,7 @@ export default function Sidebar({ collapsed, setCollapsed, onOpenPrep }: Sidebar
         { icon: BarChart, label: 'Win / Loss', path: '/win-loss' },
         { icon: Phone, label: 'Pre-Call Prep', onClick: onOpenPrep, tierLocked: !isRevIntel },
         ...(isManager ? [{ icon: UserCheck as typeof Bell, label: 'Coaching', path: '/manager' }] : []),
+        ...(isAdmin ? [{ icon: Building2 as typeof Bell, label: 'Accounts', path: '/admin/companies' }] : []),
     ];
 
     return (

@@ -19,6 +19,7 @@ import Industries from './pages/Industries';
 import Team from './pages/Team';
 import Pricing from './pages/Pricing';
 import AdminDashboard from './pages/AdminDashboard';
+import { CompanyList, CompanyDetail } from './pages/admin/SimulatedCompanies';
 import Profile from './pages/Profile';
 import AccountDeletion from './pages/AccountDeletion';
 import AppShell from './components/layout/AppShell';
@@ -167,6 +168,16 @@ function App() {
                 <Route path="/admin" element={
                   <ProtectedRoute roles={['admin']}>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/companies" element={
+                  <ProtectedRoute roles={['admin']}>
+                    <CompanyList />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/companies/:id" element={
+                  <ProtectedRoute roles={['admin']}>
+                    <CompanyDetail />
                   </ProtectedRoute>
                 } />
                 <Route path="/active-training" element={<ActiveTraining />} />

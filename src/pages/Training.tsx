@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
-import { Play, Lock, Star, Crown, DollarSign, Shield, Settings } from 'lucide-react';
+import { Play, Lock, Star, Crown, DollarSign, Shield, Settings, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { showError } from '../utils/toast';
 
@@ -82,6 +82,15 @@ export default function Training() {
     const [isEliteUnlocked, setIsEliteUnlocked] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    // ── Account selector state ──────────────────────────────────────────────
+    const [accountMode, setAccountMode] = useState(false);
+    const [companies, setCompanies] = useState<{ id: string; name: string; industry_slug: string }[]>([]);
+    const [personas, setPersonas] = useState<{ id: string; name: string; title: string }[]>([]);
+    const [selectedCompanyId, setSelectedCompanyId] = useState('');
+    const [selectedPersonaId, setSelectedPersonaId] = useState('');
+    const [accountState, setAccountState] = useState<{ call_count: number; current_stage: string; sentiment_score: number } | null>(null);
+    const [industrySlugMap, setIndustrySlugMap] = useState<Record<string, string>>({});
+
     // ── New briefing state ─────────────────────────────────────────────────
     const [dealContext, setDealContext] = useState<DealContext>({
         prospectName: '', prospectCompany: '', icpTier: '',
@@ -123,6 +132,37 @@ export default function Training() {
                     }
                 }
 
+                // Fetch industry_profile_slug mapping for account selector
+                const { data: indWithSlugs } = await supabase
+                    .from('industries')
+                    .select('id, industry_profile_slug');
+                if (indWithSlugs) {
+                    const map: Record<string, string> = {};
+                    for (const row of indWithSlugs) {
+                        if (row.industry_profile_slug) map[row.id] = row.industry_profile_slug;
+                    }
+                    setIndustrySlugMap(map);
+                }
+
+                // Fetch simulated companies for account selector
+                const { data: { session: authSession } } = await supabase.auth.getSession();
+                if (authSession) {
+                    try {
+                        const res = await fetch(
+                            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/accounts-api`,
+                            { headers: { Authorization: `Bearer ${authSession.access_token}` } },
+                        );
+                        if (res.ok) {
+                            const companyData = await res.json();
+                            setCompanies((companyData as any[]).map((c: any) => ({
+                                id: c.id,
+                                name: c.name,
+                                industry_slug: c.industry_slug,
+                            })));
+                        }
+                    } catch { /* non-critical */ }
+                }
+
                 if (user?.id) {
                     const { data: profile } = await supabase
                         .from('profiles').select('mastery_level, preferred_voice_id').eq('id', user.id).single();
@@ -137,6 +177,42 @@ export default function Training() {
         };
         fetchData();
     }, [moduleId, user?.id]);
+
+    // Fetch personas when company is selected
+    useEffect(() => {
+        if (!selectedCompanyId) { setPersonas([]); setSelectedPersonaId(''); setAccountState(null); return; }
+        const fetchPersonas = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
+            try {
+                const res = await fetch(
+                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/accounts-api/${selectedCompanyId}/personas`,
+                    { headers: { Authorization: `Bearer ${session.access_token}` } },
+                );
+                if (res.ok) {
+                    const data = await res.json();
+                    setPersonas((data as any[]).map((p: any) => ({ id: p.id, name: p.name, title: p.title })));
+                }
+            } catch { /* non-critical */ }
+        };
+        fetchPersonas();
+    }, [selectedCompanyId]);
+
+    // Fetch account state when persona is selected
+    useEffect(() => {
+        if (!selectedCompanyId || !selectedPersonaId || !user?.id) { setAccountState(null); return; }
+        const fetchAccountState = async () => {
+            const { data } = await supabase
+                .from('account_states')
+                .select('call_count, current_stage, sentiment_score')
+                .eq('company_id', selectedCompanyId)
+                .eq('persona_id', selectedPersonaId)
+                .eq('user_id', user.id)
+                .maybeSingle();
+            setAccountState(data || null);
+        };
+        fetchAccountState();
+    }, [selectedCompanyId, selectedPersonaId, user?.id]);
 
     useEffect(() => {
         if (!formData.industryId) { setAvailableScenarios(DEFAULT_SCENARIOS); return; }
@@ -157,14 +233,13 @@ export default function Training() {
         e.preventDefault();
         setLoading(true);
         try {
-            const payload = {
+            const payload: Record<string, unknown> = {
                 ...formData,
                 industryId: formData.industryId || null,
                 type: moduleId ? 'learning_path' : 'simulation',
                 moduleId,
                 scenario: formData.isMultiPersona ? 'buying_committee' : formData.scenario,
                 action: 'create',
-                // Extended: deal context stored in session_state
                 session_state: {
                     dealContext,
                     objective,
@@ -172,6 +247,8 @@ export default function Training() {
                     confidenceRating,
                 },
             };
+            if (accountMode && selectedCompanyId) payload.companyId = selectedCompanyId;
+            if (accountMode && selectedPersonaId) payload.personaId = selectedPersonaId;
 
             const { data: { session: currentSession } } = await supabase.auth.getSession();
             if (!currentSession) throw new Error('No active session found. Please log in again.');
@@ -445,6 +522,104 @@ export default function Training() {
                                 )}
                             </div>
                         </div>
+                    </div>
+
+                    {/* ── Row 4b: Account Selector ────────────────────────── */}
+                    <div className="bg-bg-surface border border-[#2a2a2e] p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-text-muted">
+                                Specific Account
+                            </h2>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setAccountMode(!accountMode);
+                                    if (accountMode) {
+                                        setSelectedCompanyId('');
+                                        setSelectedPersonaId('');
+                                        setAccountState(null);
+                                    }
+                                }}
+                                className={`px-3 py-1 text-[9px] font-black uppercase tracking-wider border transition-colors ${
+                                    accountMode
+                                        ? 'border-accent text-accent bg-accent/5'
+                                        : 'border-[#2a2a2e] text-text-muted hover:border-accent/40'
+                                }`}
+                            >
+                                {accountMode ? 'On' : 'Off'}
+                            </button>
+                        </div>
+
+                        {!accountMode && (
+                            <p className="text-[10px] text-text-muted">
+                                Toggle on to practice against a specific simulated company and persona.
+                            </p>
+                        )}
+
+                        {accountMode && (
+                            <div className="space-y-3">
+                                {/* Company Picker */}
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-text-muted mb-1">
+                                        Company
+                                    </label>
+                                    <select
+                                        value={selectedCompanyId}
+                                        onChange={e => { setSelectedCompanyId(e.target.value); setSelectedPersonaId(''); setAccountState(null); }}
+                                        className="input-os text-xs py-2 w-full"
+                                    >
+                                        <option value="">Select company...</option>
+                                        {companies
+                                            .filter(c => {
+                                                if (!formData.industryId) return true;
+                                                const slug = industrySlugMap[formData.industryId];
+                                                return !slug || c.industry_slug === slug;
+                                            })
+                                            .map(c => <option key={c.id} value={c.id}>{c.name}</option>)
+                                        }
+                                    </select>
+                                </div>
+
+                                {/* Persona Picker */}
+                                {selectedCompanyId && (
+                                    <div>
+                                        <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-text-muted mb-1">
+                                            Persona
+                                        </label>
+                                        <select
+                                            value={selectedPersonaId}
+                                            onChange={e => setSelectedPersonaId(e.target.value)}
+                                            className="input-os text-xs py-2 w-full"
+                                        >
+                                            <option value="">Select persona...</option>
+                                            {personas.map(p => <option key={p.id} value={p.id}>{p.name} — {p.title}</option>)}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Account State Display */}
+                                {selectedPersonaId && accountState && (
+                                    <div className="flex items-center gap-3 p-3 bg-bg-canvas border border-[#2a2a2e]">
+                                        <Building2 className="h-4 w-4 text-accent shrink-0" />
+                                        <p className="text-[10px] text-text-secondary">
+                                            You've called <span className="text-text-primary font-bold">{personas.find(p => p.id === selectedPersonaId)?.name}</span>{' '}
+                                            <span className="font-mono text-accent">{accountState.call_count}</span> times.
+                                            Current stage: <span className="font-bold text-text-primary">{accountState.current_stage}</span>.
+                                            Sentiment: <span className="font-mono text-accent">{accountState.sentiment_score}/100</span>
+                                        </p>
+                                    </div>
+                                )}
+
+                                {selectedPersonaId && !accountState && (
+                                    <div className="flex items-center gap-3 p-3 bg-bg-canvas border border-[#2a2a2e]">
+                                        <Building2 className="h-4 w-4 text-text-muted shrink-0" />
+                                        <p className="text-[10px] text-text-muted">
+                                            First call with this persona. Account state will be created when you start.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* ── Row 5: Prospect Voice ────────────────────────────── */}

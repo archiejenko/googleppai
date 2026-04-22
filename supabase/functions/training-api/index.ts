@@ -307,6 +307,28 @@ serve(async (req: Request) => {
 
         if (error) throw error
 
+        // Initialise account_state for company/persona pair if first interaction
+        if (companyId && personaId && orgId) {
+            const { error: asError } = await supabaseClient
+                .from('account_states')
+                .upsert(
+                    {
+                        org_id: orgId,
+                        user_id: user.id,
+                        company_id: companyId,
+                        persona_id: personaId,
+                        current_stage: 'cold',
+                        sentiment_score: 50,
+                        relationship_notes: {},
+                        call_count: 0,
+                    },
+                    { onConflict: 'org_id,user_id,company_id,persona_id', ignoreDuplicates: true },
+                )
+            if (asError) {
+                console.error('[training-api] account_state init failed:', asError)
+            }
+        }
+
         return new Response(JSON.stringify(session), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
