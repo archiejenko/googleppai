@@ -34,12 +34,19 @@ serve(async (req) => {
       );
     }
 
+    const { data: decryptedAccess } = await supabase.rpc("decrypt_token", { cipher_text: conn.access_token });
+    const { data: decryptedRefresh } = await supabase.rpc("decrypt_token", { cipher_text: conn.refresh_token });
+
+    if (!decryptedAccess || !decryptedRefresh) {
+      throw new Error("Failed to decrypt stored tokens");
+    }
+
     const expiresAt = new Date(conn.token_expires_at);
     const fiveMinutesFromNow = new Date(Date.now() + 5 * 60 * 1000);
 
     if (expiresAt > fiveMinutesFromNow) {
       return new Response(
-        JSON.stringify({ access_token: conn.access_token, instance_url: conn.instance_url }),
+        JSON.stringify({ access_token: decryptedAccess, instance_url: conn.instance_url }),
         { headers: { "Content-Type": "application/json" } },
       );
     }
@@ -59,7 +66,7 @@ serve(async (req) => {
           grant_type: "refresh_token",
           client_id: clientId,
           client_secret: clientSecret,
-          refresh_token: conn.refresh_token,
+          refresh_token: decryptedRefresh,
         }),
       });
       const tokenData = await tokenRes.json();
@@ -78,7 +85,7 @@ serve(async (req) => {
           grant_type: "refresh_token",
           client_id: clientId,
           client_secret: clientSecret,
-          refresh_token: conn.refresh_token,
+          refresh_token: decryptedRefresh,
         }),
       });
       const tokenData = await tokenRes.json();
@@ -89,10 +96,12 @@ serve(async (req) => {
       newExpiresAt = new Date(Date.now() + 7200 * 1000).toISOString();
     }
 
+    const { data: encNewAccess } = await supabase.rpc("encrypt_token", { plain_text: newAccessToken });
+
     const { error: updateError } = await supabase
       .from("crm_connections")
       .update({
-        access_token: newAccessToken,
+        access_token: encNewAccess,
         token_expires_at: newExpiresAt,
         instance_url: newInstanceUrl,
       })

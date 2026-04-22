@@ -78,7 +78,7 @@ serve(async (req) => {
         const clientId = Deno.env.get("HUBSPOT_CLIENT_ID");
         const redirectUri = Deno.env.get("HUBSPOT_REDIRECT_URI");
         if (!clientId || !redirectUri) throw new Error("HubSpot OAuth env vars not configured");
-        const scopes = "crm.objects.deals.read crm.objects.owners.read";
+        const scopes = "crm.objects.deals.read crm.objects.owners.read crm.objects.companies.read crm.objects.contacts.read";
         redirectUrl = `https://app.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
       } else {
         const clientId = Deno.env.get("SALESFORCE_CLIENT_ID");
@@ -118,6 +118,8 @@ serve(async (req) => {
       let expiresAt: string;
       let instanceUrl: string | null = null;
 
+      let grantedScopes: string[] = [];
+
       if (provider === "hubspot") {
         const clientId = Deno.env.get("HUBSPOT_CLIENT_ID")!;
         const clientSecret = Deno.env.get("HUBSPOT_CLIENT_SECRET")!;
@@ -140,6 +142,7 @@ serve(async (req) => {
         accessToken = tokenData.access_token;
         refreshToken = tokenData.refresh_token;
         expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
+        grantedScopes = (tokenData.scope ?? "").split(" ").filter(Boolean);
       } else {
         const clientId = Deno.env.get("SALESFORCE_CLIENT_ID")!;
         const clientSecret = Deno.env.get("SALESFORCE_CLIENT_SECRET")!;
@@ -163,17 +166,23 @@ serve(async (req) => {
         refreshToken = tokenData.refresh_token;
         instanceUrl = tokenData.instance_url;
         expiresAt = new Date(Date.now() + 7200 * 1000).toISOString();
+        grantedScopes = (tokenData.scope ?? "").split(" ").filter(Boolean);
       }
+
+      const { data: encAccess } = await supabaseAdmin.rpc("encrypt_token", { plain_text: accessToken });
+      const { data: encRefresh } = await supabaseAdmin.rpc("encrypt_token", { plain_text: refreshToken });
 
       const { error: upsertError } = await supabaseAdmin
         .from("crm_connections")
         .upsert({
           org_id: orgId,
           provider,
-          access_token: accessToken,
-          refresh_token: refreshToken,
+          access_token: encAccess,
+          refresh_token: encRefresh,
           token_expires_at: expiresAt,
           instance_url: instanceUrl,
+          scopes: grantedScopes,
+          sync_status: "pending",
           connected_at: new Date().toISOString(),
           connected_by: user.id,
         }, { onConflict: "org_id,provider" });
@@ -222,7 +231,7 @@ serve(async (req) => {
 
       const { data: connections, error } = await supabaseAdmin
         .from("crm_connections")
-        .select("provider, connected_at, last_synced_at, sync_error")
+        .select("provider, connected_at, last_synced_at, sync_error, sync_status, scopes, field_mappings")
         .eq("org_id", orgId);
 
       if (error) throw error;

@@ -14,6 +14,8 @@ interface Company {
     size: string;
     stage: string;
     difficulty_tier: string;
+    source: string;
+    external_provider: string | null;
     simulated_personas: { count: number }[];
     created_at: string;
 }
@@ -28,6 +30,7 @@ interface Persona {
 }
 
 type SortField = 'name' | 'industry' | 'stage' | 'difficulty_tier' | 'personas' | 'created_at';
+type SourceFilter = '' | 'manual' | 'crm_sync' | 'uploaded';
 
 export function CompanyList() {
     const navigate = useNavigate();
@@ -36,6 +39,7 @@ export function CompanyList() {
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | undefined>();
     const [industryFilter, setIndustryFilter] = useState('');
+    const [sourceFilter, setSourceFilter] = useState<SourceFilter>('');
     const [sortField, setSortField] = useState<SortField>('created_at');
     const [sortAsc, setSortAsc] = useState(false);
 
@@ -74,8 +78,9 @@ export function CompanyList() {
     const industries = [...new Set(companies.map(c => c.industry?.display_name || c.industry_slug))];
 
     const filtered = companies.filter(c => {
-        if (!industryFilter) return true;
-        return (c.industry?.display_name || c.industry_slug) === industryFilter;
+        if (industryFilter && (c.industry?.display_name || c.industry_slug) !== industryFilter) return false;
+        if (sourceFilter && c.source !== sourceFilter) return false;
+        return true;
     });
 
     const sorted = [...filtered].sort((a, b) => {
@@ -129,9 +134,9 @@ export function CompanyList() {
                     </button>
                 </div>
 
-                {/* Filter */}
-                {industries.length > 1 && (
-                    <div className="mb-4 animate-in-up" style={{ animationDelay: '0.1s' }}>
+                {/* Filters */}
+                <div className="mb-4 animate-in-up flex items-center gap-3" style={{ animationDelay: '0.1s' }}>
+                    {industries.length > 1 && (
                         <select
                             value={industryFilter}
                             onChange={e => setIndustryFilter(e.target.value)}
@@ -140,8 +145,18 @@ export function CompanyList() {
                             <option value="">All Industries</option>
                             {industries.map(ind => <option key={ind} value={ind}>{ind}</option>)}
                         </select>
-                    </div>
-                )}
+                    )}
+                    <select
+                        value={sourceFilter}
+                        onChange={e => setSourceFilter(e.target.value as SourceFilter)}
+                        className="input-os text-sm py-2"
+                    >
+                        <option value="">All Sources</option>
+                        <option value="manual">Manual</option>
+                        <option value="crm_sync">CRM Sync</option>
+                        <option value="uploaded">Uploaded</option>
+                    </select>
+                </div>
 
                 {/* Table */}
                 <div className="card-os p-0 overflow-hidden animate-in-up" style={{ animationDelay: '0.15s' }}>
@@ -171,6 +186,11 @@ export function CompanyList() {
                                                     <Building2 className="h-4 w-4" />
                                                 </div>
                                                 <span className="text-[rgb(var(--text-primary))] font-medium">{company.name}</span>
+                                                {company.source === 'crm_sync' && (
+                                                    <span className="ml-2 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider bg-[rgb(var(--accent-primary))]/10 text-[rgb(var(--accent-primary))] border border-[rgb(var(--accent-primary))]/20">
+                                                        {company.external_provider === 'salesforce' ? 'Salesforce' : 'HubSpot'}
+                                                    </span>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="p-4 text-[rgb(var(--text-secondary))]">{company.industry?.display_name || company.industry_slug}</td>

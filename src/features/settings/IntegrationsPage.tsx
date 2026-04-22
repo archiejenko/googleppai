@@ -192,7 +192,7 @@ const APP_URL     = window.location.origin;
 
 const CRM_OAUTH_URLS: Record<string, string | null> = {
     hubspot:    import.meta.env.VITE_HUBSPOT_CLIENT_ID
-        ? `https://app.hubspot.com/oauth/authorize?client_id=${import.meta.env.VITE_HUBSPOT_CLIENT_ID}&redirect_uri=${encodeURIComponent(`${APP_URL}/settings/integrations?provider=hubspot`)}&scope=crm.objects.contacts.write%20crm.objects.deals.write%20engagements.read_write`
+        ? `https://app.hubspot.com/oauth/authorize?client_id=${import.meta.env.VITE_HUBSPOT_CLIENT_ID}&redirect_uri=${encodeURIComponent(`${APP_URL}/settings/integrations?provider=hubspot`)}&scope=crm.objects.companies.read%20crm.objects.contacts.read%20crm.objects.deals.read%20crm.objects.owners.read`
         : null,
     salesforce: import.meta.env.VITE_SALESFORCE_CLIENT_ID
         ? `https://login.salesforce.com/services/oauth2/authorize?client_id=${import.meta.env.VITE_SALESFORCE_CLIENT_ID}&redirect_uri=${encodeURIComponent(`${APP_URL}/settings/integrations?provider=salesforce`)}&response_type=code`
