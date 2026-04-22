@@ -20,6 +20,7 @@ import Team from './pages/Team';
 import Pricing from './pages/Pricing';
 import AdminDashboard from './pages/AdminDashboard';
 import { CompanyList, CompanyDetail } from './pages/admin/SimulatedCompanies';
+import AuditLog from './pages/admin/AuditLog';
 import Profile from './pages/Profile';
 import AccountDeletion from './pages/AccountDeletion';
 import AppShell from './components/layout/AppShell';
@@ -179,6 +180,11 @@ function App() {
                 <Route path="/admin/companies/:id" element={
                   <ProtectedRoute roles={['admin']}>
                     <CompanyDetail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/audit-log" element={
+                  <ProtectedRoute roles={['admin']}>
+                    <AuditLog />
                   </ProtectedRoute>
                 } />
                 <Route path="/accounts/:accountStateId" element={<AccountTimeline />} />

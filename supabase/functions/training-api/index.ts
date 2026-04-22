@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { checkOrgAiLimit } from '../_shared/orgRateLimit.ts'
 import { validateBody } from '../_shared/validateBody.ts'
+import { logAudit, extractRequestContext } from '../_shared/audit.ts'
 
 const AI_ESTIMATED_TOKENS = 1500; // ~800 prompt (transcript) + 700 max output (gpt-4o-mini)
 
@@ -27,6 +28,8 @@ serve(async (req: Request) => {
     }
 
     try {
+        const reqCtx = extractRequestContext(req)
+
         const authHeader = req.headers.get('Authorization')
         if (!authHeader) {
             console.error('[training-api] Missing Authorization header')
@@ -347,6 +350,15 @@ serve(async (req: Request) => {
                 console.error('[training-api] increment_user_xp RPC failed:', xpError)
             }
 
+            if (orgId) {
+                await logAudit(supabaseAdmin, {
+                    orgId, userId: user.id, action: 'call.completed',
+                    resourceType: 'training_session', resourceId: sessionId,
+                    metadata: { pitch_id: pitchId || null, xp_earned: xpEarned },
+                    ...reqCtx,
+                })
+            }
+
             return new Response(JSON.stringify({ success: true, pitchId, xpEarned }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 200,
@@ -397,6 +409,21 @@ serve(async (req: Request) => {
             if (asError) {
                 console.error('[training-api] account_state init failed:', asError)
             }
+        }
+
+        if (orgId) {
+            await logAudit(supabaseAdmin, {
+                orgId, userId: user.id, action: 'call.started',
+                resourceType: 'training_session', resourceId: session.id,
+                metadata: {
+                    industry_slug: industryId ?? null,
+                    company_id: companyId ?? null,
+                    persona_id: personaId ?? null,
+                    call_stage: callStage ?? null,
+                    difficulty: difficulty ?? null,
+                },
+                ...reqCtx,
+            })
         }
 
         return new Response(JSON.stringify(session), {

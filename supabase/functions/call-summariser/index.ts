@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { checkOrgAiLimit } from "../_shared/orgRateLimit.ts"
 import { logTokenUsage } from "../_shared/tokenUsage.ts"
+import { logAudit } from "../_shared/audit.ts"
 
 const FN = "[call-summariser]"
 const AI_ESTIMATED_TOKENS = 2500
@@ -491,6 +492,18 @@ serve(async (req: Request) => {
     }
 
     const callSummaryId = await updateAccountState(supabase, accountStateId, summary, callNumber, orgId)
+
+    if (callSummaryId) {
+      await logAudit(supabase, {
+        orgId, userId: null, action: 'call.summarised',
+        resourceType: 'call_summary', resourceId: callSummaryId,
+        metadata: {
+          account_state_id: accountStateId,
+          stage_transition: summary.stage_transition,
+          sentiment_delta: summary.sentiment_delta,
+        },
+      })
+    }
 
     return new Response(JSON.stringify({ success: true, summary, callSummaryId }), {
       status: 200,

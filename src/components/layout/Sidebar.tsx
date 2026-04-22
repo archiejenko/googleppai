@@ -26,6 +26,7 @@ import {
     MessageSquare,
     BarChart,
     UserCheck,
+    Shield,
 } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
@@ -82,7 +83,10 @@ export default function Sidebar({ collapsed, setCollapsed, onOpenPrep }: Sidebar
         { icon: BarChart, label: 'Win / Loss', path: '/win-loss' },
         { icon: Phone, label: 'Pre-Call Prep', onClick: onOpenPrep, tierLocked: !isRevIntel },
         ...(isManager ? [{ icon: UserCheck as typeof Bell, label: 'Coaching', path: '/manager' }] : []),
-        ...(isAdmin ? [{ icon: Building2 as typeof Bell, label: 'Accounts', path: '/admin/companies' }] : []),
+        ...(isAdmin ? [
+            { icon: Building2 as typeof Bell, label: 'Accounts', path: '/admin/companies' },
+            { icon: Shield as typeof Bell, label: 'Audit Log', path: '/admin/audit-log' },
+        ] : []),
     ];
 
     return (

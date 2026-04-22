@@ -3,6 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { validateBody } from '../_shared/validateBody.ts'
 import { sanitizeTextField } from '../_shared/sanitizePromptField.ts'
+import { requireAdmin, requireOwnerOrRole } from '../_shared/authorise.ts'
+import { logAudit, extractRequestContext } from '../_shared/audit.ts'
+import { canExport } from '../_shared/export-guard.ts'
 
 const FN = '[accounts-api]'
 
@@ -243,6 +246,9 @@ serve(async (req: Request) => {
             return jsonError('Forbidden: no org_id found for user', 403, corsHeaders)
         }
 
+        // ── Request context for audit logging ────────────────────────────
+        const reqCtx = extractRequestContext(req)
+
         // ── Routing ──────────────────────────────────────────────────────────
         const url = new URL(req.url)
         const pathParts = url.pathname
@@ -270,8 +276,11 @@ serve(async (req: Request) => {
             return jsonOk(data, corsHeaders)
         }
 
-        // POST / — create company
+        // POST / — create company (org_admin only)
         if (method === 'POST' && pathParts.length === 0) {
+            const adminAuth = await requireAdmin(supabaseAdmin, user.id, orgId)
+            if (adminAuth instanceof Response) return adminAuth
+
             const rawBody = await req.json().catch(() => null)
             const v = validateBody<Record<string, unknown>>(rawBody, {
                 name:            { type: 'string', required: true },
@@ -324,11 +333,21 @@ serve(async (req: Request) => {
                 return jsonError('Failed to create company', 500, corsHeaders)
             }
 
+            await logAudit(supabaseAdmin, {
+                orgId, userId: user.id, action: 'company.create',
+                resourceType: 'simulated_company', resourceId: data.id,
+                metadata: { name: data.name, industry_slug: data.industry_slug },
+                ...reqCtx,
+            })
+
             return jsonOk(data, corsHeaders, 201)
         }
 
-        // PUT /:id — update company
+        // PUT /:id — update company (org_admin only)
         if (method === 'PUT' && pathParts.length === 1 && pathParts[0] !== 'personas') {
+            const adminAuth = await requireAdmin(supabaseAdmin, user.id, orgId)
+            if (adminAuth instanceof Response) return adminAuth
+
             const companyId = pathParts[0]
             const rawBody = await req.json().catch(() => null)
             const v = validateBody<Record<string, unknown>>(rawBody, {
@@ -385,12 +404,28 @@ serve(async (req: Request) => {
                 return jsonError('Failed to update company', 500, corsHeaders)
             }
 
+            await logAudit(supabaseAdmin, {
+                orgId, userId: user.id, action: 'company.update',
+                resourceType: 'simulated_company', resourceId: companyId,
+                metadata: { changed_fields: Object.keys(update) },
+                ...reqCtx,
+            })
+
             return jsonOk(data, corsHeaders)
         }
 
-        // DELETE /:id — delete company (FK cascades handle children)
+        // DELETE /:id — delete company (org_admin only, FK cascades handle children)
         if (method === 'DELETE' && pathParts.length === 1 && pathParts[0] !== 'personas') {
+            const adminAuth = await requireAdmin(supabaseAdmin, user.id, orgId)
+            if (adminAuth instanceof Response) return adminAuth
+
             const companyId = pathParts[0]
+
+            const { data: snapshot } = await supabaseClient
+                .from('simulated_companies')
+                .select('id, name, industry_slug, size, stage, difficulty_tier')
+                .eq('id', companyId)
+                .single()
 
             const { error } = await supabaseClient
                 .from('simulated_companies')
@@ -401,6 +436,13 @@ serve(async (req: Request) => {
                 console.error(`${FN} delete company error:`, error)
                 return jsonError('Failed to delete company', 500, corsHeaders)
             }
+
+            await logAudit(supabaseAdmin, {
+                orgId, userId: user.id, action: 'company.delete',
+                resourceType: 'simulated_company', resourceId: companyId,
+                metadata: { snapshot: snapshot ?? {} },
+                ...reqCtx,
+            })
 
             return jsonOk({ success: true }, corsHeaders)
         }
@@ -427,8 +469,11 @@ serve(async (req: Request) => {
             return jsonOk(data, corsHeaders)
         }
 
-        // POST /:id/personas — create persona for a company
+        // POST /:id/personas — create persona for a company (org_admin only)
         if (method === 'POST' && pathParts.length === 2 && pathParts[1] === 'personas') {
+            const adminAuth = await requireAdmin(supabaseAdmin, user.id, orgId)
+            if (adminAuth instanceof Response) return adminAuth
+
             const companyId = pathParts[0]
 
             const rawBody = await req.json().catch(() => null)
@@ -478,6 +523,13 @@ serve(async (req: Request) => {
                 return jsonError('Failed to create persona', 500, corsHeaders)
             }
 
+            await logAudit(supabaseAdmin, {
+                orgId, userId: user.id, action: 'persona.create',
+                resourceType: 'simulated_persona', resourceId: data.id,
+                metadata: { name: data.name, title: data.title, company_id: companyId },
+                ...reqCtx,
+            })
+
             return jsonOk(data, corsHeaders, 201)
         }
 
@@ -485,8 +537,11 @@ serve(async (req: Request) => {
         // PERSONA routes — direct by persona ID
         // ────────────────────────────────────────────────────────────────────
 
-        // PUT /personas/:id — update persona
+        // PUT /personas/:id — update persona (org_admin only)
         if (method === 'PUT' && pathParts.length === 2 && pathParts[0] === 'personas') {
+            const adminAuth = await requireAdmin(supabaseAdmin, user.id, orgId)
+            if (adminAuth instanceof Response) return adminAuth
+
             const personaId = pathParts[1]
 
             const rawBody = await req.json().catch(() => null)
@@ -538,12 +593,28 @@ serve(async (req: Request) => {
                 return jsonError('Failed to update persona', 500, corsHeaders)
             }
 
+            await logAudit(supabaseAdmin, {
+                orgId, userId: user.id, action: 'persona.update',
+                resourceType: 'simulated_persona', resourceId: personaId,
+                metadata: { changed_fields: Object.keys(update) },
+                ...reqCtx,
+            })
+
             return jsonOk(data, corsHeaders)
         }
 
-        // DELETE /personas/:id — delete persona
+        // DELETE /personas/:id — delete persona (org_admin only)
         if (method === 'DELETE' && pathParts.length === 2 && pathParts[0] === 'personas') {
+            const adminAuth = await requireAdmin(supabaseAdmin, user.id, orgId)
+            if (adminAuth instanceof Response) return adminAuth
+
             const personaId = pathParts[1]
+
+            const { data: snapshot } = await supabaseClient
+                .from('simulated_personas')
+                .select('id, name, title, seniority, company_id')
+                .eq('id', personaId)
+                .single()
 
             const { error } = await supabaseClient
                 .from('simulated_personas')
@@ -555,6 +626,13 @@ serve(async (req: Request) => {
                 return jsonError('Failed to delete persona', 500, corsHeaders)
             }
 
+            await logAudit(supabaseAdmin, {
+                orgId, userId: user.id, action: 'persona.delete',
+                resourceType: 'simulated_persona', resourceId: personaId,
+                metadata: { snapshot: snapshot ?? {} },
+                ...reqCtx,
+            })
+
             return jsonOk({ success: true }, corsHeaders)
         }
 
@@ -562,13 +640,13 @@ serve(async (req: Request) => {
         // ACCOUNT STATE routes
         // ──────────��────────────────────────────���────────────────────────────
 
-        // POST /accounts/:accountStateId/reset — reset account state to defaults
+        // POST /accounts/:accountStateId/reset — reset account state (owner or org_admin)
         if (method === 'POST' && pathParts.length === 3 && pathParts[0] === 'accounts' && pathParts[2] === 'reset') {
             const accountStateId = pathParts[1]
 
             const { data: accountState, error: asErr } = await supabaseClient
                 .from('account_states')
-                .select('id, org_id, user_id')
+                .select('id, org_id, user_id, current_stage, sentiment_score, call_count')
                 .eq('id', accountStateId)
                 .single()
 
@@ -579,6 +657,10 @@ serve(async (req: Request) => {
             if (accountState.org_id !== orgId) {
                 return jsonError('Forbidden', 403, corsHeaders)
             }
+
+            const ownerAuth = await requireOwnerOrRole(supabaseAdmin, user.id, orgId, accountState.user_id, 'admin')
+            if (ownerAuth instanceof Response) return ownerAuth
+
 
             const { error: archiveErr } = await supabaseAdmin
                 .from('call_summaries')
@@ -610,7 +692,32 @@ serve(async (req: Request) => {
                 return jsonError('Failed to reset account state', 500, corsHeaders)
             }
 
+            await logAudit(supabaseAdmin, {
+                orgId, userId: user.id, action: 'account.reset',
+                resourceType: 'account_state', resourceId: accountStateId,
+                metadata: {
+                    previous_state: {
+                        stage: accountState.current_stage,
+                        sentiment: accountState.sentiment_score,
+                        call_count: accountState.call_count,
+                    },
+                },
+                ...reqCtx,
+            })
+
             return jsonOk(resetState, corsHeaders)
+        }
+
+        // GET /export-check?table=<table_name> — check if table data is exportable
+        if (method === 'GET' && pathParts.length === 1 && pathParts[0] === 'export-check') {
+            const adminAuth = await requireAdmin(supabaseAdmin, user.id, orgId)
+            if (adminAuth instanceof Response) return adminAuth
+
+            const tableName = url.searchParams.get('table')
+            if (!tableName) return jsonError('table query parameter required', 400, corsHeaders)
+
+            const allowed = await canExport(supabaseAdmin, tableName)
+            return jsonOk({ allowed }, corsHeaders)
         }
 
         return jsonError('Not found', 404, corsHeaders)
