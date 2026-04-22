@@ -40,3 +40,4 @@ supabase/.temp/
 OAST_OBSIDIAN_VAULT/
 .claude/
 .mcp.json
+sqlite.db
