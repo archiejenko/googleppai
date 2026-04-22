@@ -375,6 +375,7 @@ export async function assembleCallPrompt(opts: AssembleOpts): Promise<string> {
         .from('call_summaries')
         .select('*')
         .eq('account_state_id', accountState.id)
+        .is('archived_at', null)
         .order('call_number', { ascending: false })
         .limit(5);
 

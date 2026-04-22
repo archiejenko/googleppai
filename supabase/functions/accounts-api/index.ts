@@ -558,7 +558,61 @@ serve(async (req: Request) => {
             return jsonOk({ success: true }, corsHeaders)
         }
 
-        // ── No matching route ────────────────────────────────────────────────
+        // ────────────────────────────────────────────────────────────────────
+        // ACCOUNT STATE routes
+        // ──────────��────────────────────────────���────────────────────────────
+
+        // POST /accounts/:accountStateId/reset — reset account state to defaults
+        if (method === 'POST' && pathParts.length === 3 && pathParts[0] === 'accounts' && pathParts[2] === 'reset') {
+            const accountStateId = pathParts[1]
+
+            const { data: accountState, error: asErr } = await supabaseClient
+                .from('account_states')
+                .select('id, org_id, user_id')
+                .eq('id', accountStateId)
+                .single()
+
+            if (asErr || !accountState) {
+                return jsonError('Account state not found', 404, corsHeaders)
+            }
+
+            if (accountState.org_id !== orgId) {
+                return jsonError('Forbidden', 403, corsHeaders)
+            }
+
+            const { error: archiveErr } = await supabaseAdmin
+                .from('call_summaries')
+                .update({ archived_at: new Date().toISOString() })
+                .eq('account_state_id', accountStateId)
+                .is('archived_at', null)
+
+            if (archiveErr) {
+                console.error(`${FN} archive call_summaries error:`, archiveErr)
+                return jsonError('Failed to archive call summaries', 500, corsHeaders)
+            }
+
+            const { data: resetState, error: resetErr } = await supabaseClient
+                .from('account_states')
+                .update({
+                    current_stage: 'cold',
+                    sentiment_score: 50,
+                    relationship_notes: {},
+                    call_count: 0,
+                    last_interaction_at: null,
+                    next_scheduled_touchpoint: null,
+                })
+                .eq('id', accountStateId)
+                .select()
+                .single()
+
+            if (resetErr) {
+                console.error(`${FN} reset account_state error:`, resetErr)
+                return jsonError('Failed to reset account state', 500, corsHeaders)
+            }
+
+            return jsonOk(resetState, corsHeaders)
+        }
+
         return jsonError('Not found', 404, corsHeaders)
 
     } catch (error: unknown) {

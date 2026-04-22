@@ -256,6 +256,51 @@ serve(async (req: Request) => {
                 }
             }
 
+            // Trigger call-summariser for company/persona sessions
+            if (session.company_id && session.persona_id && orgId && messages && messages.length > 0) {
+                const summaryTranscript = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
+                const { data: accountState } = await supabaseAdmin
+                    .from('account_states')
+                    .select('id, call_count, relationship_notes')
+                    .eq('org_id', orgId)
+                    .eq('user_id', user.id)
+                    .eq('company_id', session.company_id)
+                    .eq('persona_id', session.persona_id)
+                    .single();
+
+                if (accountState) {
+                    const notes = (accountState.relationship_notes as Record<string, unknown>) || {};
+                    const existingCommitments = Array.isArray(notes.commitments_made_by_rep)
+                        ? (notes.commitments_made_by_rep as string[])
+                            .filter((c: string) => {
+                                const fulfilled = Array.isArray(notes.commitments_fulfilled) ? notes.commitments_fulfilled as string[] : [];
+                                return !fulfilled.includes(c);
+                            })
+                            .map((c: string) => ({ commitment: c, made_by: 'rep' }))
+                        : [];
+
+                    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+                    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+                    fetch(`${supabaseUrl}/functions/v1/call-summariser`, {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${serviceKey}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            transcript: summaryTranscript,
+                            accountStateId: accountState.id,
+                            orgId,
+                            callNumber: (accountState.call_count || 0) + 1,
+                            priorCommitments: existingCommitments,
+                        }),
+                    }).catch((e) => console.error(`[training-api] call-summariser failed for account_state_id=${accountState.id}:`, e));
+                } else {
+                    console.error(`[training-api] no account_state found for company=${session.company_id} persona=${session.persona_id} user=${user.id}`);
+                }
+            }
+
             // Calculate XP
             const xpMap: Record<string, number> = { easy: 50, medium: 100, hard: 200 };
             const xpEarned = xpMap[session.difficulty] || 50;

@@ -25,6 +25,7 @@ import AccountDeletion from './pages/AccountDeletion';
 import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './components/ProtectedRoute';
 import ActiveTraining from './pages/ActiveTraining';
+import AccountTimeline from './pages/AccountTimeline';
 import Capabilities from './pages/Capabilities';
 import UserJourney from './pages/UserJourney';
 import IndustriesMarketing from './pages/IndustriesMarketing';
@@ -180,6 +181,7 @@ function App() {
                     <CompanyDetail />
                   </ProtectedRoute>
                 } />
+                <Route path="/accounts/:accountStateId" element={<AccountTimeline />} />
                 <Route path="/active-training" element={<ActiveTraining />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/account/delete" element={<AccountDeletion />} />
