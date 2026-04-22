@@ -4,8 +4,10 @@ import { getCorsHeaders } from '../_shared/cors.ts'
 import { sanitizeTextField, validateDifficulty } from '../_shared/sanitizePromptField.ts'
 import { checkOrgAiLimit } from '../_shared/orgRateLimit.ts'
 import { validateBody } from '../_shared/validateBody.ts'
+import { assembleCallPrompt } from '../_shared/prompt-assembly.ts'
 
-const ESTIMATED_TOKENS = 1200; // ~600 prompt + 600 max output (gpt-4o-mini)
+const ESTIMATED_TOKENS_LEGACY = 1200;
+const ESTIMATED_TOKENS_LAYERED = 3000;
 
 async function hashIp(ip: string): Promise<string> {
     const encoder = new TextEncoder();
@@ -86,7 +88,9 @@ serve(async (req) => {
             });
         }
 
-        const orgLimit = await checkOrgAiLimit(supabaseAdmin, orgId, 'unified-ai', ESTIMATED_TOKENS);
+        // Token estimate is set after we know whether this is a layered or legacy session
+        let estimatedTokens = ESTIMATED_TOKENS_LEGACY;
+        const orgLimit = await checkOrgAiLimit(supabaseAdmin, orgId, 'unified-ai', ESTIMATED_TOKENS_LEGACY);
         if (!orgLimit.allowed) {
             return new Response(JSON.stringify({ error: orgLimit.message }), {
                 status: 429,
@@ -119,16 +123,63 @@ serve(async (req) => {
             })
         }
 
-        // Sanitize all DB-derived values before interpolation into the system prompt.
-        const persona    = sanitizeTextField(session.target_persona, 200) || 'Sales Prospect';
-        const scenario   = sanitizeTextField(session.scenario, 300)       || 'Sales Call';
-        const pitchGoal  = sanitizeTextField(session.pitch_goal, 300)     || 'close the deal';
-        const difficulty = validateDifficulty(session.difficulty);
-        const methodology = sanitizeTextField(session.methodology, 50)    || 'SPIN';
-
         const isGreeting = message === '__START_SIMULATION__';
+        const useLayeredPrompt = Boolean(session.industry_id);
 
-        const systemInstruction = `You are a ROLEPLAYING AI acting as "${persona}".
+        let systemInstruction: string;
+
+        if (useLayeredPrompt) {
+            estimatedTokens = ESTIMATED_TOKENS_LAYERED;
+            const assembledPrompt = await assembleCallPrompt({
+                supabaseClient,
+                orgId,
+                userId: user.id,
+                industrySlug: session.industry_id,
+                companyId: session.company_id ?? undefined,
+                personaId: session.persona_id ?? undefined,
+                callStage: session.call_stage ?? undefined,
+                difficulty: session.difficulty ?? undefined,
+                callFocus: session.call_focus ?? undefined,
+            });
+
+            systemInstruction = `${assembledPrompt}
+
+RESPONSE FORMAT:
+You MUST respond with a valid JSON object with this exact structure:
+{
+  "buyer_response": "string — your in-character reply to the salesperson",
+  "evaluation": {
+    "confidence": 0.0,
+    "clarity": 0.0,
+    "objection_handling": 0.0,
+    "rapport": 0.0,
+    "overall_score": 0
+  },
+  "coaching_feedback": "string — one sentence of coaching for the salesperson (not shown to them live)",
+  "missed_opportunities": ["string"],
+  "strengths": ["string"],
+  "next_objection_type": "string — e.g. Price, Authority, Need, Timing, or None",
+  "updated_state": {
+    "objection_stage": "string",
+    "buyer_temperature": 0.0,
+    "closing_probability": 0.0
+  }
+}
+
+For evaluation scores: use 0.0–1.0 range for confidence/clarity/objection_handling/rapport, and 0–100 for overall_score.
+For buyer_temperature: 0.0 = hostile, 0.5 = neutral, 1.0 = ready to buy.
+For closing_probability: 0.0–1.0.
+${isGreeting ? 'This is the opening of the call. Start the scene as the buyer picking up the phone. Score all evaluation metrics at 0.5 baseline.' : ''}
+JSON ONLY. No markdown, no explanation.`;
+        } else {
+            // Legacy path: free-text session fields, no industry data
+            const persona    = sanitizeTextField(session.target_persona, 200) || 'Sales Prospect';
+            const scenario   = sanitizeTextField(session.scenario, 300)       || 'Sales Call';
+            const pitchGoal  = sanitizeTextField(session.pitch_goal, 300)     || 'close the deal';
+            const difficulty = validateDifficulty(session.difficulty);
+            const methodology = sanitizeTextField(session.methodology, 50)    || 'SPIN';
+
+            systemInstruction = `You are a ROLEPLAYING AI acting as "${persona}".
 SCENARIO: ${scenario}.
 The user is a salesperson trying to "${pitchGoal}".
 Difficulty: ${difficulty}.
@@ -165,7 +216,8 @@ For evaluation scores: use 0.0–1.0 range for confidence/clarity/objection_hand
 For buyer_temperature: 0.0 = hostile, 0.5 = neutral, 1.0 = ready to buy.
 For closing_probability: 0.0–1.0.
 ${isGreeting ? 'This is the opening of the call. Start the scene as the buyer picking up the phone. Score all evaluation metrics at 0.5 baseline.' : ''}
-JSON ONLY. No markdown, no explanation.`
+JSON ONLY. No markdown, no explanation.`;
+        }
 
         for (const h of (history || [])) {
             if (typeof (h as any)?.role !== 'string') {

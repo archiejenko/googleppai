@@ -97,7 +97,7 @@ serve(async (req: Request) => {
         }
 
         const rawBody = await req.json().catch(() => null)
-        const v = validateBody<{ action?: string; sessionId?: string; messages?: unknown[]; scenario?: string; difficulty?: string; targetPersona?: string; pitchGoal?: string; timeLimit?: number; language?: string; industryId?: string; audioUrl?: string }>(rawBody, {
+        const v = validateBody<{ action?: string; sessionId?: string; messages?: unknown[]; scenario?: string; difficulty?: string; targetPersona?: string; pitchGoal?: string; timeLimit?: number; language?: string; industryId?: string; audioUrl?: string; companyId?: string; personaId?: string; callStage?: string; callFocus?: string }>(rawBody, {
             action:        { type: 'string' },
             sessionId:     { type: 'string' },
             messages:      { type: 'array' },
@@ -109,13 +109,17 @@ serve(async (req: Request) => {
             pitchGoal:     { type: 'string' },
             language:      { type: 'string' },
             industryId:    { type: 'string' },
+            companyId:     { type: 'string' },
+            personaId:     { type: 'string' },
+            callStage:     { type: 'string' },
+            callFocus:     { type: 'string' },
         })
         if (!v.ok) return new Response(JSON.stringify({ error: v.error }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: v.status,
         })
         const body = v.body
-        const { action, sessionId, messages, scenario, difficulty, targetPersona, pitchGoal, timeLimit, language, industryId, audioUrl } = body
+        const { action, sessionId, messages, scenario, difficulty, targetPersona, pitchGoal, timeLimit, language, industryId, audioUrl, companyId, personaId, callStage, callFocus } = body
 
         // === ACTION: COMPLETE SESSION ===
         if (action === 'complete') {
@@ -280,18 +284,24 @@ serve(async (req: Request) => {
         }
 
         // === ACTION: CREATE SESSION (Default) ===
+        const sessionInsert: Record<string, unknown> = {
+            user_id: user.id,
+            scenario,
+            difficulty,
+            target_persona: targetPersona,
+            pitch_goal: pitchGoal,
+            time_limit: timeLimit,
+            language: language || 'en',
+            industry_id: industryId,
+        }
+        if (companyId)  sessionInsert.company_id = companyId;
+        if (personaId)  sessionInsert.persona_id = personaId;
+        if (callStage)  sessionInsert.call_stage = callStage;
+        if (callFocus)  sessionInsert.call_focus = callFocus;
+
         const { data: session, error } = await supabaseClient
             .from('training_sessions')
-            .insert({
-                user_id: user.id,
-                scenario,
-                difficulty,
-                target_persona: targetPersona,
-                pitch_goal: pitchGoal,
-                time_limit: timeLimit,
-                language: language || 'en',
-                industry_id: industryId
-            })
+            .insert(sessionInsert)
             .select()
             .single()
 
