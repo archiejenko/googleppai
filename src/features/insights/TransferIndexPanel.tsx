@@ -43,19 +43,19 @@ function ScenarioRow({ s, maxScore }: { s: ScenarioTransferIndex; maxScore: numb
         : 'Monitor — moderate transfer detected.'
 
   return (
-    <div className="border-b border-[#2a2a2e] last:border-0">
+    <div className="border-b border-[rgb(var(--border-default))] last:border-0">
       <button
-        className="w-full text-left px-4 py-3 hover:bg-[#1c1c1f] transition-colors"
+        className="w-full text-left px-4 py-3 hover:bg-[rgba(255,255,255,0.02)] transition-colors"
         onClick={() => setExpanded(e => !e)}
       >
         <div className="flex items-center gap-3">
           {/* Scenario name */}
-          <span className="font-mono text-sm text-white w-52 shrink-0 truncate">
+          <span className="font-mono text-sm text-[rgb(var(--text-primary))] w-52 shrink-0 truncate">
             {s.scenario_name}
           </span>
 
           {/* Bar */}
-          <div className="flex-1 h-5 bg-[#2a2a2e] relative overflow-hidden">
+          <div className="flex-1 h-5 bg-[rgb(var(--border-default))] relative overflow-hidden">
             {!isNull && (
               <div
                 className="absolute inset-y-0 left-0 transition-all duration-500"
@@ -72,37 +72,37 @@ function ScenarioRow({ s, maxScore }: { s: ScenarioTransferIndex; maxScore: numb
           {/* Band pill */}
           <div className="w-20 flex justify-end shrink-0">
             {!isNull && <BandPill band={s.transfer_index_band} />}
-            {isNull && <span className="text-xs text-[#6b7280] font-mono">No data</span>}
+            {isNull && <span className="text-xs text-[rgb(var(--text-muted))] font-mono">No data</span>}
           </div>
 
           {/* Expand icon */}
-          <span className="text-[#6b7280] shrink-0">
+          <span className="text-[rgb(var(--text-muted))] shrink-0">
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </span>
         </div>
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 pt-1 bg-[#161618] border-t border-[#2a2a2e]">
+        <div className="px-4 pb-4 pt-1 bg-[rgb(var(--bg-surface-raised))] border-t border-[rgb(var(--border-default))]">
           <div className="grid grid-cols-2 gap-2 text-sm mb-2">
             <div>
-              <span className="text-[#6b7280]">Skill targeted: </span>
-              <span className="text-white font-mono">{skillLabel}</span>
+              <span className="text-[rgb(var(--text-muted))]">Skill targeted: </span>
+              <span className="text-[rgb(var(--text-primary))] font-mono">{skillLabel}</span>
             </div>
             <div>
-              <span className="text-[#6b7280]">Reps with data: </span>
-              <span className="text-white font-mono">{s.rep_count}</span>
+              <span className="text-[rgb(var(--text-muted))]">Reps with data: </span>
+              <span className="text-[rgb(var(--text-primary))] font-mono">{s.rep_count}</span>
             </div>
             {s.pre_avg !== null && (
               <div>
-                <span className="text-[#6b7280]">Pre-training avg: </span>
-                <span className="text-white font-mono">{s.pre_avg.toFixed(1)}</span>
+                <span className="text-[rgb(var(--text-muted))]">Pre-training avg: </span>
+                <span className="text-[rgb(var(--text-primary))] font-mono">{s.pre_avg.toFixed(1)}</span>
               </div>
             )}
             {s.post_avg !== null && (
               <div>
-                <span className="text-[#6b7280]">Post-training avg: </span>
-                <span className="text-white font-mono">{s.post_avg.toFixed(1)}</span>
+                <span className="text-[rgb(var(--text-muted))]">Post-training avg: </span>
+                <span className="text-[rgb(var(--text-primary))] font-mono">{s.post_avg.toFixed(1)}</span>
               </div>
             )}
           </div>
@@ -123,25 +123,25 @@ export default function TransferIndexPanel() {
   const maxScore = scored.length ? Math.max(...scored.map(s => Math.abs(s.transfer_index_score!))) : 1
 
   return (
-    <div className="bg-[#161618] border border-[#2a2a2e]">
-      <div className="px-6 py-4 border-b border-[#2a2a2e] flex items-center gap-3">
-        <BarChart2 size={18} className="text-[#FF6B6B]" />
+    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg overflow-hidden">
+      <div className="px-5 py-4 border-b border-[rgb(var(--border-default))] flex items-center gap-2">
+        <BarChart2 size={16} className="text-[#FF6B6B]" />
         <div>
-          <h2 className="font-display font-bold text-white tracking-wide">TRANSFER INDEX</h2>
-          <p className="text-xs text-[#6b7280] mt-0.5">
+          <h2 className="card-title !mb-0">Transfer Index</h2>
+          <p className="text-xs text-[rgb(var(--text-muted))] mt-0.5">
             Which training modules produce real-world skill improvement within 14 days
           </p>
         </div>
       </div>
 
       {isLoading && (
-        <div className="px-6 py-8 text-center text-[#6b7280] font-mono text-sm">
+        <div className="px-6 py-8 text-center text-[rgb(var(--text-muted))] font-mono text-sm">
           Computing transfer indices…
         </div>
       )}
 
       {!isLoading && !scenarios.length && (
-        <div className="px-6 py-8 text-center text-[#6b7280] font-mono text-sm">
+        <div className="px-6 py-8 text-center text-[rgb(var(--text-muted))] font-mono text-sm">
           No completed training sessions found.
         </div>
       )}
@@ -149,11 +149,11 @@ export default function TransferIndexPanel() {
       {!isLoading && scenarios.length > 0 && (
         <>
           {/* Column headers */}
-          <div className="flex items-center gap-3 px-4 py-2 border-b border-[#2a2a2e]">
-            <span className="text-xs text-[#6b7280] font-mono w-52 shrink-0">Scenario</span>
-            <span className="flex-1 text-xs text-[#6b7280] font-mono">Transfer Index</span>
-            <span className="text-xs text-[#6b7280] font-mono w-16 text-right shrink-0">Score</span>
-            <span className="text-xs text-[#6b7280] font-mono w-20 text-right shrink-0">Band</span>
+          <div className="flex items-center gap-3 px-4 py-2 border-b border-[rgb(var(--border-default))]">
+            <span className="text-xs text-[rgb(var(--text-muted))] font-mono w-52 shrink-0">Scenario</span>
+            <span className="flex-1 text-xs text-[rgb(var(--text-muted))] font-mono">Transfer Index</span>
+            <span className="text-xs text-[rgb(var(--text-muted))] font-mono w-16 text-right shrink-0">Score</span>
+            <span className="text-xs text-[rgb(var(--text-muted))] font-mono w-20 text-right shrink-0">Band</span>
             <span className="w-4 shrink-0" />
           </div>
 

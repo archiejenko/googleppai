@@ -21,33 +21,31 @@ const SECTIONS = [
 
 export default function InsightsDashboard() {
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-10">
+    <div className="space-y-8">
 
       {/* Page header */}
-      <div className="border-b border-[#2a2a2e] pb-5">
-        <h1
-          className="text-2xl font-black uppercase tracking-tight text-white mb-1"
-          style={{ fontFamily: 'Oswald, sans-serif' }}
-        >
-          Cross-Layer Insights
-        </h1>
-        <p className="text-sm text-[#6b7280]">
-          Training effectiveness · best practice extraction · onboarding acceleration
-        </p>
-
-        {/* Section nav */}
-        <div className="flex items-center gap-3 mt-4 flex-wrap">
-          {SECTIONS.map(({ id, label, Icon }) => (
-            <a
-              key={id}
-              href={`#${id}`}
-              className="flex items-center gap-1.5 text-xs font-mono text-[#6b7280] hover:text-white transition-colors border border-[#2a2a2e] hover:border-[#6366F1] px-3 py-1.5"
-            >
-              <Icon size={12} />
-              {label}
-            </a>
-          ))}
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="page-kicker">Intelligence</div>
+          <div className="page-title">Insights</div>
+          <div className="page-desc">
+            Training engagement, skill progression, and AI coaching recommendations across your team.
+          </div>
         </div>
+      </div>
+
+      {/* Section nav */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {SECTIONS.map(({ id, label, Icon }) => (
+          <a
+            key={id}
+            href={`#${id}`}
+            className="flex items-center gap-1.5 text-[11px] font-semibold text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] transition-colors border border-[rgb(var(--border-default))] hover:border-[rgba(255,107,107,0.3)] rounded-lg px-3 py-1.5"
+          >
+            <Icon size={12} />
+            {label}
+          </a>
+        ))}
       </div>
 
       {/* X1 — Transfer Index */}
@@ -58,11 +56,11 @@ export default function InsightsDashboard() {
       {/* X2 — Best Practice Playbooks */}
       <section id="playbooks" className="scroll-mt-6">
         <div className="mb-4">
-          <div className="flex items-center gap-3 mb-1">
-            <BookOpen size={18} className="text-[#6366F1]" />
-            <h2 className="font-display font-bold text-white tracking-wide">WINNING PLAYBOOKS</h2>
+          <div className="flex items-center gap-2 mb-1">
+            <BookOpen size={16} className="text-[#FF6B6B]" />
+            <h2 className="card-title !mb-0">Winning Playbooks</h2>
           </div>
-          <p className="text-xs text-[#6b7280]">
+          <p className="text-xs text-[rgb(var(--text-muted))]">
             AI-generated from top performers · regenerated every Monday · assign to underperforming reps
           </p>
         </div>

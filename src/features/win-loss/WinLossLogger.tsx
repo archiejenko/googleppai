@@ -8,16 +8,16 @@ import { toast } from 'sonner'
 
 type Outcome = 'won' | 'lost' | 'no_decision'
 
-const OUTCOME_CONFIG: Record<Outcome, { label: string; icon: typeof TrendingUp; color: string; bg: string }> = {
-    won: { label: 'Won', icon: TrendingUp, color: 'text-status-success', bg: 'bg-status-success/10 border-status-success/40' },
-    lost: { label: 'Lost', icon: TrendingDown, color: 'text-status-danger', bg: 'bg-status-danger/10 border-status-danger/40' },
-    no_decision: { label: 'No Decision', icon: Minus, color: 'text-text-muted', bg: 'bg-bg-raised border-border' },
+const OUTCOME_CONFIG: Record<Outcome, { label: string; icon: typeof TrendingUp; color: string; bg: string; pillClass: string }> = {
+    won: { label: 'Won', icon: TrendingUp, color: 'text-[#4ADE80]', bg: 'bg-[rgba(74,222,128,0.12)] border-[rgba(74,222,128,0.4)]', pillClass: 'pill pill-green' },
+    lost: { label: 'Lost', icon: TrendingDown, color: 'text-[#FF6B6B]', bg: 'bg-[rgba(255,107,107,0.12)] border-[rgba(255,107,107,0.4)]', pillClass: 'pill pill-coral' },
+    no_decision: { label: 'No Decision', icon: Minus, color: 'text-[rgb(var(--text-muted))]', bg: 'bg-[rgb(var(--bg-surface-raised))] border-[rgb(var(--border-default))]', pillClass: 'pill pill-amber' },
 }
 
 function OutcomeBadge({ outcome }: { outcome: Outcome }) {
-    const { label, icon: Icon, color } = OUTCOME_CONFIG[outcome]
+    const { label, icon: Icon, color, pillClass } = OUTCOME_CONFIG[outcome]
     return (
-        <span className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-widest ${color}`}>
+        <span className={`${pillClass} inline-flex items-center gap-1 text-[10px] uppercase tracking-widest`}>
             <Icon className="w-3 h-3" />
             {label}
         </span>
@@ -57,18 +57,18 @@ function LogOutcomePanel({ onClose }: { onClose: () => void }) {
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 40 }}
-            className="fixed right-0 top-0 h-full w-full max-w-sm bg-bg-surface border-l border-border z-40 flex flex-col"
+            className="fixed right-0 top-0 h-full w-full max-w-sm bg-[rgb(var(--bg-surface))] border-l border-[rgb(var(--border-default))] rounded-l-lg z-40 flex flex-col"
         >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted">Log Deal Outcome</p>
-                <button onClick={onClose} className="w-6 h-6 flex items-center justify-center hover:bg-bg-raised">
-                    <X className="w-4 h-4 text-text-muted" />
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgb(var(--border-default))]">
+                <p className="page-kicker !mb-0">Log Deal Outcome</p>
+                <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-[rgb(var(--bg-surface-raised))]">
+                    <X className="w-4 h-4 text-[rgb(var(--text-muted))]" />
                 </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
                 <div>
-                    <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted block mb-1">Deal Name *</label>
+                    <label className="stat-label block mb-1">Deal Name *</label>
                     <input
                         className="input-os w-full text-sm"
                         placeholder="e.g. Acme Corp — Q2 expansion"
@@ -78,13 +78,13 @@ function LogOutcomePanel({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div>
-                    <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted block mb-2">Outcome *</label>
+                    <label className="stat-label block mb-2">Outcome *</label>
                     <div className="grid grid-cols-3 gap-2">
                         {(Object.entries(OUTCOME_CONFIG) as [Outcome, typeof OUTCOME_CONFIG[Outcome]][]).map(([key, cfg]) => (
                             <button
                                 key={key}
                                 onClick={() => setOutcome(key)}
-                                className={`py-3 border text-xs font-black uppercase tracking-widest transition-all flex flex-col items-center gap-1 ${outcome === key ? cfg.bg : 'border-border text-text-muted hover:bg-bg-raised'}`}
+                                className={`py-3 border rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex flex-col items-center gap-1 ${outcome === key ? cfg.bg : 'border-[rgb(var(--border-default))] text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--bg-surface-raised))]'}`}
                             >
                                 <cfg.icon className={`w-4 h-4 ${outcome === key ? cfg.color : ''}`} />
                                 {cfg.label}
@@ -95,9 +95,9 @@ function LogOutcomePanel({ onClose }: { onClose: () => void }) {
 
                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted block mb-1 flex items-center gap-1">
+                        <label className="stat-label block mb-1 flex items-center gap-1">
                             <DollarSign className="w-3 h-3" />
-                            Deal Value (£)
+                            Deal Value
                         </label>
                         <input
                             type="number"
@@ -108,7 +108,7 @@ function LogOutcomePanel({ onClose }: { onClose: () => void }) {
                         />
                     </div>
                     <div>
-                        <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted block mb-1">Close Date</label>
+                        <label className="stat-label block mb-1">Close Date</label>
                         <input
                             type="date"
                             className="input-os w-full text-sm"
@@ -119,7 +119,7 @@ function LogOutcomePanel({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div>
-                    <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted block mb-1">Notes</label>
+                    <label className="stat-label block mb-1">Notes</label>
                     <textarea
                         className="input-os w-full h-20 resize-none text-sm"
                         placeholder="What tipped the deal? Key learnings..."
@@ -129,11 +129,11 @@ function LogOutcomePanel({ onClose }: { onClose: () => void }) {
                 </div>
             </div>
 
-            <div className="p-5 border-t border-border">
+            <div className="p-5 border-t border-[rgb(var(--border-default))]">
                 <button
                     onClick={handleSubmit}
                     disabled={!dealName.trim() || !outcome || addOutcome.isPending}
-                    className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-40"
+                    className="btn-primary w-full rounded-lg flex items-center justify-center gap-2 disabled:opacity-40"
                 >
                     {addOutcome.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                     Log Outcome
@@ -155,16 +155,17 @@ export default function WinLossLogger() {
         d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'
 
     return (
-        <div className="pb-12 space-y-8 relative">
+        <div className="pb-12 space-y-6 relative">
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-2xl font-black text-text-primary uppercase tracking-tight">Win / Loss</h1>
-                    <p className="text-sm text-text-muted mt-0.5">Track outcomes and measure training ROI</p>
+                    <p className="page-kicker">Revenue Intelligence</p>
+                    <h1 className="page-title">Win / Loss Analysis</h1>
+                    <p className="page-desc">AI-analysed deal outcomes with root cause attribution and skill correlation.</p>
                 </div>
                 <button
                     onClick={() => setShowPanel(true)}
-                    className="btn-primary flex items-center gap-2 text-xs"
+                    className="btn-primary rounded-lg flex items-center gap-2 text-xs"
                 >
                     <Plus className="w-4 h-4" />
                     Log Outcome
@@ -172,51 +173,61 @@ export default function WinLossLogger() {
             </div>
 
             {/* Outcomes table */}
-            <div className="card-os border border-border overflow-hidden">
-                <div className="px-5 py-3 border-b border-border/40">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted">Recent Outcomes</p>
+            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg overflow-hidden">
+                <div className="px-5 py-3 border-b border-[rgb(var(--border-default))]">
+                    <p className="card-title !mb-0">Recent Deals</p>
+                    <p className="text-[10px] text-[rgb(var(--text-muted))] mt-1">Individual deal outcomes with call scores and loss attribution.</p>
                 </div>
 
                 {isLoading && (
                     <div className="flex items-center justify-center h-24">
-                        <Loader2 className="w-5 h-5 text-accent animate-spin" />
+                        <Loader2 className="w-5 h-5 text-[var(--color-coral)] animate-spin" />
                     </div>
                 )}
 
                 {!isLoading && outcomes.length === 0 && (
                     <div className="py-10 text-center space-y-2">
-                        <TrendingUp className="w-6 h-6 text-text-muted mx-auto" />
-                        <p className="text-sm text-text-secondary">No outcomes logged yet.</p>
-                        <p className="text-xs text-text-muted">Start logging to build your ROI picture.</p>
+                        <TrendingUp className="w-6 h-6 text-[rgb(var(--text-muted))] mx-auto" />
+                        <p className="text-sm text-[rgb(var(--text-secondary))]">No outcomes logged yet.</p>
+                        <p className="text-xs text-[rgb(var(--text-muted))]">Start logging to build your ROI picture.</p>
                     </div>
                 )}
 
                 {!isLoading && outcomes.length > 0 && (
-                    <div className="divide-y divide-border/40">
-                        {outcomes.map((outcome, i) => (
-                            <motion.div
-                                key={outcome.id}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: i * 0.04 }}
-                                className="flex items-center gap-4 px-5 py-3 hover:bg-bg-raised transition-colors"
-                            >
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-text-primary truncate">{outcome.deal_name}</p>
-                                    {outcome.notes && (
-                                        <p className="text-xs text-text-muted truncate mt-0.5">{outcome.notes}</p>
-                                    )}
-                                </div>
-                                <OutcomeBadge outcome={outcome.outcome} />
-                                <p className="text-sm text-text-secondary font-black w-20 text-right">
-                                    {formatValue(outcome.deal_value)}
-                                </p>
-                                <p className="text-xs text-text-muted w-20 text-right">
-                                    {formatDate(outcome.close_date)}
-                                </p>
-                            </motion.div>
-                        ))}
-                    </div>
+                    <table className="table-os">
+                        <thead>
+                            <tr>
+                                <th>Deal</th>
+                                <th>Outcome</th>
+                                <th>Value</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {outcomes.map((outcome, i) => (
+                                <motion.tr
+                                    key={outcome.id}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: i * 0.04 }}
+                                >
+                                    <td>
+                                        <div className="font-semibold text-[rgb(var(--text-primary))]">{outcome.deal_name}</div>
+                                        {outcome.notes && (
+                                            <div className="text-[10px] text-[rgb(var(--text-muted))] truncate max-w-[250px] mt-0.5">{outcome.notes}</div>
+                                        )}
+                                    </td>
+                                    <td><OutcomeBadge outcome={outcome.outcome} /></td>
+                                    <td className="font-semibold text-[rgb(var(--text-primary))]" style={{ fontFamily: "'Oswald', sans-serif" }}>
+                                        {formatValue(outcome.deal_value)}
+                                    </td>
+                                    <td className="text-[rgb(var(--text-muted))]">
+                                        {formatDate(outcome.close_date)}
+                                    </td>
+                                </motion.tr>
+                            ))}
+                        </tbody>
+                    </table>
                 )}
             </div>
 

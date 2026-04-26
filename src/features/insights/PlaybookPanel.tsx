@@ -55,13 +55,13 @@ export default function PlaybookPanel() {
   const [assigned, setAssigned] = useState<Record<string, boolean>>({})
 
   if (isLoading) return (
-    <div className="bg-[#161618] border border-[#2a2a2e] px-6 py-8 text-center text-[#6b7280] font-mono text-sm">
+    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] px-6 py-8 text-center text-[rgb(var(--text-muted))] font-mono text-sm">
       Loading playbooks…
     </div>
   )
 
   if (!playbooks?.length) return (
-    <div className="bg-[#161618] border border-[#2a2a2e] px-6 py-8 text-center text-[#6b7280] font-mono text-sm">
+    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] px-6 py-8 text-center text-[rgb(var(--text-muted))] font-mono text-sm">
       No playbooks generated yet. Playbook Generator runs every Monday at 04:00 UTC.
     </div>
   )
@@ -86,43 +86,43 @@ export default function PlaybookPanel() {
         }
 
         return (
-          <div key={p.id} className="bg-[#161618] border border-[#2a2a2e]">
+          <div key={p.id} className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-[#2a2a2e]">
+            <div className="px-6 py-4 border-b border-[rgb(var(--border-default))]">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="font-display font-bold text-white tracking-wide">
+                  <span className="font-display font-bold text-[rgb(var(--text-primary))] tracking-wide">
                     WINNING PLAYBOOK — {topName.toUpperCase()}
                   </span>
                   {p.role && (
-                    <span className="ml-3 text-xs font-mono text-[#6b7280] border border-[#2a2a2e] px-2 py-0.5">
+                    <span className="ml-3 text-xs font-mono text-[rgb(var(--text-muted))] border border-[rgb(var(--border-default))] px-2 py-0.5">
                       {p.role}
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-[#6b7280] font-mono">
+                <span className="text-xs text-[rgb(var(--text-muted))] font-mono">
                   Generated {new Date(p.generated_at).toLocaleDateString()}
                 </span>
               </div>
             </div>
 
             {/* Narrative */}
-            <div className="px-6 py-4 border-b border-[#2a2a2e]">
+            <div className="px-6 py-4 border-b border-[rgb(var(--border-default))]">
               <p className="text-sm text-[#d1d1d3] leading-relaxed">{p.narrative}</p>
             </div>
 
             {/* Stats table */}
             {top && tavg && (
-              <div className="px-6 py-4 border-b border-[#2a2a2e]">
+              <div className="px-6 py-4 border-b border-[rgb(var(--border-default))]">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-xs text-[#6b7280] font-mono">
+                    <tr className="text-xs text-[rgb(var(--text-muted))] font-mono">
                       <th className="text-left pb-2">Metric</th>
                       <th className="text-right pb-2">This Rep</th>
                       <th className="text-right pb-2">Team Avg</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#2a2a2e]">
+                  <tbody className="divide-y divide-[rgb(var(--border-default))]">
                     {STAT_LABELS.map(({ key, label, unit, invert }) => {
                       const topVal  = top[key as keyof typeof top]  as number | null
                       const avgVal  = tavg[key === 'transfer_gap' ? 'transfer_gap_overall' : key as keyof typeof tavg] as number | null
@@ -136,7 +136,7 @@ export default function PlaybookPanel() {
                           <td className="py-1.5 text-right font-mono" style={{ color: better === true ? '#10B981' : better === false ? '#FF6B6B' : '#fff' }}>
                             {fmt(topVal, unit, isPct)}
                           </td>
-                          <td className="py-1.5 text-right font-mono text-[#6b7280]">
+                          <td className="py-1.5 text-right font-mono text-[rgb(var(--text-muted))]">
                             {fmt(avgVal, unit, isPct)}
                           </td>
                         </tr>
@@ -156,7 +156,7 @@ export default function PlaybookPanel() {
                   </span>
                 )}
                 {p.assigned_to_rep_ids.length > 0 && (
-                  <span className="text-xs text-[#6b7280] font-mono">
+                  <span className="text-xs text-[rgb(var(--text-muted))] font-mono">
                     {p.assigned_to_rep_ids.length} rep{p.assigned_to_rep_ids.length !== 1 ? 's' : ''} assigned
                   </span>
                 )}
@@ -164,7 +164,7 @@ export default function PlaybookPanel() {
 
               <div className="relative">
                 <button
-                  className="flex items-center gap-1 text-xs font-mono px-3 py-1.5 bg-[#6366F1] text-white hover:bg-[#4f52d3] transition-colors"
+                  className="flex items-center gap-1 text-xs font-mono px-3 py-1.5 bg-[#FF6B6B] text-[rgb(var(--text-primary))] hover:bg-[rgba(255,107,107,0.8)] transition-colors"
                   onClick={() => setShowAssign(isShowingAssign ? null : p.id)}
                 >
                   Assign to Rep
@@ -172,10 +172,10 @@ export default function PlaybookPanel() {
                 </button>
 
                 {isShowingAssign && (
-                  <div className="absolute right-0 bottom-full mb-1 w-64 bg-[#1c1c1f] border border-[#2a2a2e] z-10 shadow-xl">
+                  <div className="absolute right-0 bottom-full mb-1 w-64 bg-[rgb(var(--bg-deep))] border border-[rgb(var(--border-default))] z-10 shadow-xl">
                     <div className="max-h-48 overflow-y-auto">
                       {reps.map(r => (
-                        <label key={r.id} className="flex items-center gap-2 px-3 py-2 hover:bg-[#2a2a2e] cursor-pointer text-sm text-white">
+                        <label key={r.id} className="flex items-center gap-2 px-3 py-2 hover:bg-[rgba(255,255,255,0.03)] cursor-pointer text-sm text-[rgb(var(--text-primary))]">
                           <input
                             type="checkbox"
                             checked={sel.includes(r.id)}
@@ -191,11 +191,11 @@ export default function PlaybookPanel() {
                         </label>
                       ))}
                     </div>
-                    <div className="px-3 py-2 border-t border-[#2a2a2e]">
+                    <div className="px-3 py-2 border-t border-[rgb(var(--border-default))]">
                       <button
                         disabled={!sel.length || assign.isPending}
                         onClick={handleAssign}
-                        className="w-full text-xs font-mono py-1.5 bg-[#6366F1] text-white disabled:opacity-50 hover:bg-[#4f52d3] transition-colors"
+                        className="w-full text-xs font-mono py-1.5 bg-[#FF6B6B] text-[rgb(var(--text-primary))] disabled:opacity-50 hover:bg-[rgba(255,107,107,0.8)] transition-colors"
                       >
                         {assign.isPending ? 'Assigning…' : `Assign to ${sel.length} rep${sel.length !== 1 ? 's' : ''}`}
                       </button>

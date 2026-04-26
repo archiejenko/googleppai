@@ -123,27 +123,27 @@ export default function PreCallPrepDrawer({ open, onClose }: PreCallPrepDrawerPr
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', stiffness: 300, damping: 35 }}
-                        className="fixed right-0 top-0 h-full w-full max-w-[480px] bg-bg-surface border-l border-border z-50 flex flex-col"
+                        className="fixed right-0 top-0 h-full w-full max-w-[480px] bg-[rgb(var(--bg-surface))] border-l border-[rgb(var(--border-default))] rounded-l-lg z-50 flex flex-col"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[rgb(var(--border-default))] flex-shrink-0">
                             <div className="flex items-center gap-2">
-                                <Phone className="w-4 h-4 text-accent" />
-                                <p className="text-[10px] uppercase tracking-[0.3em] text-text-muted">Pre-Call Prep</p>
+                                <Phone className="w-4 h-4 text-[var(--color-coral)]" />
+                                <p className="page-kicker !mb-0">Pre-Call Prep</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="text-[9px] text-text-muted border border-border px-1.5 py-0.5 uppercase tracking-widest hidden sm:block">
+                                <span className="text-[9px] text-[rgb(var(--text-muted))] border border-[rgb(var(--border-default))] rounded px-1.5 py-0.5 uppercase tracking-widest hidden sm:block">
                                     {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+Shift+P
                                 </span>
-                                <button onClick={onClose} className="w-7 h-7 flex items-center justify-center hover:bg-bg-raised transition-colors">
-                                    <X className="w-4 h-4 text-text-muted" />
+                                <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[rgb(var(--bg-surface-raised))] transition-colors">
+                                    <X className="w-4 h-4 text-[rgb(var(--text-muted))]" />
                                 </button>
                             </div>
                         </div>
 
                         {/* Tier gate */}
                         {!isRevIntel ? (
-                            <div className="flex-1 flex items-center justify-center p-6">
+                            <div className="flex-1 flex items-center justify-center p-6 bg-[rgb(var(--bg-surface))]">
                                 <TierGate>
                                     <div className="min-h-[400px]" />
                                 </TierGate>
@@ -162,11 +162,11 @@ export default function PreCallPrepDrawer({ open, onClose }: PreCallPrepDrawerPr
                                             className="p-6 space-y-4"
                                         >
                                             {state === 'error' && (
-                                                <div className="bg-status-danger/10 border border-status-danger/30 p-3 flex items-start gap-2">
-                                                    <AlertTriangle className="w-4 h-4 text-status-danger flex-shrink-0 mt-0.5" />
+                                                <div className="bg-[rgba(248,113,113,0.08)] border border-[rgba(248,113,113,0.3)] rounded-lg p-3 flex items-start gap-2">
+                                                    <AlertTriangle className="w-4 h-4 text-[var(--color-coral)] flex-shrink-0 mt-0.5" />
                                                     <div>
-                                                        <p className="text-xs text-status-danger">{errorMsg}</p>
-                                                        <button onClick={() => setState('idle')} className="text-xs text-accent mt-1 underline underline-offset-2">
+                                                        <p className="text-xs text-[var(--color-coral)]">{errorMsg}</p>
+                                                        <button onClick={() => setState('idle')} className="text-xs text-[var(--color-coral)] mt-1 underline underline-offset-2">
                                                             Try again
                                                         </button>
                                                     </div>
@@ -174,7 +174,7 @@ export default function PreCallPrepDrawer({ open, onClose }: PreCallPrepDrawerPr
                                             )}
 
                                             <div>
-                                                <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted block mb-1">Prospect Name *</label>
+                                                <label className="stat-label block mb-1">Prospect Name *</label>
                                                 <input
                                                     className="input-os w-full text-sm"
                                                     placeholder="e.g. Sarah Chen"
@@ -185,7 +185,7 @@ export default function PreCallPrepDrawer({ open, onClose }: PreCallPrepDrawerPr
 
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div>
-                                                    <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted block mb-1">Title</label>
+                                                    <label className="stat-label block mb-1">Title</label>
                                                     <input
                                                         className="input-os w-full text-sm"
                                                         placeholder="e.g. VP Sales"
@@ -194,7 +194,7 @@ export default function PreCallPrepDrawer({ open, onClose }: PreCallPrepDrawerPr
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted block mb-1">Company *</label>
+                                                    <label className="stat-label block mb-1">Company *</label>
                                                     <input
                                                         className="input-os w-full text-sm"
                                                         placeholder="e.g. Acme Corp"
@@ -205,7 +205,7 @@ export default function PreCallPrepDrawer({ open, onClose }: PreCallPrepDrawerPr
                                             </div>
 
                                             <div>
-                                                <label className="text-[10px] uppercase tracking-[0.15em] text-text-muted block mb-1">Call Purpose</label>
+                                                <label className="stat-label block mb-1">Call Purpose</label>
                                                 <input
                                                     className="input-os w-full text-sm"
                                                     placeholder="e.g. Discovery call, renewal discussion..."
@@ -216,13 +216,13 @@ export default function PreCallPrepDrawer({ open, onClose }: PreCallPrepDrawerPr
 
                                             <button
                                                 onClick={handleGenerate}
-                                                className="btn-primary w-full flex items-center justify-center gap-2 mt-2"
+                                                className="btn-primary w-full flex items-center justify-center gap-2 mt-2 rounded-lg"
                                             >
                                                 <Phone className="w-4 h-4" />
                                                 Generate Brief
                                             </button>
 
-                                            <p className="text-[10px] text-text-muted text-center">
+                                            <p className="text-[10px] text-[rgb(var(--text-muted))] text-center">
                                                 Personalised using your Rep DNA profile · under 10 seconds
                                             </p>
                                         </motion.div>
@@ -237,10 +237,10 @@ export default function PreCallPrepDrawer({ open, onClose }: PreCallPrepDrawerPr
                                             exit={{ opacity: 0 }}
                                             className="flex flex-col items-center justify-center h-64 gap-4 p-6"
                                         >
-                                            <Loader2 className="w-8 h-8 text-accent animate-spin" />
+                                            <Loader2 className="w-8 h-8 text-[var(--color-coral)] animate-spin" />
                                             <div className="text-center">
-                                                <p className="text-sm text-text-primary">Analysing prospect<span className="animate-pulse">...</span></p>
-                                                <p className="text-xs text-text-muted mt-1">Building your personalised brief</p>
+                                                <p className="text-sm text-[rgb(var(--text-primary))]">Analysing prospect<span className="animate-pulse">...</span></p>
+                                                <p className="text-xs text-[rgb(var(--text-muted))] mt-1">Building your personalised brief</p>
                                             </div>
                                         </motion.div>
                                     )}
@@ -254,24 +254,26 @@ export default function PreCallPrepDrawer({ open, onClose }: PreCallPrepDrawerPr
                                             exit={{ opacity: 0 }}
                                             className="p-6 space-y-5"
                                         >
-                                            <div>
-                                                <p className="text-xs text-text-secondary">
-                                                    Brief for <span className="text-text-primary font-black">{prospectName}</span>
-                                                    {prospectTitle && <span className="text-text-muted"> · {prospectTitle}</span>}
+                                            {/* Brief preview card */}
+                                            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[var(--color-coral)] to-[var(--color-purple)]" />
+                                                <p className="text-xs text-[rgb(var(--text-secondary))]">
+                                                    Brief for <span className="text-[rgb(var(--text-primary))] font-bold">{prospectName}</span>
+                                                    {prospectTitle && <span className="text-[rgb(var(--text-muted))]"> · {prospectTitle}</span>}
                                                     {' at '}
-                                                    <span className="text-text-primary">{prospectCompany}</span>
+                                                    <span className="text-[rgb(var(--text-primary))]">{prospectCompany}</span>
                                                 </p>
                                             </div>
 
                                             {/* Likely Objections */}
                                             <div className="space-y-2">
-                                                <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted flex items-center gap-1.5">
+                                                <p className="stat-label flex items-center gap-1.5">
                                                     <AlertTriangle className="w-3 h-3" />
                                                     Likely Objections
                                                 </p>
                                                 <div className="space-y-1.5">
                                                     {brief.likely_objections.map((obj, i) => (
-                                                        <div key={i} className="border border-border/60 border-l-2 border-l-accent/60 pl-3 py-2 pr-3 text-sm text-text-secondary bg-bg-raised/50">
+                                                        <div key={i} className="border border-[rgb(var(--border-default))] border-l-2 border-l-[var(--color-coral)] rounded-lg pl-3 py-2 pr-3 text-sm text-[rgb(var(--text-secondary))] bg-[rgba(255,255,255,0.02)]">
                                                             {obj}
                                                         </div>
                                                     ))}
@@ -280,13 +282,13 @@ export default function PreCallPrepDrawer({ open, onClose }: PreCallPrepDrawerPr
 
                                             {/* Discovery Questions */}
                                             <div className="space-y-2">
-                                                <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted flex items-center gap-1.5">
+                                                <p className="stat-label flex items-center gap-1.5">
                                                     <HelpCircle className="w-3 h-3" />
                                                     Discovery Questions
                                                 </p>
                                                 <div className="space-y-1.5">
                                                     {brief.discovery_questions.map((q, i) => (
-                                                        <div key={i} className="border border-border/60 border-l-2 border-l-status-success/60 pl-3 py-2 pr-3 text-sm text-text-secondary bg-bg-raised/50">
+                                                        <div key={i} className="border border-[rgb(var(--border-default))] border-l-2 border-l-[var(--color-green)] rounded-lg pl-3 py-2 pr-3 text-sm text-[rgb(var(--text-secondary))] bg-[rgba(255,255,255,0.02)]">
                                                             {q}
                                                         </div>
                                                     ))}
@@ -295,26 +297,26 @@ export default function PreCallPrepDrawer({ open, onClose }: PreCallPrepDrawerPr
 
                                             {/* Personal Watchout */}
                                             <div className="space-y-2">
-                                                <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted flex items-center gap-1.5">
+                                                <p className="stat-label flex items-center gap-1.5">
                                                     <Eye className="w-3 h-3" />
                                                     Your Watchout
                                                 </p>
-                                                <div className="border border-accent/30 bg-accent/5 p-3 text-sm text-text-primary leading-relaxed">
+                                                <div className="border border-[rgba(255,107,107,0.3)] bg-[rgba(255,107,107,0.05)] rounded-lg p-3 text-sm text-[rgb(var(--text-primary))] leading-relaxed">
                                                     {brief.personal_watchout}
                                                 </div>
                                             </div>
 
                                             {/* Actions */}
-                                            <div className="flex gap-3 pt-2 border-t border-border/40">
+                                            <div className="flex gap-3 pt-2 border-t border-[rgb(var(--border-default))]">
                                                 <button
                                                     onClick={handleCopyLink}
                                                     disabled={!brief.prep_session_id}
-                                                    className="flex-1 btn-ghost flex items-center justify-center gap-2 text-xs disabled:opacity-40"
+                                                    className="flex-1 btn-ghost rounded-lg flex items-center justify-center gap-2 text-xs disabled:opacity-40"
                                                 >
-                                                    {copied ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Copy className="w-3.5 h-3.5" />}
+                                                    {copied ? <Check className="w-3.5 h-3.5 text-[var(--color-green)]" /> : <Copy className="w-3.5 h-3.5" />}
                                                     Share Link
                                                 </button>
-                                                <button onClick={handleReset} className="flex-1 btn-ghost text-xs">
+                                                <button onClick={handleReset} className="flex-1 btn-ghost rounded-lg text-xs">
                                                     New Brief
                                                 </button>
                                             </div>

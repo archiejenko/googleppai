@@ -17,8 +17,10 @@ import { useQueryClient } from '@tanstack/react-query';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const ACCENT = '#ff6b6b';
-const BLUE = '#60a5fa';
+const ACCENT = '#FF6B6B';
+const GREEN = '#4ADE80';
+const AMBER = '#FBBF24';
+const BLUE = '#60A5FA';
 
 const DIMENSION_KEYS = [
   { label: 'Talk Ratio', gapKey: 'talk_ratio_gap' },
@@ -31,15 +33,34 @@ const DIMENSION_KEYS = [
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function gapColor(gap: number): string {
-  if (gap >= 20) return 'text-status-danger';
-  if (gap >= 10) return 'text-status-warning';
-  return 'text-status-success';
+  if (gap >= 30) return 'text-[#FF6B6B]';
+  if (gap >= 15) return 'text-[#FBBF24]';
+  return 'text-[#4ADE80]';
 }
 
 function gapBg(gap: number): string {
-  if (gap >= 20) return 'bg-status-danger/10 text-status-danger border-status-danger/30';
-  if (gap >= 10) return 'bg-status-warning/10 text-status-warning border-status-warning/30';
-  return 'bg-status-success/10 text-status-success border-status-success/30';
+  if (gap >= 30) return 'bg-[rgba(255,107,107,0.12)] text-[#FF6B6B]';
+  if (gap >= 15) return 'bg-[rgba(251,191,36,0.12)] text-[#FBBF24]';
+  return 'bg-[rgba(74,222,128,0.12)] text-[#4ADE80]';
+}
+
+function gapBarColor(gap: number): string {
+  if (gap >= 30) return '#FF6B6B';
+  if (gap >= 15) return '#FBBF24';
+  return '#4ADE80';
+}
+
+/** Score colour: >= 80 green, 60-79 amber, < 60 coral */
+function scoreColor(score: number): string {
+  if (score >= 80) return '#4ADE80';
+  if (score >= 60) return '#FBBF24';
+  return '#FF6B6B';
+}
+
+function scorePillClass(score: number): string {
+  if (score >= 80) return 'pill pill-green';
+  if (score >= 60) return 'pill pill-amber';
+  return 'pill pill-coral';
 }
 
 // ── Empty state ───────────────────────────────────────────────────────────────
@@ -48,7 +69,7 @@ function EmptyState() {
   const navigate = useNavigate();
   return (
     <div className="flex flex-col items-center justify-center py-24 px-6 text-center space-y-6">
-      <div className="w-16 h-16 flex items-center justify-center bg-accent/10 border border-accent/30">
+      <div className="w-16 h-16 flex items-center justify-center bg-accent/10 border border-accent/30 rounded-lg">
         <GitCompareArrows className="w-8 h-8 text-accent" />
       </div>
       <div>
@@ -79,9 +100,9 @@ function OrgSummary() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-[14px]">
         {[0, 1, 2].map(i => (
-          <div key={i} className="card-os p-5 border border-border h-24 animate-pulse bg-bg-raised" />
+          <div key={i} className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 h-24 animate-pulse" />
         ))}
       </div>
     );
@@ -96,29 +117,29 @@ function OrgSummary() {
       label: 'Avg Transfer Gap',
       value: `${avgGap.toFixed(1)} pts`,
       sub: 'training score minus live score',
-      color: avgGap >= 15 ? 'text-status-danger' : avgGap >= 8 ? 'text-status-warning' : 'text-status-success',
+      color: avgGap >= 15 ? 'text-[#FF6B6B]' : avgGap >= 8 ? 'text-[#FBBF24]' : 'text-[#4ADE80]',
     },
     {
       label: 'Reps With Decay',
       value: `${repsWithDecay} / ${efficacy.total_reps_analysed}`,
       sub: 'skill declining over 90 days',
-      color: repsWithDecay > 0 ? 'text-status-warning' : 'text-status-success',
+      color: repsWithDecay > 0 ? 'text-[#FBBF24]' : 'text-[#4ADE80]',
     },
     {
       label: 'Pressure Regression',
       value: `${efficacy.reps_with_pressure_regression}`,
       sub: 'score drops on calls >15 min',
-      color: efficacy.reps_with_pressure_regression > 0 ? 'text-status-warning' : 'text-status-success',
+      color: efficacy.reps_with_pressure_regression > 0 ? 'text-[#FBBF24]' : 'text-[#4ADE80]',
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-[14px]">
       {stats.map(s => (
-        <div key={s.label} className="card-os p-5 border border-border space-y-1">
-          <p className="text-[10px] uppercase tracking-widest text-text-muted">{s.label}</p>
-          <p className={`text-3xl ${s.color}`}>{s.value}</p>
-          <p className="text-xs text-text-muted">{s.sub}</p>
+        <div key={s.label} className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 space-y-1">
+          <p className="stat-label">{s.label}</p>
+          <p className={`stat-value ${s.color}`}>{s.value}</p>
+          <p className="text-[11px] text-[rgb(var(--text-muted))] mt-1">{s.sub}</p>
         </div>
       ))}
     </div>
@@ -140,31 +161,31 @@ function TeamBarChart({ rows, onSelectRep }: { rows: TeamRepRow[]; onSelectRep: 
   if (chartData.length === 0) return null;
 
   return (
-    <div className="card-os border border-border p-5">
-      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Transfer Gap by Rep</p>
-      <p className="text-xs text-text-secondary mb-4">
+    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+      <p className="card-title mb-1">Transfer Gap by Rep</p>
+      <p className="text-[11px] text-[rgb(var(--text-muted))] mb-4">
         Points above zero = training score higher than live score. Click a bar to drill in.
       </p>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={chartData} onClick={(d: any) => { if (d?.activePayload?.[0]?.payload?.repId) onSelectRep(d.activePayload[0].payload.repId); }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgb(30 41 59)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
           <XAxis
             dataKey="rep"
-            tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 10, fontFamily: 'Oswald' }}
+            tick={{ fill: '#4a5567', fontSize: 10, fontFamily: 'Oswald' }}
           />
           <YAxis
-            tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 10, fontFamily: 'Oswald' }}
+            tick={{ fill: '#4a5567', fontSize: 10, fontFamily: 'Oswald' }}
             width={30}
           />
           <Tooltip
             contentStyle={{
-              background: 'rgb(15 23 42)',
-              border: '1px solid rgb(30 41 59)',
-              borderRadius: 0,
-              fontFamily: 'Oswald',
+              background: '#151c25',
+              border: '1px solid #1e2a38',
+              borderRadius: 12,
+              fontFamily: 'DM Sans',
               fontSize: 11,
             }}
-            labelStyle={{ color: '#94a3b8' }}
+            labelStyle={{ color: '#7d8a98' }}
             itemStyle={{ color: ACCENT }}
             formatter={(value: any) => [`${value} pts`, 'Transfer Gap']}
           />
@@ -173,11 +194,11 @@ function TeamBarChart({ rows, onSelectRep }: { rows: TeamRepRow[]; onSelectRep: 
             fill={ACCENT}
             fillOpacity={0.8}
             cursor="pointer"
-            radius={0}
+            radius={[4, 4, 0, 0]}
           />
         </BarChart>
       </ResponsiveContainer>
-      <p className="text-[10px] text-text-muted mt-2">Click any bar to view rep detail</p>
+      <p className="text-[10px] text-[rgb(var(--text-muted))] mt-2">Click any bar to view rep detail</p>
     </div>
   );
 }
@@ -196,51 +217,71 @@ function TeamTable({
   const sorted = [...rows].sort((a, b) => b.transfer_gap_overall - a.transfer_gap_overall);
 
   return (
-    <div className="card-os border border-border overflow-x-auto">
-      <table className="w-full text-sm">
+    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 overflow-x-auto">
+      <p className="card-title mb-1">Rep Breakdown</p>
+      <p className="text-[11px] text-[rgb(var(--text-muted))] mb-4">Individual transfer gap analysis with trend direction.</p>
+      <table className="table-os">
         <thead>
-          <tr className="border-b border-border text-text-muted text-xs uppercase tracking-widest">
-            <th className="px-5 py-3 text-left">Rep</th>
-            <th className="px-5 py-3 text-center">Transfer Gap</th>
-            <th className="px-5 py-3 text-center">Decay</th>
-            <th className="px-5 py-3 text-center">Pressure Regression</th>
-            <th className="px-5 py-3 text-left">Last Snapshot</th>
+          <tr>
+            <th>Rep</th>
+            <th style={{ textAlign: 'center' }}>Transfer Gap</th>
+            <th style={{ textAlign: 'center' }}>Gap Visual</th>
+            <th style={{ textAlign: 'center' }}>Decay</th>
+            <th style={{ textAlign: 'center' }}>Pressure Regression</th>
+            <th>Last Snapshot</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">
+        <tbody>
           {sorted.map(row => {
             const isSelected = selectedRepId === row.rep_id;
+            const gap = row.transfer_gap_overall;
             return (
               <tr
                 key={row.rep_id}
                 onClick={() => onSelectRep(row.rep_id)}
-                className={`cursor-pointer transition-colors ${isSelected ? 'bg-accent/5 border-l-2 border-l-accent' : 'hover:bg-bg-raised'}`}
+                className={`cursor-pointer transition-colors ${isSelected ? 'bg-[rgba(255,107,107,0.05)]' : ''}`}
               >
-                <td className="px-5 py-3 text-text-primary font-medium">{row.rep_name}</td>
-                <td className="px-5 py-3 text-center">
-                  <span className={`text-xs px-2 py-0.5 border ${gapBg(row.transfer_gap_overall)}`}>
-                    {row.transfer_gap_overall.toFixed(1)} pts
+                <td>
+                  <span className="font-semibold text-[rgb(var(--text-primary))]">{row.rep_name}</span>
+                </td>
+                <td style={{ textAlign: 'center' }}>
+                  <span className={`pill ${gap >= 30 ? 'pill-coral' : gap >= 15 ? 'pill-amber' : 'pill-green'}`}>
+                    {gap.toFixed(1)} pts
                   </span>
                 </td>
-                <td className="px-5 py-3 text-center">
+                <td style={{ textAlign: 'center' }}>
+                  <div className="flex items-center gap-2">
+                    <div className="h-bar flex-1" style={{ minWidth: 80 }}>
+                      <div
+                        className="h-bar-fill"
+                        style={{
+                          width: `${Math.min(100, (gap / 50) * 100)}%`,
+                          background: gapBarColor(gap),
+                        }}
+                      />
+                    </div>
+                    <span className={`text-[11px] font-semibold ${gapColor(gap)}`}>{gap.toFixed(0)}%</span>
+                  </div>
+                </td>
+                <td style={{ textAlign: 'center' }}>
                   {row.knowledge_decay_detected ? (
-                    <span className="flex items-center justify-center gap-1 text-xs text-status-warning">
+                    <span className="flex items-center justify-center gap-1 text-xs text-[#FBBF24]">
                       <AlertTriangle className="w-3 h-3" /> Detected
                     </span>
                   ) : (
-                    <span className="text-xs text-status-success">—</span>
+                    <span className="text-xs text-[#4ADE80]">—</span>
                   )}
                 </td>
-                <td className="px-5 py-3 text-center">
+                <td style={{ textAlign: 'center' }}>
                   {row.pressure_regression ? (
-                    <span className="flex items-center justify-center gap-1 text-xs text-status-warning">
+                    <span className="flex items-center justify-center gap-1 text-xs text-[#FBBF24]">
                       <TrendingDown className="w-3 h-3" /> Yes
                     </span>
                   ) : (
-                    <span className="text-xs text-text-muted">—</span>
+                    <span className="text-xs text-[rgb(var(--text-muted))]">—</span>
                   )}
                 </td>
-                <td className="px-5 py-3 text-xs text-text-muted">{row.snapshot_date}</td>
+                <td className="text-xs text-[rgb(var(--text-muted))]">{row.snapshot_date}</td>
               </tr>
             );
           })}
@@ -261,7 +302,7 @@ function RepDetailPanel({ repId, repName, onBack }: { repId: string; repName: st
         <button onClick={onBack} className="flex items-center gap-2 text-xs text-text-muted hover:text-text-primary transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" /> Back to team
         </button>
-        <div className="card-os border border-border p-8 animate-pulse bg-bg-raised h-64" />
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-8 animate-pulse h-64" />
       </div>
     );
   }
@@ -272,7 +313,7 @@ function RepDetailPanel({ repId, repName, onBack }: { repId: string; repName: st
         <button onClick={onBack} className="flex items-center gap-2 text-xs text-text-muted hover:text-text-primary transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" /> Back to team
         </button>
-        <div className="card-os border border-border p-8 text-center">
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-8 text-center">
           <p className="text-text-muted text-sm">
             No detail data available for {repName} yet. They need to complete training sessions and live calls.
           </p>
@@ -322,8 +363,8 @@ function RepDetailPanel({ repId, repName, onBack }: { repId: string; repName: st
           <h2 className="text-xl text-text-primary uppercase tracking-tight">{repName}</h2>
           <p className="text-xs text-text-muted mt-0.5">Transfer Gap Analysis</p>
         </div>
-        <div className={`text-center px-4 py-2 border ${gapBg(snap.transfer_gap_overall)}`}>
-          <p className="text-2xl">{snap.transfer_gap_overall.toFixed(1)}</p>
+        <div className={`text-center px-4 py-2 rounded-lg ${gapBg(snap.transfer_gap_overall)}`}>
+          <p className="stat-value">{snap.transfer_gap_overall.toFixed(1)}</p>
           <p className="text-[10px] uppercase tracking-widest">Overall Gap</p>
         </div>
       </div>
@@ -332,22 +373,22 @@ function RepDetailPanel({ repId, repName, onBack }: { repId: string; repName: st
       {(snap.knowledge_decay_detected || snap.pressure_regression) && (
         <div className="flex flex-wrap gap-3">
           {snap.knowledge_decay_detected && snap.decaying_dimensions?.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 border border-status-warning/40 bg-status-warning/10">
-              <AlertTriangle className="w-4 h-4 text-status-warning flex-shrink-0" />
+            <div className="flex items-center gap-2 px-3 py-2 border border-[rgba(251,191,36,0.4)] bg-[rgba(251,191,36,0.1)] rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-[#FBBF24] flex-shrink-0" />
               <div>
-                <p className="text-xs text-status-warning font-medium">Skill Decay Detected</p>
-                <p className="text-[11px] text-text-muted">
+                <p className="text-xs text-[#FBBF24] font-medium">Skill Decay Detected</p>
+                <p className="text-[11px] text-[rgb(var(--text-muted))]">
                   Declining in: {snap.decaying_dimensions.join(', ')}
                 </p>
               </div>
             </div>
           )}
           {snap.pressure_regression && (
-            <div className="flex items-center gap-2 px-3 py-2 border border-status-warning/40 bg-status-warning/10">
-              <TrendingDown className="w-4 h-4 text-status-warning flex-shrink-0" />
+            <div className="flex items-center gap-2 px-3 py-2 border border-[rgba(251,191,36,0.4)] bg-[rgba(251,191,36,0.1)] rounded-lg">
+              <TrendingDown className="w-4 h-4 text-[#FBBF24] flex-shrink-0" />
               <div>
-                <p className="text-xs text-status-warning font-medium">Pressure Regression</p>
-                <p className="text-[11px] text-text-muted">Score drops on calls longer than 15 minutes</p>
+                <p className="text-xs text-[#FBBF24] font-medium">Pressure Regression</p>
+                <p className="text-[11px] text-[rgb(var(--text-muted))]">Score drops on calls longer than 15 minutes</p>
               </div>
             </div>
           )}
@@ -356,22 +397,22 @@ function RepDetailPanel({ repId, repName, onBack }: { repId: string; repName: st
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Radar: Training vs Live per dimension */}
-        <div className="card-os border border-border p-5">
-          <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Skill Radar — Training vs Live</p>
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+          <p className="card-title mb-1">Skill Radar — Training vs Live</p>
           <div className="flex gap-4 mb-3">
-            <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-              <span className="w-3 h-0.5 bg-[#60a5fa] inline-block" /> Training
+            <span className="flex items-center gap-1.5 text-[11px] text-[rgb(var(--text-muted))]">
+              <span className="w-3 h-0.5 bg-[#60A5FA] inline-block" /> Training
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-              <span className="w-3 h-0.5 bg-accent inline-block" /> Live
+            <span className="flex items-center gap-1.5 text-[11px] text-[rgb(var(--text-muted))]">
+              <span className="w-3 h-0.5 bg-[#FF6B6B] inline-block" /> Live
             </span>
           </div>
           <ResponsiveContainer width="100%" height={240}>
             <RadarChart data={radarData}>
-              <PolarGrid stroke="rgb(30 41 59)" />
+              <PolarGrid stroke="rgba(255,255,255,0.06)" />
               <PolarAngleAxis
                 dataKey="dimension"
-                tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 10, fontFamily: 'Oswald' }}
+                tick={{ fill: '#4a5567', fontSize: 10, fontFamily: 'Oswald' }}
               />
               <Radar name="Training" dataKey="Training" stroke={BLUE} fill={BLUE} fillOpacity={0.15} strokeWidth={2} />
               <Radar name="Live" dataKey="Live" stroke={ACCENT} fill={ACCENT} fillOpacity={0.12} strokeWidth={2} />
@@ -382,7 +423,7 @@ function RepDetailPanel({ repId, repName, onBack }: { repId: string; repName: st
           <div className="flex flex-wrap gap-2 mt-3">
             {radarData.map(d => (
               d.isDecaying && (
-                <span key={d.dimension} className="flex items-center gap-1 text-[10px] px-2 py-0.5 border border-status-warning/40 bg-status-warning/10 text-status-warning">
+                <span key={d.dimension} className="flex items-center gap-1 text-[10px] px-2 py-0.5 border border-[rgba(251,191,36,0.4)] bg-[rgba(251,191,36,0.1)] text-[#FBBF24] rounded">
                   <AlertTriangle className="w-2.5 h-2.5" /> {d.dimension} decaying
                 </span>
               )
@@ -391,8 +432,8 @@ function RepDetailPanel({ repId, repName, onBack }: { repId: string; repName: st
         </div>
 
         {/* Dimension gap breakdown */}
-        <div className="card-os border border-border p-5">
-          <p className="text-[10px] uppercase tracking-widest text-text-muted mb-4">Gap by Dimension</p>
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+          <p className="card-title mb-4">Gap by Dimension</p>
           <div className="space-y-3">
             {DIMENSION_KEYS.map(d => {
               const gap = d.gapKey === 'transfer_gap_overall'
@@ -401,58 +442,61 @@ function RepDetailPanel({ repId, repName, onBack }: { repId: string; repName: st
               const isDecaying = snap.decaying_dimensions?.includes(d.label) ?? false;
               return (
                 <div key={d.label} className="flex items-center gap-3">
-                  <span className="w-28 text-xs text-text-secondary flex-shrink-0">{d.label}</span>
-                  <div className="flex-1 h-1.5 bg-bg-raised">
+                  <span className="w-28 text-xs text-[rgb(var(--text-secondary))] flex-shrink-0">{d.label}</span>
+                  <div className="h-bar flex-1">
                     <div
-                      className={`h-full transition-all ${gap >= 20 ? 'bg-status-danger' : gap >= 10 ? 'bg-status-warning' : 'bg-status-success'}`}
-                      style={{ width: `${Math.min(100, (gap / 40) * 100)}%` }}
+                      className="h-bar-fill transition-all"
+                      style={{
+                        width: `${Math.min(100, (gap / 40) * 100)}%`,
+                        background: gapBarColor(gap),
+                      }}
                     />
                   </div>
                   <span className={`w-12 text-right text-xs font-mono ${gapColor(gap)}`}>
                     {gap.toFixed(1)}
                   </span>
                   {isDecaying && (
-                    <AlertTriangle className="w-3.5 h-3.5 text-status-warning flex-shrink-0" />
+                    <AlertTriangle className="w-3.5 h-3.5 text-[#FBBF24] flex-shrink-0" />
                   )}
                 </div>
               );
             })}
           </div>
-          <p className="text-[10px] text-text-muted mt-4">
-            Gap = training avg − live avg. Higher = more drop-off under real conditions.
+          <p className="text-[10px] text-[rgb(var(--text-muted))] mt-4">
+            Gap = training avg - live avg. Higher = more drop-off under real conditions.
           </p>
         </div>
       </div>
 
       {/* Trend line chart */}
       {trendData.length >= 2 && (
-        <div className="card-os border border-border p-5">
-          <p className="text-[10px] uppercase tracking-widest text-text-muted mb-4">90-Day Trend — Training vs Live</p>
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+          <p className="card-title mb-4">90-Day Trend — Training vs Live</p>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgb(30 41 59)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
               <XAxis
                 dataKey="date"
-                tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 9, fontFamily: 'Oswald' }}
+                tick={{ fill: '#4a5567', fontSize: 9, fontFamily: 'Oswald' }}
                 interval={Math.max(0, Math.floor(trendData.length / 8) - 1)}
               />
               <YAxis
                 domain={[0, 100]}
-                tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 9, fontFamily: 'Oswald' }}
+                tick={{ fill: '#4a5567', fontSize: 9, fontFamily: 'Oswald' }}
                 width={28}
               />
               <Tooltip
                 contentStyle={{
-                  background: 'rgb(15 23 42)',
-                  border: '1px solid rgb(30 41 59)',
-                  borderRadius: 0,
-                  fontFamily: 'Oswald',
+                  background: '#151c25',
+                  border: '1px solid #1e2a38',
+                  borderRadius: 12,
+                  fontFamily: 'DM Sans',
                   fontSize: 11,
                 }}
-                labelStyle={{ color: '#94a3b8' }}
+                labelStyle={{ color: '#7d8a98' }}
               />
               <Legend
-                wrapperStyle={{ fontFamily: 'Oswald', fontSize: 10 }}
+                wrapperStyle={{ fontFamily: 'DM Sans', fontSize: 10 }}
               />
               <Line type="monotone" dataKey="Training" stroke={BLUE} strokeWidth={2} dot={false} activeDot={{ r: 3 }} />
               <Line type="monotone" dataKey="Live" stroke={ACCENT} strokeWidth={2} dot={false} activeDot={{ r: 3 }} />
@@ -490,30 +534,30 @@ function TransferGapDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-1">Revenue Intelligence</p>
-          <h1 className="text-2xl text-text-primary uppercase tracking-tight">Transfer Gap</h1>
-          <p className="text-sm text-text-secondary mt-0.5">
+          <p className="page-kicker">Revenue Intelligence</p>
+          <h1 className="page-title">Transfer Gap</h1>
+          <p className="page-desc mt-0.5">
             Delta between training performance and live call performance, by rep and skill dimension.
           </p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={isLoading}
-          className="btn-ghost flex items-center gap-2 text-xs py-2 px-3"
+          className="flex items-center gap-[5px] text-xs text-[rgb(var(--text-secondary))] px-3 py-[6px] border border-[rgb(var(--border-default))] bg-transparent rounded-md font-[DM_Sans,sans-serif] hover:text-[rgb(var(--text-primary))] transition-colors"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
 
       {isLoading ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-[14px]">
             {[0, 1, 2].map(i => (
-              <div key={i} className="card-os border border-border h-24 animate-pulse bg-bg-raised" />
+              <div key={i} className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg h-24 animate-pulse" />
             ))}
           </div>
-          <div className="card-os border border-border h-64 animate-pulse bg-bg-raised" />
+          <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg h-64 animate-pulse" />
         </div>
       ) : !hasData ? (
         <EmptyState />
@@ -543,10 +587,11 @@ export default function TransferGapPage() {
     <TierGate
       preview={
         <div className="p-6 space-y-4 opacity-60 pointer-events-none">
-          <h1 className="text-2xl text-text-primary">Transfer Gap</h1>
-          <div className="grid grid-cols-3 gap-4">
+          <p className="page-kicker">Revenue Intelligence</p>
+          <h1 className="page-title">Transfer Gap</h1>
+          <div className="grid grid-cols-3 gap-[14px]">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="card-os p-5 border border-border h-28 bg-bg-surface" />
+              <div key={i} className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 h-28" />
             ))}
           </div>
         </div>

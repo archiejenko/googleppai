@@ -124,30 +124,30 @@ interface ModuleCard {
 
 function MetricCard({ card, onAction }: { card: ModuleCard; onAction: (key: string) => void }) {
     return (
-        <div className="card-os p-5 border border-border hover:border-border/80 transition-colors space-y-4">
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 hover:border-[rgb(var(--border-subtle))] transition-colors space-y-4">
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 flex items-center justify-center border border-border bg-bg-raised">
-                        <card.icon className="w-4 h-4 text-accent" />
+                    <div className="w-9 h-9 flex items-center justify-center border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))] rounded-lg">
+                        <card.icon className="w-4 h-4 text-[#FF6B6B]" />
                     </div>
                     <div>
-                        <p className="text-sm text-text-primary">{card.label}</p>
-                        <p className="text-[10px] text-text-muted mt-0.5">{card.description}</p>
+                        <p className="text-sm text-[rgb(var(--text-primary))]">{card.label}</p>
+                        <p className="text-[10px] text-[rgb(var(--text-muted))] mt-0.5">{card.description}</p>
                     </div>
                 </div>
             </div>
 
             {card.stat !== null && (
                 <div>
-                    <p className="text-2xl text-accent">{card.stat}</p>
-                    <p className="text-[10px] text-text-muted uppercase tracking-widest mt-0.5">{card.statLabel}</p>
+                    <p className="stat-value text-[#FF6B6B]">{card.stat}</p>
+                    <p className="text-[10px] text-[rgb(var(--text-muted))] uppercase tracking-widest mt-0.5">{card.statLabel}</p>
                 </div>
             )}
 
             {card.action && (
                 <button
                     onClick={() => onAction(card.key)}
-                    className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-text-muted hover:text-accent transition-colors"
+                    className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-[rgb(var(--text-muted))] hover:text-[#FF6B6B] transition-colors"
                 >
                     {card.action} <ArrowRight className="w-3 h-3" />
                 </button>
@@ -158,11 +158,11 @@ function MetricCard({ card, onAction }: { card: ModuleCard; onAction: (key: stri
 
 function GapScoreBadge({ score, label }: { score: number | null; label: string }) {
     if (score === null) return null;
-    const color = score >= 70 ? 'text-status-error' : score >= 40 ? 'text-status-warning' : 'text-status-success';
+    const color = score >= 70 ? 'text-[#FF6B6B]' : score >= 40 ? 'text-[#FBBF24]' : 'text-[#4ADE80]';
     return (
         <div className="text-center">
-            <p className={`text-3xl font-mono ${color}`}>{Math.round(score)}</p>
-            <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">{label}</p>
+            <p className={`stat-value font-mono ${color}`}>{Math.round(score)}</p>
+            <p className="text-[10px] uppercase tracking-widest text-[rgb(var(--text-muted))] mt-0.5">{label}</p>
         </div>
     );
 }
@@ -172,18 +172,18 @@ function CompBar({ label, training, live }: { label: string; training: number | 
     const l = live ?? 0;
     return (
         <div className="space-y-1">
-            <p className="text-[10px] uppercase tracking-widest text-text-muted">{label}</p>
-            <div className="flex items-center gap-2 text-xs text-text-muted">
+            <p className="stat-label">{label}</p>
+            <div className="flex items-center gap-2 text-xs text-[rgb(var(--text-muted))]">
                 <span className="w-16 text-right">Training</span>
-                <div className="flex-1 bg-bg-raised h-2">
-                    <div className="bg-accent h-2" style={{ width: `${Math.min(100, t)}%` }} />
+                <div className="h-bar flex-1">
+                    <div className="h-bar-fill" style={{ width: `${Math.min(100, t)}%`, background: '#FF6B6B' }} />
                 </div>
                 <span className="w-8 font-mono">{Math.round(t)}</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-text-muted">
+            <div className="flex items-center gap-2 text-xs text-[rgb(var(--text-muted))]">
                 <span className="w-16 text-right">Live</span>
-                <div className="flex-1 bg-bg-raised h-2">
-                    <div className="bg-text-muted h-2" style={{ width: `${Math.min(100, l)}%` }} />
+                <div className="h-bar flex-1">
+                    <div className="h-bar-fill" style={{ width: `${Math.min(100, l)}%`, background: '#4a5567' }} />
                 </div>
                 <span className="w-8 font-mono">{Math.round(l)}</span>
             </div>
@@ -227,21 +227,21 @@ function TransferGapSection({ authHeader }: { authHeader: string }) {
         ((data.sample_size_live ?? 0) < 3 || (data.sample_size_training ?? 0) < 3);
 
     return (
-        <div className="card-os border border-border p-6 space-y-5">
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-6 space-y-5">
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-0.5">Transfer Gap Analysis</p>
-                    <p className="text-sm text-text-muted">Training performance vs live call execution</p>
+                    <p className="card-title mb-0.5">Transfer Gap Analysis</p>
+                    <p className="text-[11px] text-[rgb(var(--text-muted))]">Training performance vs live call execution</p>
                 </div>
                 <div className="flex gap-1">
                     {[30, 60, 90].map((d) => (
                         <button
                             key={d}
                             onClick={() => setPeriodDays(d)}
-                            className={`text-[10px] uppercase tracking-widest px-3 py-1.5 border transition-colors ${
+                            className={`text-[10px] uppercase tracking-widest px-3 py-1.5 border rounded-md transition-colors ${
                                 periodDays === d
-                                    ? 'border-accent text-accent'
-                                    : 'border-border text-text-muted hover:text-text-primary'
+                                    ? 'border-[#FF6B6B] text-[#FF6B6B]'
+                                    : 'border-[rgb(var(--border-default))] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]'
                             }`}
                         >
                             {d}d
@@ -252,13 +252,13 @@ function TransferGapSection({ authHeader }: { authHeader: string }) {
 
             {loading && (
                 <div className="grid grid-cols-2 gap-6">
-                    <div className="h-32 bg-bg-raised animate-pulse" />
-                    <div className="h-32 bg-bg-raised animate-pulse" />
+                    <div className="h-32 bg-[rgb(var(--bg-surface-raised))] rounded-lg animate-pulse" />
+                    <div className="h-32 bg-[rgb(var(--bg-surface-raised))] rounded-lg animate-pulse" />
                 </div>
             )}
 
             {isEmpty && (
-                <p className="text-sm text-text-muted py-4">
+                <p className="text-sm text-[rgb(var(--text-muted))] py-4">
                     Not enough data yet. Complete more training sessions and calls to generate your Transfer Gap.
                 </p>
             )}
@@ -333,15 +333,15 @@ function PercentileBar({ userScore, p25, p50, p75 }: { userScore: number; p25: n
     const clamp = (v: number) => Math.max(0, Math.min(100, v));
     const userPos = clamp(userScore);
     return (
-        <div className="relative h-6 bg-bg-raised border border-border">
-            <div className="absolute top-0 bottom-0 border-r border-border" style={{ left: `${clamp(p75)}%` }} />
-            <div className="absolute top-0 bottom-0 border-r border-accent/40" style={{ left: `${clamp(p50)}%` }} />
-            <div className="absolute top-0 bottom-0 border-r border-border" style={{ left: `${clamp(p25)}%` }} />
+        <div className="relative h-6 bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded">
+            <div className="absolute top-0 bottom-0 border-r border-[rgb(var(--border-default))]" style={{ left: `${clamp(p75)}%` }} />
+            <div className="absolute top-0 bottom-0 border-r border-[rgba(255,107,107,0.4)]" style={{ left: `${clamp(p50)}%` }} />
+            <div className="absolute top-0 bottom-0 border-r border-[rgb(var(--border-default))]" style={{ left: `${clamp(p25)}%` }} />
             <div
-                className="absolute top-0 bottom-0 w-1 bg-accent"
+                className="absolute top-0 bottom-0 w-1 bg-[#FF6B6B]"
                 style={{ left: `${userPos}%` }}
             />
-            <div className="absolute -bottom-4 flex justify-between w-full text-[8px] text-text-muted">
+            <div className="absolute -bottom-4 flex justify-between w-full text-[8px] text-[rgb(var(--text-muted))]">
                 <span style={{ left: `${clamp(p75)}%`, position: 'absolute', transform: 'translateX(-50%)' }}>Top 25%</span>
                 <span style={{ left: `${clamp(p50)}%`, position: 'absolute', transform: 'translateX(-50%)' }}>Median</span>
                 <span style={{ left: `${clamp(p25)}%`, position: 'absolute', transform: 'translateX(-50%)' }}>Bottom 25%</span>
@@ -373,9 +373,9 @@ function BenchmarkPanel({ authHeader, periodDays, gapData }: { authHeader: strin
         })();
     }, [authHeader, periodDays]);
 
-    if (loading) return <div className="h-16 bg-bg-raised animate-pulse" />;
+    if (loading) return <div className="h-16 bg-[rgb(var(--bg-surface-raised))] rounded-lg animate-pulse" />;
     if (benchmarks.length === 0) {
-        return <p className="text-sm text-text-muted">Benchmarks will appear once enough platform data is available.</p>;
+        return <p className="text-sm text-[rgb(var(--text-muted))]">Benchmarks will appear once enough platform data is available.</p>;
     }
 
     const orgIndustry = (org as Record<string, unknown> | null)?.industry as string | null ?? null;
@@ -471,12 +471,12 @@ function CoachingSection({ authHeader }: { authHeader: string }) {
     };
 
     return (
-        <div className="card-os border border-border p-6 space-y-5">
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-6 space-y-5">
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-0.5">AI Revenue Coaching</p>
+                    <p className="card-title mb-0.5">AI Revenue Coaching</p>
                     {profile?.generated_at && (
-                        <p className="text-[10px] text-text-muted">
+                        <p className="text-[10px] text-[rgb(var(--text-muted))]">
                             Last generated: {new Date(profile.generated_at).toLocaleDateString('en-GB')}
                         </p>
                     )}
@@ -484,49 +484,49 @@ function CoachingSection({ authHeader }: { authHeader: string }) {
                 <button
                     onClick={handleRefresh}
                     disabled={refreshing || loading}
-                    className="btn-ghost flex items-center gap-2 text-xs py-2 px-3"
+                    className="flex items-center gap-[5px] text-xs text-[rgb(var(--text-secondary))] px-3 py-[6px] border border-[rgb(var(--border-default))] bg-transparent rounded-md hover:text-[rgb(var(--text-primary))] transition-colors"
                 >
                     <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
                     Refresh
                 </button>
             </div>
 
-            {loading && <div className="h-24 bg-bg-raised animate-pulse" />}
+            {loading && <div className="h-24 bg-[rgb(var(--bg-surface-raised))] rounded-lg animate-pulse" />}
 
             {!loading && !profile && (
-                <p className="text-sm text-text-muted">No coaching profile yet. Click Refresh to generate.</p>
+                <p className="text-sm text-[rgb(var(--text-muted))]">No coaching profile yet. Click Refresh to generate.</p>
             )}
 
             {!loading && profile && (
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] uppercase tracking-widest bg-bg-raised text-accent px-2 py-1 border border-border">
+                        <span className="pill pill-coral">
                             {GAP_LABELS[profile.primary_gap] ?? profile.primary_gap}
                         </span>
                     </div>
 
                     {profile.top_recommendation && (
-                        <div className="border-l-2 border-accent pl-4">
-                            <p className="text-sm text-text-primary">{profile.top_recommendation}</p>
+                        <div className="border-l-2 border-[#FF6B6B] pl-4">
+                            <p className="text-sm text-[rgb(var(--text-primary))]">{profile.top_recommendation}</p>
                         </div>
                     )}
 
                     {(profile.recommendations ?? []).length > 0 && (
                         <div className="space-y-3">
                             {profile.recommendations.slice(0, 3).map((rec, i) => (
-                                <div key={i} className="card-os border border-border p-4 space-y-1">
+                                <div key={i} className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4 space-y-1">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-accent">
+                                            <span className="text-[#FF6B6B]">
                                                 <DrillTypeIcon type={rec.drill_type} />
                                             </span>
-                                            <p className="text-sm text-text-primary">{rec.title}</p>
+                                            <p className="text-sm text-[rgb(var(--text-primary))]">{rec.title}</p>
                                         </div>
-                                        <span className="text-[10px] uppercase tracking-widest bg-bg-raised text-text-muted px-2 py-0.5 border border-border">
+                                        <span className="pill text-[rgb(var(--text-muted))]">
                                             P{rec.priority}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-text-muted pl-6">{rec.detail}</p>
+                                    <p className="text-xs text-[rgb(var(--text-muted))] pl-6">{rec.detail}</p>
                                 </div>
                             ))}
                         </div>
@@ -573,10 +573,10 @@ function WinLossSection({ authHeader }: { authHeader: string }) {
     useEffect(() => { fetchWinLoss(); }, [fetchWinLoss]);
 
     return (
-        <div className="card-os border border-border p-6 space-y-5">
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-6 space-y-5">
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                    <h2 className="font-display text-lg text-text-primary uppercase tracking-wider">Win/Loss Analysis</h2>
+                    <p className="card-title">Win/Loss Analysis</p>
                 </div>
                 <div className="flex gap-2">
                     <div className="flex gap-1">
@@ -584,8 +584,8 @@ function WinLossSection({ authHeader }: { authHeader: string }) {
                             <button
                                 key={s}
                                 onClick={() => setScope(s)}
-                                className={`btn-ghost text-[10px] uppercase tracking-widest px-3 py-1.5 ${
-                                    scope === s ? 'border-accent text-accent' : ''
+                                className={`text-[10px] uppercase tracking-widest px-3 py-1.5 border rounded-md transition-colors ${
+                                    scope === s ? 'border-[#FF6B6B] text-[#FF6B6B]' : 'border-[rgb(var(--border-default))] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]'
                                 }`}
                             >
                                 {s === 'rep' ? 'Rep' : 'Team'}
@@ -597,10 +597,10 @@ function WinLossSection({ authHeader }: { authHeader: string }) {
                             <button
                                 key={d}
                                 onClick={() => setPeriodDays(d)}
-                                className={`text-[10px] uppercase tracking-widest px-3 py-1.5 border transition-colors ${
+                                className={`text-[10px] uppercase tracking-widest px-3 py-1.5 border rounded-md transition-colors ${
                                     periodDays === d
-                                        ? 'border-accent text-accent'
-                                        : 'border-border text-text-muted hover:text-text-primary'
+                                        ? 'border-[#FF6B6B] text-[#FF6B6B]'
+                                        : 'border-[rgb(var(--border-default))] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]'
                                 }`}
                             >
                                 {d}d
@@ -610,14 +610,14 @@ function WinLossSection({ authHeader }: { authHeader: string }) {
                 </div>
             </div>
 
-            {loading && <div className="h-32 bg-bg-raised animate-pulse" />}
+            {loading && <div className="h-32 bg-[rgb(var(--bg-surface-raised))] rounded-lg animate-pulse" />}
 
             {!loading && scope === 'team' && !isAdmin && (
-                <p className="text-sm text-text-muted py-4">Team view is available to managers only.</p>
+                <p className="text-sm text-[rgb(var(--text-muted))] py-4">Team view is available to managers only.</p>
             )}
 
             {!loading && data?.insufficient_data && (
-                <p className="text-sm text-text-muted py-4">
+                <p className="text-sm text-[rgb(var(--text-muted))] py-4">
                     Not enough won and lost deals to generate analysis. Log at least 3 deals in each outcome to unlock this view.
                 </p>
             )}
@@ -634,26 +634,26 @@ function WinLossSection({ authHeader }: { authHeader: string }) {
                             : `${Math.round(delta)} on lost deals`;
                         return (
                             <div key={key} className="space-y-1">
-                                <p className="text-xs text-text-primary">{label}</p>
+                                <p className="text-xs text-[rgb(var(--text-primary))]">{label}</p>
                                 <div className="flex items-center gap-3">
                                     <div className="flex-1 space-y-1">
-                                        <div className="flex items-center gap-2 text-[10px] text-text-muted">
+                                        <div className="flex items-center gap-2 text-[10px] text-[rgb(var(--text-muted))]">
                                             <span className="w-8">Won</span>
-                                            <div className="flex-1 bg-bg-raised h-3">
-                                                <div className="bg-accent h-3" style={{ width: `${Math.min(100, won ?? 0)}%` }} />
+                                            <div className="h-bar flex-1" style={{ height: '10px' }}>
+                                                <div className="h-bar-fill" style={{ width: `${Math.min(100, won ?? 0)}%`, background: '#4ADE80', height: '100%' }} />
                                             </div>
-                                            <span className="w-8 font-mono text-accent">{Math.round(won ?? 0)}</span>
+                                            <span className="w-8 font-mono text-[#4ADE80]">{Math.round(won ?? 0)}</span>
                                         </div>
-                                        <div className="flex items-center gap-2 text-[10px] text-text-muted">
+                                        <div className="flex items-center gap-2 text-[10px] text-[rgb(var(--text-muted))]">
                                             <span className="w-8">Lost</span>
-                                            <div className="flex-1 bg-bg-raised h-3">
-                                                <div className="bg-text-muted h-3" style={{ width: `${Math.min(100, lost ?? 0)}%` }} />
+                                            <div className="h-bar flex-1" style={{ height: '10px' }}>
+                                                <div className="h-bar-fill" style={{ width: `${Math.min(100, lost ?? 0)}%`, background: '#FF6B6B', height: '100%' }} />
                                             </div>
-                                            <span className="w-8 font-mono">{Math.round(lost ?? 0)}</span>
+                                            <span className="w-8 font-mono text-[#FF6B6B]">{Math.round(lost ?? 0)}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-text-muted">{deltaLabel}</p>
+                                <p className="text-[10px] text-[rgb(var(--text-muted))]">{deltaLabel}</p>
                             </div>
                         );
                     })}
@@ -706,15 +706,15 @@ function TokenUsageBanner() {
 
     const bannerConfig: Record<number, { cls: string; text: string }> = {
         75: {
-            cls: 'border-status-warning/40 bg-status-warning/5',
+            cls: 'border-[rgba(251,191,36,0.4)] bg-[rgba(251,191,36,0.05)]',
             text: 'Your team has used 75% of your monthly AI allowance. No action needed, plenty of headroom remains.',
         },
         90: {
-            cls: 'border-accent/40 bg-accent/5',
+            cls: 'border-[rgba(255,107,107,0.4)] bg-[rgba(255,107,107,0.05)]',
             text: 'Your team has used 90% of your monthly AI allowance. Usage continues uninterrupted. Contact us if you expect consistently high usage.',
         },
         100: {
-            cls: 'border-status-danger/40 bg-status-danger/5',
+            cls: 'border-[rgba(248,113,113,0.4)] bg-[rgba(248,113,113,0.05)]',
             text: 'Your team has exceeded the monthly fair use allowance. Access continues. We will be in touch.',
         },
     };
@@ -722,14 +722,14 @@ function TokenUsageBanner() {
     const config = bannerConfig[warning.threshold] ?? bannerConfig[100];
 
     return (
-        <div className={`card-os p-4 border ${config.cls} flex items-start justify-between gap-3`}>
+        <div className={`bg-[rgb(var(--bg-surface-raised))] rounded-lg p-4 border ${config.cls} flex items-start justify-between gap-3`}>
             <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-text-muted flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-text-primary">{config.text}</p>
+                <AlertCircle className="w-5 h-5 text-[rgb(var(--text-muted))] flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-[rgb(var(--text-primary))]">{config.text}</p>
             </div>
             <button
                 onClick={acknowledge}
-                className="text-[10px] uppercase tracking-widest text-text-muted hover:text-text-primary border border-border px-3 py-1.5 flex-shrink-0"
+                className="text-[10px] uppercase tracking-widest text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] border border-[rgb(var(--border-default))] rounded-md px-3 py-1.5 flex-shrink-0"
             >
                 Acknowledge
             </button>
@@ -779,11 +779,11 @@ function AlertBanners() {
     return (
         <div className="space-y-2">
             {alerts.map(alert => (
-                <div key={alert.id} className="card-os border border-border border-l-4 border-l-accent p-4 flex items-start justify-between gap-3">
-                    <p className="text-sm text-text-primary">
+                <div key={alert.id} className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] border-l-4 border-l-[#FF6B6B] rounded-lg p-4 flex items-start justify-between gap-3">
+                    <p className="text-sm text-[rgb(var(--text-primary))]">
                         {ALERT_MESSAGES[alert.alert_type]?.(alert.delta_delivery, alert.delta_readiness) ?? 'Gap alert detected.'}
                     </p>
-                    <button onClick={() => dismiss(alert.id)} className="text-text-muted hover:text-text-primary shrink-0">
+                    <button onClick={() => dismiss(alert.id)} className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] shrink-0">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
@@ -899,15 +899,16 @@ function RevenueIntelDashboard() {
 
     return (
         <div className="p-6 space-y-6 max-w-5xl">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between">
                 <div>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-1">Revenue Intelligence</p>
-                    <h1 className="text-2xl text-text-primary">Overview</h1>
+                    <p className="page-kicker">Intelligence</p>
+                    <h1 className="page-title">Revenue Intel</h1>
+                    <p className="page-desc">Pipeline health, win rates, and revenue performance across your team.</p>
                 </div>
                 <button
                     onClick={() => { setRefreshing(true); fetchSummary(); }}
                     disabled={refreshing}
-                    className="btn-ghost flex items-center gap-2 text-xs py-2 px-3"
+                    className="flex items-center gap-[5px] text-xs text-[rgb(var(--text-secondary))] px-3 py-[6px] border border-[rgb(var(--border-default))] bg-transparent rounded-md hover:text-[rgb(var(--text-primary))] transition-colors"
                 >
                     <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
                     Refresh
@@ -916,13 +917,13 @@ function RevenueIntelDashboard() {
 
             {/* Pre-Call Brief (collapsible) */}
             {session?.user?.id && (
-                <div className="card-os border border-border">
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg">
                     <button
                         onClick={() => setBriefOpen(!briefOpen)}
                         className="w-full flex items-center justify-between p-4 text-left"
                     >
-                        <span className="text-[10px] uppercase tracking-widest text-text-muted">Pre-Call Brief</span>
-                        <ChevronDown className={`w-4 h-4 text-text-muted transition-transform ${briefOpen ? 'rotate-180' : ''}`} />
+                        <span className="stat-label">Pre-Call Brief</span>
+                        <ChevronDown className={`w-4 h-4 text-[rgb(var(--text-muted))] transition-transform ${briefOpen ? 'rotate-180' : ''}`} />
                     </button>
                     {briefOpen && (
                         <div className="px-4 pb-4">
@@ -967,22 +968,22 @@ function RevenueIntelDashboard() {
 
             {/* Inline detail panel */}
             {detailKey && (
-                <div className="card-os border border-border p-5 space-y-3">
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 space-y-3">
                     <div className="flex items-center justify-between">
-                        <p className="text-xs font-black uppercase tracking-widest text-text-muted">
+                        <p className="card-title">
                             {cards.find(c => c.key === detailKey)?.label}
                         </p>
-                        <button onClick={() => setDetailKey(null)} className="text-xs text-text-muted hover:text-text-primary">close</button>
+                        <button onClick={() => setDetailKey(null)} className="text-xs text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]">close</button>
                     </div>
 
                     {detailKey === 'competitive' && (
                         <div className="space-y-2">
                             {(summary.competitive ?? []).length === 0
-                                ? <p className="text-sm text-text-muted">No competitive data yet. Complete sessions mentioning competitors.</p>
+                                ? <p className="text-sm text-[rgb(var(--text-muted))]">No competitive data yet. Complete sessions mentioning competitors.</p>
                                 : (summary.competitive ?? []).map((c, i) => (
-                                    <div key={i} className="flex items-center justify-between text-sm border-b border-border pb-2">
-                                        <span className="text-text-primary">{c.competitor_name}</span>
-                                        <span className="text-text-muted">{c.mention_count} mentions · {c.win_rate ?? 'n/a'}% win rate</span>
+                                    <div key={i} className="flex items-center justify-between text-sm border-b border-[rgb(var(--border-default))] pb-2">
+                                        <span className="text-[rgb(var(--text-primary))]">{c.competitor_name}</span>
+                                        <span className="text-[rgb(var(--text-muted))]">{c.mention_count} mentions · {c.win_rate ?? 'n/a'}% win rate</span>
                                     </div>
                                 ))
                             }
@@ -992,11 +993,11 @@ function RevenueIntelDashboard() {
                     {detailKey === 'synergies' && (
                         <div className="space-y-2">
                             {(summary.synergies ?? []).length === 0
-                                ? <p className="text-sm text-text-muted">No synergies detected yet.</p>
+                                ? <p className="text-sm text-[rgb(var(--text-muted))]">No synergies detected yet.</p>
                                 : (summary.synergies ?? []).map((s, i) => (
-                                    <div key={i} className="flex items-center justify-between text-sm border-b border-border pb-2">
-                                        <span className="text-text-primary">{s.account_a} + {s.account_b}</span>
-                                        <span className="text-accent text-xs">{s.opportunity_type}</span>
+                                    <div key={i} className="flex items-center justify-between text-sm border-b border-[rgb(var(--border-default))] pb-2">
+                                        <span className="text-[rgb(var(--text-primary))]">{s.account_a} + {s.account_b}</span>
+                                        <span className="text-[#FF6B6B] text-xs">{s.opportunity_type}</span>
                                     </div>
                                 ))
                             }
@@ -1004,47 +1005,49 @@ function RevenueIntelDashboard() {
                     )}
 
                     {detailKey === 'automation' && (
-                        <p className="text-sm text-text-muted">CRM automation log is populated as live call signals trigger actions. No entries yet.</p>
+                        <p className="text-sm text-[rgb(var(--text-muted))]">CRM automation log is populated as live call signals trigger actions. No entries yet.</p>
                     )}
 
                     {detailKey === 'prospects' && (
-                        <p className="text-sm text-text-muted">Prospect profiles are enriched from call signal data. Complete sessions with named prospects to populate this view.</p>
+                        <p className="text-sm text-[rgb(var(--text-muted))]">Prospect profiles are enriched from call signal data. Complete sessions with named prospects to populate this view.</p>
                     )}
                 </div>
             )}
 
             {/* Missed Opportunities Table */}
             {!loading && (summary.opps ?? []).length > 0 && (
-                <div>
-                    <h2 className="text-sm text-text-muted uppercase tracking-widest mb-3">Top Open Opportunities</h2>
-                    <div className="card-os border border-border overflow-x-auto">
-                        <table className="w-full text-sm">
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                    <p className="card-title mb-1">Top Open Opportunities</p>
+                    <p className="text-[11px] text-[rgb(var(--text-muted))] mb-4">Revenue at risk with recovery potential.</p>
+                    <div className="overflow-x-auto">
+                        <table className="table-os">
                             <thead>
-                                <tr className="border-b border-border text-text-muted text-xs uppercase tracking-widest">
-                                    <th className="px-5 py-3 text-left">Company</th>
-                                    <th className="px-5 py-3 text-right">Deal Value</th>
-                                    <th className="px-5 py-3 text-center">Recovery Score</th>
-                                    <th className="px-5 py-3 text-left">Lost Reason</th>
+                                <tr>
+                                    <th>Company</th>
+                                    <th style={{ textAlign: 'right' }}>Deal Value</th>
+                                    <th style={{ textAlign: 'center' }}>Recovery Score</th>
+                                    <th>Lost Reason</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border">
-                                {(summary.opps ?? []).slice(0, 8).map((opp) => (
-                                    <tr key={opp.id} className="hover:bg-bg-raised transition-colors">
-                                        <td className="px-5 py-3 text-text-primary">{opp.company_name || 'n/a'}</td>
-                                        <td className="px-5 py-3 text-right text-accent font-mono">
-                                            {opp.deal_value_gbp ? `£${Number(opp.deal_value_gbp).toLocaleString('en-GB')}` : 'n/a'}
-                                        </td>
-                                        <td className="px-5 py-3 text-center">
-                                            <span className={`text-xs px-2 py-0.5 ${(opp.recovery_score || 0) >= 70 ? 'bg-status-success/10 text-status-success' :
-                                                    (opp.recovery_score || 0) >= 40 ? 'bg-status-warning/10 text-status-warning' :
-                                                        'bg-bg-raised text-text-muted'
-                                                }`}>
-                                                {Math.round(opp.recovery_score || 0)}
-                                            </span>
-                                        </td>
-                                        <td className="px-5 py-3 text-text-muted text-xs">{opp.lost_reason_category || 'n/a'}</td>
-                                    </tr>
-                                ))}
+                            <tbody>
+                                {(summary.opps ?? []).slice(0, 8).map((opp) => {
+                                    const rs = opp.recovery_score || 0;
+                                    const pillCls = rs >= 80 ? 'pill pill-green' : rs >= 60 ? 'pill pill-amber' : 'pill pill-coral';
+                                    return (
+                                        <tr key={opp.id}>
+                                            <td className="text-[rgb(var(--text-primary))] font-semibold">{opp.company_name || 'n/a'}</td>
+                                            <td style={{ textAlign: 'right' }} className="text-[#FF6B6B] font-mono">
+                                                {opp.deal_value_gbp ? `£${Number(opp.deal_value_gbp).toLocaleString('en-GB')}` : 'n/a'}
+                                            </td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <span className={pillCls}>
+                                                    {Math.round(rs)}
+                                                </span>
+                                            </td>
+                                            <td className="text-[rgb(var(--text-muted))] text-xs">{opp.lost_reason_category || 'n/a'}</td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

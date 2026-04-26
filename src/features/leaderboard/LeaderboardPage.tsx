@@ -8,12 +8,12 @@ import AvatarChip from '../../components/shared/AvatarChip';
 import EmptyState from '../../components/shared/EmptyState';
 
 function RankChange({ change }: { change: number }) {
-  if (change > 0) return <span className="flex items-center gap-0.5 text-xs text-[#22c55e] font-bold"><TrendingUp className="w-3 h-3" />+{change}</span>;
-  if (change < 0) return <span className="flex items-center gap-0.5 text-xs text-[#ef4444] font-bold"><TrendingDown className="w-3 h-3" />{change}</span>;
-  return <span className="flex items-center gap-0.5 text-xs text-[rgb(var(--text-muted))] font-bold"><Minus className="w-3 h-3" />—</span>;
+  if (change > 0) return <span className="flex items-center gap-0.5 text-xs text-[#4ADE80] font-semibold"><TrendingUp className="w-3 h-3" />+{change}</span>;
+  if (change < 0) return <span className="flex items-center gap-0.5 text-xs text-[#FF6B6B] font-semibold"><TrendingDown className="w-3 h-3" />{change}</span>;
+  return <span className="flex items-center gap-0.5 text-xs text-[rgb(var(--text-muted))] font-semibold"><Minus className="w-3 h-3" />-</span>;
 }
 
-const MEDAL_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
+const MEDAL_COLORS = ['#F59E0B', '#94A3B8', '#D97706'];
 const MEDAL_LABELS = ['🥇', '🥈', '🥉'];
 
 function AnimatedNumber({ target, delay = 0 }: { target: number; delay?: number }) {
@@ -48,30 +48,32 @@ export default function LeaderboardPage() {
   const tableRows = board.slice(3);
 
   return (
-    <div className="pb-12 space-y-8">
+    <div className="pb-12 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-black text-[rgb(var(--text-primary))] uppercase tracking-tight">Leaderboard</h1>
-          <p className="text-sm text-[rgb(var(--text-muted))] mt-0.5">See how you stack up against the team</p>
+          <p className="page-kicker">Coaching</p>
+          <h1 className="page-title">Leaderboard</h1>
+          <p className="page-desc">Team rankings by composite score: training performance, Transfer Gap, session volume, and win rate.</p>
         </div>
-        <div className="flex items-center border border-[rgb(var(--border-default))]">
-          {(['weekly', 'monthly', 'alltime'] as const).map(p => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors
-                ${period === p ? 'bg-[rgb(var(--accent-primary))] text-white' : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] hover:bg-[rgb(var(--bg-raised))]'}`}
-            >
-              {p === 'alltime' ? 'All Time' : p.charAt(0).toUpperCase() + p.slice(1)}
-            </button>
-          ))}
-        </div>
+      </div>
+
+      {/* Filter bar */}
+      <div className="flex items-center gap-2">
+        {(['weekly', 'monthly', 'alltime'] as const).map(p => (
+          <button
+            key={p}
+            onClick={() => setPeriod(p)}
+            className={`filter-pill ${period === p ? 'active' : ''}`}
+          >
+            {p === 'alltime' ? 'All Time' : p === 'weekly' ? 'This Week' : 'This Month'}
+          </button>
+        ))}
       </div>
 
       {loading ? (
         <div className="space-y-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-20 bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-20 bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg animate-pulse" />)}
         </div>
       ) : board.length === 0 ? (
         <EmptyState
@@ -81,63 +83,93 @@ export default function LeaderboardPage() {
           action={{ label: 'Start Training', onClick: () => navigate('/training') }}
         />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
           {/* Main leaderboard */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6">
             {/* Podium */}
             {podiumOrder.length >= 2 && (
-              <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-8">
-                <div className="flex items-end justify-center gap-6 mb-2">
-                  {podiumOrder.map((entry, i) => {
-                    const position = i === 0 ? 1 : i === 1 ? 0 : 2;
-                    const heights = [140, 100, 80];
-                    const h = heights[position] ?? 60;
-                    const medalColor = MEDAL_COLORS[position];
-                    return (
-                      <div key={entry.userId} className="flex flex-col items-center gap-3">
-                        <div className="relative">
-                          <div className="w-16 h-16 border-2 flex items-center justify-center" style={{ borderColor: medalColor, background: `${medalColor}18` }}>
-                            <span className="text-xl font-black uppercase" style={{ color: medalColor }}>
-                              {(entry.name || entry.email || '?').slice(0, 2)}
-                            </span>
-                          </div>
-                          <span className="absolute -top-3 -right-3 text-xl">{MEDAL_LABELS[position]}</span>
-                          {entry.isCurrentUser && (
-                            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[8px] font-black bg-[rgb(var(--accent-primary))] text-white px-1">
-                              YOU
-                            </span>
-                          )}
+              <div className="flex items-end justify-center gap-4 py-5">
+                {podiumOrder.map((entry, i) => {
+                  const position = i === 0 ? 1 : i === 1 ? 0 : 2;
+                  const medalColor = MEDAL_COLORS[position];
+                  const isFirst = position === 0;
+                  return (
+                    <div
+                      key={entry.userId}
+                      className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg text-center relative overflow-hidden"
+                      style={{ width: isFirst ? 230 : 200, padding: isFirst ? '20px 20px 28px' : '20px' }}
+                    >
+                      {/* Top gradient bar */}
+                      <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-lg" style={{ background: medalColor }} />
+
+                      {/* Rank */}
+                      <p className="text-3xl font-bold mb-2" style={{ fontFamily: "'Oswald', sans-serif", color: medalColor, lineHeight: 1 }}>
+                        {entry.rank}
+                      </p>
+
+                      {/* Avatar */}
+                      <div
+                        className="mx-auto mb-2.5 rounded-lg flex items-center justify-center font-bold"
+                        style={{
+                          width: isFirst ? 56 : 48,
+                          height: isFirst ? 56 : 48,
+                          background: `${medalColor}18`,
+                          color: medalColor,
+                          fontFamily: "'Oswald', sans-serif",
+                          fontSize: isFirst ? 18 : 16,
+                        }}
+                      >
+                        {(entry.name || entry.email || '?').slice(0, 2)}
+                      </div>
+
+                      {/* Name & role */}
+                      <p className="font-semibold text-[rgb(var(--text-primary))]" style={{ fontFamily: "'Oswald', sans-serif", fontSize: isFirst ? 18 : 16 }}>
+                        {entry.name}
+                      </p>
+                      {entry.isCurrentUser && (
+                        <span className="text-[8px] font-bold bg-[rgb(var(--accent-primary))] text-white px-1.5 py-0.5 rounded mt-0.5 inline-block">
+                          YOU
+                        </span>
+                      )}
+
+                      {/* Score */}
+                      <p className="mt-2" style={{ fontFamily: "'Oswald', sans-serif", fontSize: isFirst ? 34 : 28, fontWeight: 700, color: medalColor }}>
+                        <AnimatedNumber target={entry.score} delay={position * 150} />
+                      </p>
+                      <p className="text-[9px] text-[rgb(var(--text-muted))] uppercase tracking-widest">Points</p>
+
+                      {/* Stats row */}
+                      <div className="flex justify-center gap-4 mt-3">
+                        <div className="text-center">
+                          <p className="text-sm font-semibold" style={{ fontFamily: "'Oswald', sans-serif", color: entry.winRate >= 40 ? '#4ADE80' : entry.winRate >= 30 ? '#FBBF24' : '#FF6B6B' }}>
+                            {entry.winRate}%
+                          </p>
+                          <p className="text-[8px] text-[rgb(var(--text-muted))] uppercase tracking-wider">Win Rate</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-xs font-black text-[rgb(var(--text-primary))] leading-tight">{entry.name.split(' ')[0]}</p>
-                          <p className="text-lg font-black" style={{ color: medalColor }}>
-                            <AnimatedNumber target={entry.score} delay={position * 150} />
+                          <p className="text-sm font-semibold text-[rgb(var(--text-primary))]" style={{ fontFamily: "'Oswald', sans-serif" }}>
+                            {entry.calls}
                           </p>
-                          <RankChange change={entry.rankChange} />
-                        </div>
-                        <div
-                          className="w-24 flex items-center justify-center border-t-2 text-xs font-black text-[rgb(var(--text-muted))] uppercase tracking-widest"
-                          style={{ height: h, borderColor: medalColor, background: `${medalColor}18` }}
-                        >
-                          #{entry.rank}
+                          <p className="text-[8px] text-[rgb(var(--text-muted))] uppercase tracking-wider">Sessions</p>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="mt-2"><RankChange change={entry.rankChange} /></div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
             {/* Table */}
             {tableRows.length > 0 && (
-              <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))]">
-                <table className="w-full">
+              <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                <p className="card-title">Full Rankings</p>
+                <p className="text-[10px] text-[rgb(var(--text-muted))] mb-4">Composite score breakdown for remaining team members.</p>
+                <table className="table-os">
                   <thead>
-                    <tr className="border-b border-[rgb(var(--border-default))]">
-                      {['Rank', 'Rep', 'Score', 'Sessions', 'Pass Rate', 'XP', 'Change'].map(col => (
-                        <th key={col} className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))]">
-                          {col}
-                        </th>
+                    <tr>
+                      {['#', 'Rep', 'Score', 'Sessions', 'Win Rate', 'XP', 'Move'].map(col => (
+                        <th key={col}>{col}</th>
                       ))}
                     </tr>
                   </thead>
@@ -148,27 +180,29 @@ export default function LeaderboardPage() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.06 }}
-                        className={`border-b border-[rgb(var(--border-default))] hover:bg-[rgb(var(--bg-raised))] transition-colors
-                          ${entry.isCurrentUser ? 'border-l-4 border-l-[rgb(var(--accent-primary))]' : ''}`}
                       >
-                        <td className="px-4 py-3 text-sm font-black text-[rgb(var(--text-muted))]">#{entry.rank}</td>
-                        <td className="px-4 py-3">
+                        <td style={{ fontFamily: "'Oswald', sans-serif", fontSize: 18, fontWeight: 700, color: 'rgb(var(--text-muted))' }}>
+                          {entry.rank}
+                        </td>
+                        <td>
                           <div className="flex items-center gap-2">
                             <AvatarChip name={entry.name} seed={entry.email} showName />
                             {entry.isCurrentUser && (
-                              <span className="text-xs px-1.5 py-0.5 bg-[rgb(var(--accent-primary)/0.15)] text-[rgb(var(--accent-primary))] border border-[rgb(var(--accent-primary)/0.4)]">
-                                You
-                              </span>
+                              <span className="pill pill-coral text-[9px]">You</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm font-black text-[rgb(var(--text-primary))]">
+                        <td style={{ fontFamily: "'Oswald', sans-serif", fontSize: 18, fontWeight: 700, color: 'rgb(var(--text-primary))' }}>
                           <AnimatedNumber target={entry.score} delay={i * 80} />
                         </td>
-                        <td className="px-4 py-3 text-sm text-[rgb(var(--text-secondary))]">{entry.calls}</td>
-                        <td className="px-4 py-3 text-sm text-[rgb(var(--text-secondary))]">{entry.winRate}%</td>
-                        <td className="px-4 py-3 text-sm text-[rgb(var(--text-secondary))]">{entry.xp.toLocaleString()} XP</td>
-                        <td className="px-4 py-3"><RankChange change={entry.rankChange} /></td>
+                        <td>{entry.calls}</td>
+                        <td>
+                          <span className="font-semibold" style={{ color: entry.winRate >= 40 ? '#4ADE80' : entry.winRate >= 30 ? '#FBBF24' : '#FF6B6B' }}>
+                            {entry.winRate}%
+                          </span>
+                        </td>
+                        <td>{entry.xp.toLocaleString()} XP</td>
+                        <td><RankChange change={entry.rankChange} /></td>
                       </motion.tr>
                     ))}
                   </tbody>
@@ -179,57 +213,64 @@ export default function LeaderboardPage() {
 
           {/* Right panel */}
           <div className="space-y-4">
-            <p className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))]">Your Stats</p>
+            {/* Your Stats card */}
             {(() => {
               const me = board.find(e => e.isCurrentUser);
               if (!me) return null;
               return (
-                <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--accent-primary)/0.4)] p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[rgb(var(--text-muted))]">Rank</span>
-                    <span className="text-sm font-black text-[rgb(var(--text-primary))]">#{me.rank}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[rgb(var(--text-muted))]">Avg Score</span>
-                    <span className="text-sm font-black" style={{ color: me.score >= 80 ? '#22c55e' : me.score >= 60 ? '#f59e0b' : '#ef4444' }}>
-                      {me.score > 0 ? me.score : '—'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[rgb(var(--text-muted))]">Sessions</span>
-                    <span className="text-sm font-black text-[rgb(var(--text-primary))]">{me.calls}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[rgb(var(--text-muted))]">Best Score</span>
-                    <span className="text-sm font-black text-[rgb(var(--text-primary))]">{me.bestScore > 0 ? me.bestScore : '—'}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[rgb(var(--text-muted))]">Pass Rate</span>
-                    <span className="text-sm font-black text-[rgb(var(--text-primary))]">{me.winRate}%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[rgb(var(--text-muted))]">Rank Change</span>
-                    <RankChange change={me.rankChange} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[rgb(var(--text-muted))]">Total XP</span>
-                    <span className="text-sm font-black text-[rgb(var(--accent-primary))]">{me.xp.toLocaleString()}</span>
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                  <p className="card-title">Your Stats</p>
+                  <p className="text-[10px] text-[rgb(var(--text-muted))] mb-4">Your current standings this period.</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between py-2 border-b border-[rgba(255,255,255,0.04)]">
+                      <span className="text-[11px] text-[rgb(var(--text-muted))]">Rank</span>
+                      <span className="text-[11px] font-semibold text-[rgb(var(--text-primary))]">#{me.rank}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-[rgba(255,255,255,0.04)]">
+                      <span className="text-[11px] text-[rgb(var(--text-muted))]">Avg Score</span>
+                      <span className="text-[11px] font-semibold" style={{ color: me.score >= 80 ? '#4ADE80' : me.score >= 60 ? '#FBBF24' : '#FF6B6B' }}>
+                        {me.score > 0 ? me.score : '-'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-[rgba(255,255,255,0.04)]">
+                      <span className="text-[11px] text-[rgb(var(--text-muted))]">Sessions</span>
+                      <span className="text-[11px] font-semibold text-[rgb(var(--text-primary))]">{me.calls}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-[rgba(255,255,255,0.04)]">
+                      <span className="text-[11px] text-[rgb(var(--text-muted))]">Best Score</span>
+                      <span className="text-[11px] font-semibold text-[rgb(var(--text-primary))]">{me.bestScore > 0 ? me.bestScore : '-'}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-[rgba(255,255,255,0.04)]">
+                      <span className="text-[11px] text-[rgb(var(--text-muted))]">Win Rate</span>
+                      <span className="text-[11px] font-semibold" style={{ color: me.winRate >= 40 ? '#4ADE80' : me.winRate >= 30 ? '#FBBF24' : '#FF6B6B' }}>
+                        {me.winRate}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-[rgba(255,255,255,0.04)]">
+                      <span className="text-[11px] text-[rgb(var(--text-muted))]">Rank Change</span>
+                      <RankChange change={me.rankChange} />
+                    </div>
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-[11px] text-[rgb(var(--text-muted))]">Total XP</span>
+                      <span className="text-[11px] font-semibold text-[var(--color-coral)]">{me.xp.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
               );
             })()}
 
+            {/* Achievements card */}
             {(() => {
               const me = board.find(e => e.isCurrentUser);
               if (!me) return null;
               const achievements = [
                 { emoji: '🏆', label: 'Ranked #1', earned: me.rank === 1 },
-                { emoji: '🎯', label: 'Pass rate ≥ 80%', earned: me.winRate >= 80 },
+                { emoji: '🎯', label: 'Pass rate >= 80%', earned: me.winRate >= 80 },
                 { emoji: '🔥', label: '10+ sessions', earned: me.calls >= 10 },
               ];
               return (
-                <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-4">
-                  <p className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-3">Achievements</p>
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                  <p className="card-title">Achievements</p>
                   <div className="space-y-2">
                     {achievements.map(a => (
                       <div key={a.label} className={`flex gap-2 text-xs ${a.earned ? 'text-[rgb(var(--text-primary))]' : 'text-[rgb(var(--text-muted))] opacity-40'}`}>

@@ -92,17 +92,17 @@ function Section({ title, icon, count, children }: {
 }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface))]"
-         style={{ boxShadow: '4px 4px 0 0 rgb(30 41 59)' }}>
+    <div className="border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))] rounded-lg"
+         style={{}}>
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[rgb(var(--bg-raised))] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[rgb(var(--bg-surface-raised))] transition-colors rounded-lg"
       >
         <div className="flex items-center gap-2">
           {icon}
-          <span className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-primary))]">{title}</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--text-primary))]">{title}</span>
           {count !== undefined && (
-            <span className="px-1.5 py-0.5 text-[10px] font-black bg-[rgb(var(--bg-raised))] text-[rgb(var(--text-muted))]">
+            <span className="px-1.5 py-0.5 text-[10px] font-bold bg-[rgb(var(--bg-surface))] text-[rgb(var(--text-muted))] rounded">
               {count}
             </span>
           )}
@@ -139,9 +139,9 @@ function MeddicRow({ item, onToggle }: {
     <div className="flex items-start gap-3 py-2 border-b border-[rgb(var(--border-default)/0.4)] last:border-0">
       <button
         onClick={() => onToggle(item.element)}
-        className={`flex-shrink-0 w-5 h-5 border flex items-center justify-center transition-colors mt-0.5
+        className={`flex-shrink-0 w-5 h-5 border rounded flex items-center justify-center transition-colors mt-0.5
           ${confirmed
-            ? 'bg-green-500/20 border-green-500'
+            ? 'bg-[rgba(74,222,128,0.2)] border-[#4ADE80]'
             : 'border-[rgb(var(--border-default))] hover:border-[rgb(var(--accent-primary))]'}`}
       >
         {confirmed && <Check className="w-3 h-3 text-green-400" />}
@@ -294,7 +294,7 @@ export default function CallPrepPage() {
         )}
 
         {error && (
-          <div className="flex items-center gap-3 p-4 border border-[rgb(var(--accent-primary)/0.4)] bg-[rgb(var(--accent-primary)/0.06)] mb-6">
+          <div className="flex items-center gap-3 p-4 border border-[rgba(255,107,107,0.3)] bg-[rgba(255,107,107,0.06)] rounded-lg mb-6">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: ACCENT }} />
             <span className="text-xs text-[rgb(var(--text-secondary))]">{error}</span>
           </div>
@@ -323,7 +323,7 @@ export default function CallPrepPage() {
           <div className="space-y-4 max-w-3xl">
 
             {/* Rep perf context strip */}
-            <div className="flex gap-6 px-4 py-3 border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface))]">
+            <div className="flex gap-6 px-4 py-3 border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))] rounded-lg">
               <ScorePill label="Avg Score 30d" value={brief.avg_score_30d} target={75} />
               <ScorePill label="Talk Ratio 30d" value={brief.avg_talk_ratio_30d} target={50} lowerIsBetter />
               <div className="flex flex-col gap-0.5">
@@ -332,7 +332,7 @@ export default function CallPrepPage() {
                   <span className="text-sm font-black text-[rgb(var(--text-primary))]">
                     {confirmedCount}/{meddicState.length}
                   </span>
-                  <div className="w-20 h-1.5 bg-[rgb(var(--bg-raised))]">
+                  <div className="w-20 h-1.5 bg-[rgb(var(--bg-surface))] rounded-full">
                     <div
                       className="h-full transition-all"
                       style={{ width: `${(confirmedCount / Math.max(meddicState.length, 1)) * 100}%`, background: ACCENT }}
@@ -343,9 +343,8 @@ export default function CallPrepPage() {
             </div>
 
             {/* Summary */}
-            <div className="px-4 py-4 border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface))]"
-                 style={{ boxShadow: '4px 4px 0 0 rgb(30 41 59)' }}>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[rgb(var(--accent-primary))] mb-2">
+            <div className="px-4 py-4 border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))] rounded-lg">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[rgb(var(--accent-primary))] mb-2">
                 Brief Summary
               </p>
               <p className="text-sm text-[rgb(var(--text-secondary))] leading-relaxed">
@@ -362,7 +361,7 @@ export default function CallPrepPage() {
               <div className="space-y-3 mt-2">
                 {brief.key_talking_points.map((tp, i) => (
                   <div key={i} className="flex gap-3">
-                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-[10px] font-black border"
+                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-[10px] font-bold border rounded"
                           style={{ borderColor: ACCENT, color: ACCENT }}>{i + 1}</span>
                     <div>
                       <p className="text-xs font-black text-[rgb(var(--text-primary))]">{tp.point}</p>
