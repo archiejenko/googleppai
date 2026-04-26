@@ -1,404 +1,199 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import DemoEnquiryModal from '../components/pricing/DemoEnquiryModal';
-import {
-  Phone,
-  BarChart2,
-  BrainCircuit,
-  BookOpen,
-  Trophy,
-  TrendingUp,
-  Users,
-  AlertTriangle,
-  Target,
-  FileText,
-  Zap,
-  UserCheck,
-  Shield,
-  Video,
-  Activity,
-} from 'lucide-react';
+const TAG_COLORS: Record<string, { color: string; bg: string }> = {
+  coral: { color: '#FF6B6B', bg: 'rgba(255,107,107,0.12)' },
+  green: { color: '#4ADE80', bg: 'rgba(74,222,128,0.12)' },
+  blue: { color: '#60A5FA', bg: 'rgba(96,165,250,0.12)' },
+  amber: { color: '#FBBF24', bg: 'rgba(251,191,36,0.12)' },
+  purple: { color: '#A78BFA', bg: 'rgba(167,139,250,0.12)' },
+};
 
-// ─── Persona data ────────────────────────────────────────────────────────────
+function Tag({ label, variant }: { label: string; variant: string }) {
+  const c = TAG_COLORS[variant] || TAG_COLORS.coral;
+  return (
+    <span style={{ fontSize: '10px', fontWeight: 600, padding: '3px 10px', borderRadius: '4px', background: c.bg, color: c.color, fontFamily: "'DM Sans', sans-serif", textTransform: 'uppercase' }}>
+      {label}
+    </span>
+  );
+}
 
-const personas = [
-  {
-    id: 'bdm',
-    label: 'BDM',
-    fullTitle: 'Business Development Representative',
-    pain: 'Low call-to-meeting conversion, inconsistent pitch quality, no structured feedback loop.',
-    northStar: { label: 'Training Score', value: '87%', description: 'Your benchmark for live-call readiness' },
-    cta: { text: 'See how Business Development Representatives use OAST', href: '#' },
-    capabilities: [
-      {
-        Icon: Phone,
-        name: 'Pre-Call Simulation Drills',
-        outcome: 'Practice every objection before the live call that counts.',
-      },
-      {
-        Icon: Activity,
-        name: 'Real-Time Pitch Analysis',
-        outcome: 'Know what is working mid-call and self-correct before the deal slips.',
-      },
-      {
-        Icon: BrainCircuit,
-        name: 'AI Coaching (Alex)',
-        outcome: 'Personalised, volume-based improvement after every session.',
-      },
-      {
-        Icon: BookOpen,
-        name: 'Drill Library',
-        outcome: 'Targeted skills development mapped to your specific gaps.',
-      },
-      {
-        Icon: Trophy,
-        name: 'Leaderboard',
-        outcome: 'Healthy competition and peer visibility to keep momentum high.',
-      },
-      {
-        Icon: BarChart2,
-        name: 'Training Score',
-        outcome: 'A structured progression path so you always know where you stand.',
-      },
-    ],
-  },
-  {
-    id: 'director',
-    label: 'Sales Director',
-    fullTitle: 'Sales Director / VP of Sales',
-    pain: "No visibility into rep readiness, can't diagnose why deals slip, reactive coaching.",
-    northStar: { label: 'Transfer Gap', value: '−26pts', description: 'Close this and pipeline converts' },
-    cta: { text: 'See how Sales Directors use OAST', href: '#' },
-    capabilities: [
-      {
-        Icon: TrendingUp,
-        name: 'Transfer Gap Metric',
-        outcome: 'Correlate training scores with live call performance — quantified.',
-      },
-      {
-        Icon: Users,
-        name: 'Team Analytics Dashboard',
-        outcome: 'Rep-by-rep readiness view so you know exactly who needs attention.',
-      },
-      {
-        Icon: AlertTriangle,
-        name: 'Manager Insight',
-        outcome: 'Flag at-risk reps before they damage pipeline — not after.',
-      },
-      {
-        Icon: Target,
-        name: 'Revenue Intelligence Layer',
-        outcome: 'Deal health signals and MEDDIC scoring across every open opportunity.',
-      },
-      {
-        Icon: FileText,
-        name: 'Win / Loss Engine',
-        outcome: 'Root cause diagnosis on every lost deal — patterns, not anecdotes.',
-      },
-      {
-        Icon: BarChart2,
-        name: 'Forecast Agent',
-        outcome: 'Data-driven pipeline confidence for every forecast review.',
-      },
-    ],
-  },
-  {
-    id: 'leader',
-    label: 'Sales Leader',
-    fullTitle: 'Sales Leader / CRO / RevOps',
-    pain: "Inconsistent ramp time, no standardised methodology, can't prove coaching ROI.",
-    northStar: { label: 'Ramp Time', value: '−34%', description: 'Faster to quota with structured ramp' },
-    cta: { text: 'See how Sales Leaders use OAST', href: '#' },
-    capabilities: [
-      {
-        Icon: UserCheck,
-        name: 'Onboarding Agent',
-        outcome: 'Structured ramp path with 48-hour activation target per new hire.',
-      },
-      {
-        Icon: Shield,
-        name: 'MEDDIC Methodology Backbone',
-        outcome: 'Embedded qualification at every stage — no rep goes off-script.',
-      },
-      {
-        Icon: Zap,
-        name: 'Revenue Readiness Tier',
-        outcome: 'Executive briefing and custom deployment for enterprise rollout.',
-      },
-      {
-        Icon: FileText,
-        name: 'Investor-Grade Reporting',
-        outcome: 'Proof of productivity lift in the format your board expects.',
-      },
-      {
-        Icon: BrainCircuit,
-        name: 'Agent Fleet',
-        outcome: 'BDR and admin tasks automated so reps spend time closing deals.',
-      },
-    ],
-  },
+function MetricRow({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#7d8a98' }}>{label}</span>
+      <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '16px', fontWeight: 600, color: color || '#c9d1d9' }}>{value}</span>
+    </div>
+  );
+}
+
+interface StepData {
+  num: number;
+  color: string;
+  nextColor?: string;
+  title: string;
+  desc: string;
+  tags: { label: string; variant: string }[];
+}
+
+function JourneyStep({ step, isLast }: { step: StepData; isLast: boolean }) {
+  const dimBg = TAG_COLORS[Object.keys(TAG_COLORS).find(k => TAG_COLORS[k].color === step.color) || 'coral']?.bg || 'rgba(255,107,107,0.12)';
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{
+          width: '48px', height: '48px', borderRadius: '50%', background: dimBg,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: "'Oswald', sans-serif", fontSize: '16px', fontWeight: 700, color: step.color, flexShrink: 0,
+        }}>
+          {step.num}
+        </div>
+        {!isLast && step.nextColor && (
+          <div style={{ width: '2px', flex: 1, minHeight: '40px', background: `linear-gradient(to bottom, ${step.color}, ${step.nextColor})` }} />
+        )}
+      </div>
+      <div style={{ background: '#151c25', border: '1px solid #1e2a38', borderRadius: '12px', padding: '24px' }}>
+        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '16px', fontWeight: 600, textTransform: 'uppercase', color: '#c9d1d9', marginBottom: '8px' }}>
+          {step.title}
+        </div>
+        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#7d8a98', lineHeight: 1.6, marginBottom: '12px' }}>
+          {step.desc}
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {step.tags.map(t => <Tag key={t.label} label={t.label} variant={t.variant} />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const BDR_STEPS: StepData[] = [
+  { num: 1, color: '#FF6B6B', nextColor: '#FBBF24', title: 'Morning Warm-Up', desc: "Start the day with a 5-minute drill targeting your weakest skill from yesterday's calls. Alex AI suggests the drill based on your Transfer Gap data. No guessing what to practice.", tags: [{ label: 'Drills', variant: 'coral' }, { label: 'Alex AI', variant: 'green' }] },
+  { num: 2, color: '#FBBF24', nextColor: '#60A5FA', title: 'Pre-Call Simulation', desc: "Before a high-value call, run a simulation against an AI buyer matching your prospect's industry and objection profile. Practice your opener, discovery, and closing in a safe environment.", tags: [{ label: 'Pre-Call Sim', variant: 'coral' }, { label: 'Voice Persona', variant: 'blue' }] },
+  { num: 3, color: '#60A5FA', nextColor: '#4ADE80', title: 'Live Call Execution', desc: "Make the real call. OAST's live scoring engine tracks your performance in real-time across 6 skill dimensions, comparing it against your training scores.", tags: [{ label: 'Live Scores', variant: 'green' }, { label: 'Transfer Gap', variant: 'amber' }] },
+  { num: 4, color: '#4ADE80', title: 'Review & Level Up', desc: 'After calls, review your Transfer Gap. Morgan AI delivers coaching insights, highlights patterns across sessions, and updates your development roadmap. Your leaderboard position updates automatically.', tags: [{ label: 'Morgan AI', variant: 'green' }, { label: 'Insights', variant: 'purple' }, { label: 'Leaderboard', variant: 'amber' }] },
 ];
 
-// ─── Cross-role capabilities ──────────────────────────────────────────────────
-
-const sharedCapabilities = [
-  {
-    Icon: Video,
-    name: 'Meeting Intelligence (Revenue Intelligence Layer only)',
-    description:
-      'Every customer conversation automatically captured, transcribed, and scored. Shared insight across rep, manager, and leader views.',
-  },
-  {
-    Icon: BarChart2,
-    name: 'Performance Analytics',
-    description:
-      'Live rep rankings, trajectory tracking, and team benchmarking in a single dashboard. Visible at every level of the org.',
-  },
-  {
-    Icon: BrainCircuit,
-    name: 'AI Coaching Feedback Loop',
-    description:
-      'Automated weekly digests per rep. Coaching recommendations derived from actual call data.',
-  },
+const BDM_STEPS: StepData[] = [
+  { num: 1, color: '#60A5FA', nextColor: '#FBBF24', title: 'Deal Preparation', desc: "Before a demo or negotiation, simulate the conversation with an AI buyer configured to match your prospect's objection patterns, deal size, and stakeholder dynamics.", tags: [{ label: 'Pre-Call Sim', variant: 'blue' }, { label: 'Accounts', variant: 'amber' }] },
+  { num: 2, color: '#FBBF24', nextColor: '#4ADE80', title: 'Meeting Intelligence', desc: 'Live meetings are transcribed, scored, and analysed automatically. Key topics, objections raised, and action items are extracted without manual note-taking.', tags: [{ label: 'Revenue Intel', variant: 'purple' }, { label: 'Meetings', variant: 'green' }] },
+  { num: 3, color: '#4ADE80', title: 'Pipeline Coaching', desc: 'Morgan AI analyses your pipeline and identifies deals where your skill gaps (closing, negotiation, objection handling) are most likely to cost you. Targeted coaching recommendations for each deal.', tags: [{ label: 'Morgan AI', variant: 'green' }, { label: 'Win/Loss', variant: 'coral' }] },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────────
+const SD_STEPS: StepData[] = [
+  { num: 1, color: '#A78BFA', nextColor: '#60A5FA', title: 'Morning Dashboard Review', desc: "Open the dashboard to see team health at a glance. Who trained yesterday, who didn't. Which reps' Transfer Gaps are widening. Which skills are dragging down pipeline. All without a single 1:1.", tags: [{ label: 'Dashboard', variant: 'purple' }, { label: 'Transfer Gap', variant: 'amber' }] },
+  { num: 2, color: '#60A5FA', nextColor: '#FF6B6B', title: 'Coaching Interventions', desc: "AI flags reps who need intervention before you even notice. 'R. Thompson completed only 3 sessions in 14 days.' 'M. Chen's objection handling dropped 12%.' Precise, data-driven coaching prompts.", tags: [{ label: 'Insights', variant: 'green' }, { label: 'Coaching', variant: 'coral' }] },
+  { num: 3, color: '#FF6B6B', title: 'Revenue Forecasting', desc: "Pipeline analytics powered by real call data, not CRM self-reporting. Win/Loss Engine shows which deals are at risk based on rep behaviour, not gut feel. Board-ready reporting on training ROI.", tags: [{ label: 'Revenue Intel', variant: 'purple' }, { label: 'Win/Loss', variant: 'green' }, { label: 'Analytics', variant: 'amber' }] },
+];
+
+function PersonaSection({
+  avatarBg, avatarColor, avatarLabel, fullTitle, role, bio, metrics, steps,
+}: {
+  avatarBg: string; avatarColor: string; avatarLabel: string; fullTitle: string; role: string; bio: string;
+  metrics: { label: string; value: string; color?: string }[];
+  steps: StepData[];
+}) {
+  return (
+    <div>
+      {/* Header grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', alignItems: 'center', marginBottom: '48px' }}>
+        <div>
+          <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Oswald', sans-serif", fontSize: '20px', fontWeight: 700, color: avatarColor, marginBottom: '16px' }}>
+            {avatarLabel}
+          </div>
+          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '32px', fontWeight: 600, textTransform: 'uppercase', color: '#c9d1d9', marginBottom: '8px' }}>{fullTitle}</h2>
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: '#4a5567', marginBottom: '12px' }}>{role}</p>
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: '#7d8a98', lineHeight: 1.6 }}>{bio}</p>
+        </div>
+        <div style={{ background: '#151c25', border: '1px solid #1e2a38', borderRadius: '12px', padding: '28px' }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', color: '#4a5567', marginBottom: '12px' }}>
+            Key Metrics You'll Track
+          </div>
+          {metrics.map(m => <MetricRow key={m.label} {...m} />)}
+        </div>
+      </div>
+
+      {/* Journey steps */}
+      <div>
+        {steps.map((s, i) => <JourneyStep key={s.title} step={s} isLast={i === steps.length - 1} />)}
+      </div>
+    </div>
+  );
+}
 
 export default function UserJourney() {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [visible, setVisible] = useState(true);
-  const [demoOpen, setDemoOpen] = useState(false);
-  const active = personas[activeIdx];
-
-  const handleTabChange = (idx: number) => {
-    if (idx === activeIdx) return;
-    setVisible(false);
-    setTimeout(() => {
-      setActiveIdx(idx);
-      setVisible(true);
-    }, 150);
-  };
-
   return (
-    <div className="w-full bg-bg-canvas text-text-primary min-h-screen">
-
-      {/* ── Hero ── */}
-      <section className="pt-16 pb-12 px-6 md:px-12 max-w-7xl mx-auto border-b border-white/[0.06]">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-accent label-os mb-6">
-          OAST — User Journey
+    <div style={{ background: '#0d1117', minHeight: '100vh' }}>
+      {/* Hero */}
+      <section style={{ paddingTop: '120px', paddingBottom: '64px', textAlign: 'center' }}>
+        <p style={{ fontFamily: "'Oswald', sans-serif", fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#FF6B6B', marginBottom: '12px' }}>
+          USER JOURNEY
         </p>
-        <h1
-          className="text-5xl md:text-7xl lg:text-8xl uppercase leading-[0.9] tracking-tighter text-text-primary mb-6 max-w-5xl"
-          style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 700 }}
-        >
-          Built for every layer of your revenue team
+        <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '52px', fontWeight: 600, textTransform: 'uppercase', color: '#c9d1d9', margin: '0 auto 16px', maxWidth: '640px', lineHeight: 1.05 }}>
+          ONE PLATFORM. THREE PERSPECTIVES.
         </h1>
-        <p
-          className="text-lg text-text-secondary max-w-xl"
-          style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 400 }}
-        >
-          Different roles. Different problems. One platform that serves them all.
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '16px', color: '#7d8a98', maxWidth: '640px', margin: '0 auto', lineHeight: 1.6 }}>
+          Whether you're a BDR making calls, a BDM managing relationships, or a Sales Director leading the floor, OAST adapts to how you work.
         </p>
       </section>
 
-      {/* ── Persona tab switcher + panel ── */}
-      <section className="px-6 md:px-12 max-w-7xl mx-auto pt-10 pb-0">
+      {/* Persona tabs */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', paddingBottom: '48px' }}>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', fontWeight: 600, padding: '10px 24px', borderRadius: '6px', border: '1px solid #FF6B6B', background: 'rgba(255,107,107,0.12)', color: '#FF6B6B' }}>BDR</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', fontWeight: 600, padding: '10px 24px', borderRadius: '6px', border: '1px solid #60A5FA', background: 'rgba(96,165,250,0.12)', color: '#60A5FA' }}>BDM</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', fontWeight: 600, padding: '10px 24px', borderRadius: '6px', border: '1px solid #A78BFA', background: 'rgba(167,139,250,0.12)', color: '#A78BFA' }}>Sales Director</span>
+      </div>
 
-        {/* Desktop tabs */}
-        <div className="hidden md:flex border-b border-white/[0.08]">
-          {personas.map((p, i) => (
-            <button
-              key={p.id}
-              onClick={() => handleTabChange(i)}
-              className={[
-                'px-8 py-4 text-[13px] uppercase tracking-[0.1em] transition-colors duration-150 border-b-2 -mb-px',
-                i === activeIdx
-                  ? 'text-white border-[#FF6B6B]'
-                  : 'text-text-muted border-transparent hover:text-text-secondary',
-              ].join(' ')}
-              style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500 }}
-            >
-              {p.label}
-            </button>
-          ))}
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 24px 80px' }}>
+        {/* BDR */}
+        <PersonaSection
+          avatarBg="rgba(255,107,107,0.12)" avatarColor="#FF6B6B" avatarLabel="BDR"
+          fullTitle="BUSINESS DEVELOPMENT REPRESENTATIVE"
+          role="The frontline. Making calls, booking meetings, building pipeline."
+          bio="You spend your day dialling, handling objections, and trying to book qualified meetings. OAST gives you a private practice environment where you can sharpen specific skills, get instant AI feedback, and track your improvement against the metrics that actually matter on live calls."
+          metrics={[
+            { label: 'Training Score', value: '84%', color: '#4ADE80' },
+            { label: 'Transfer Gap', value: '27%', color: '#FF6B6B' },
+            { label: 'Objection Handle Rate', value: '64%', color: '#FBBF24' },
+            { label: 'Training Streak', value: '12 days' },
+            { label: 'Leaderboard Rank', value: '#3', color: '#FF6B6B' },
+          ]}
+          steps={BDR_STEPS}
+        />
+
+        {/* BDM */}
+        <div style={{ borderTop: '1px solid #1e2a38', paddingTop: '48px', marginTop: '48px' }}>
+          <PersonaSection
+            avatarBg="rgba(96,165,250,0.12)" avatarColor="#60A5FA" avatarLabel="BDM"
+            fullTitle="BUSINESS DEVELOPMENT MANAGER"
+            role="The closer. Managing pipeline, running demos, negotiating deals."
+            bio="Your deals are complex, multi-stakeholder, and high-value. OAST helps you prepare for every meeting with simulation, track your deal execution skills, and get AI-driven coaching on where your live performance diverges from what you know."
+            metrics={[
+              { label: 'Win Rate', value: '38%', color: '#4ADE80' },
+              { label: 'Deal Velocity', value: '24 days', color: '#60A5FA' },
+              { label: 'Discovery Score', value: '72%', color: '#FBBF24' },
+              { label: 'Closing Transfer Gap', value: '31%', color: '#FF6B6B' },
+              { label: 'Pipeline Coverage', value: '2.4x' },
+            ]}
+            steps={BDM_STEPS}
+          />
         </div>
 
-        {/* Mobile select */}
-        <div className="md:hidden">
-          <select
-            value={activeIdx}
-            onChange={(e) => handleTabChange(Number(e.target.value))}
-            className="w-full bg-bg-surface text-text-primary text-sm px-4 py-3 border border-white/10 focus:outline-none focus:border-[#FF6B6B]"
-            style={{ fontFamily: 'DM Sans, sans-serif', borderRadius: 0 }}
-          >
-            {personas.map((p, i) => (
-              <option key={p.id} value={i}>
-                {p.fullTitle}
-              </option>
-            ))}
-          </select>
+        {/* Sales Director */}
+        <div style={{ borderTop: '1px solid #1e2a38', paddingTop: '48px', marginTop: '48px' }}>
+          <PersonaSection
+            avatarBg="rgba(167,139,250,0.12)" avatarColor="#A78BFA" avatarLabel="SD"
+            fullTitle="SALES DIRECTOR"
+            role="The leader. Team performance, pipeline health, revenue forecasting."
+            bio="You need visibility into team performance without micromanaging. OAST gives you dashboards that surface exactly who needs coaching, what skills are dragging down pipeline, and whether training investment is translating into revenue."
+            metrics={[
+              { label: 'Team Transfer Gap', value: '27%', color: '#FF6B6B' },
+              { label: 'Training ROI', value: '2.8x', color: '#4ADE80' },
+              { label: 'Pipeline Value', value: '£482K' },
+              { label: 'Team Win Rate', value: '34%', color: '#FBBF24' },
+              { label: 'Reps At Risk', value: '2', color: '#FF6B6B' },
+            ]}
+            steps={SD_STEPS}
+          />
         </div>
-
-        {/* Persona panel — opacity fade, no remount */}
-        <div
-          className="py-10"
-          style={{ opacity: visible ? 1 : 0, transition: 'opacity 150ms ease' }}
-        >
-          <div
-            className="p-8 md:p-12"
-            style={{ background: '#161618', borderRadius: '12px' }}
-          >
-            {/* Role header */}
-            <div className="mb-10">
-              <h2
-                className="text-2xl md:text-4xl uppercase text-white mb-3"
-                style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 700 }}
-              >
-                {active.fullTitle}
-              </h2>
-              <p
-                className="text-sm text-text-secondary max-w-xl"
-                style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 400 }}
-              >
-                <span className="text-text-muted uppercase tracking-widest text-[10px] label-os mr-2">Core pain:</span>
-                {active.pain}
-              </p>
-            </div>
-
-            {/* Capabilities grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/[0.04] border border-white/[0.06] mb-10">
-              {active.capabilities.map(({ Icon, name, outcome }) => (
-                <div key={name} className="bg-[#161618] p-6 flex items-start gap-4">
-                  <div className="w-8 h-8 flex-shrink-0 bg-[rgba(255,107,107,0.1)] border border-[rgba(255,107,107,0.25)] flex items-center justify-center mt-0.5">
-                    <Icon size={15} className="text-[#FF6B6B]" />
-                  </div>
-                  <div>
-                    <p
-                      className="text-[13px] uppercase tracking-[0.06em] text-white mb-1"
-                      style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}
-                    >
-                      {name}
-                    </p>
-                    <p
-                      className="text-[13px] text-text-muted leading-relaxed"
-                      style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 400 }}
-                    >
-                      {outcome}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* North star metric */}
-            <div
-              className="inline-flex flex-col gap-1 border px-6 py-4 mb-8"
-              style={{ borderColor: '#FF6B6B', borderRadius: 0 }}
-            >
-              <span className="text-[10px] uppercase tracking-[0.15em] text-[#FF6B6B] label-os">
-                North Star Metric — {active.northStar.label}
-              </span>
-              <span
-                className="text-4xl text-white"
-                style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 700 }}
-              >
-                {active.northStar.value}
-              </span>
-              <span
-                className="text-[12px] text-text-muted"
-                style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 400 }}
-              >
-                {active.northStar.description}
-              </span>
-            </div>
-
-            {/* Panel CTA */}
-            <div>
-              <a
-                href={active.cta.href}
-                className="text-sm transition-opacity hover:opacity-70 inline-flex items-center gap-1"
-                style={{ color: '#FF6B6B', fontFamily: 'DM Sans, sans-serif', fontWeight: 500 }}
-              >
-                {active.cta.text} →
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Cross-role section ── */}
-      <section className="px-6 md:px-12 max-w-7xl mx-auto py-20 border-t border-white/[0.06]">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-accent label-os mb-4">
-          Shared Infrastructure
-        </p>
-        <h2
-          className="text-3xl md:text-5xl uppercase leading-tight text-text-primary mb-4 max-w-3xl"
-          style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 700 }}
-        >
-          Shared infrastructure across every role
-        </h2>
-        <p
-          className="text-base text-text-secondary max-w-xl mb-14"
-          style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 400 }}
-        >
-          OAST operates as a core function across full sales teams, our insight serves everyone within sales, from your BDR to Sales Director.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {sharedCapabilities.map(({ Icon, name, description }) => (
-            <div
-              key={name}
-              className="p-8"
-              style={{ background: '#161618', borderRadius: '12px' }}
-            >
-              <div className="w-10 h-10 bg-[rgba(255,107,107,0.1)] border border-[rgba(255,107,107,0.25)] flex items-center justify-center mb-6">
-                <Icon size={18} className="text-[#FF6B6B]" />
-              </div>
-              <h3
-                className="text-[14px] uppercase tracking-[0.06em] text-white mb-3"
-                style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}
-              >
-                {name}
-              </h3>
-              <p
-                className="text-[13px] text-text-secondary leading-relaxed"
-                style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 400 }}
-              >
-                {description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Bottom CTA ── */}
-      <section className="px-6 md:px-12 max-w-7xl mx-auto py-20 border-t border-white/[0.06]">
-        <h2
-          className="text-3xl md:text-5xl uppercase text-white mb-10"
-          style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 700 }}
-        >
-          Which role are you?
-        </h2>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link
-            to="/register"
-            className="px-8 py-4 text-[13px] uppercase tracking-[0.12em] bg-accent text-white text-center shadow-[6px_6px_0px_0px_rgba(255,107,107,0.3)] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all duration-150"
-            style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}
-          >
-            I'm a Rep →
-          </Link>
-          <button
-            onClick={() => setDemoOpen(true)}
-            className="px-8 py-4 text-[13px] uppercase tracking-[0.12em] border border-white/20 text-text-secondary text-center hover:border-white/40 hover:text-white transition-colors duration-150"
-            style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500 }}
-          >
-            I'm a Leader →
-          </button>
-        </div>
-      </section>
-
-      <DemoEnquiryModal open={demoOpen} onClose={() => setDemoOpen(false)} />
-
+      </div>
     </div>
   );
 }
