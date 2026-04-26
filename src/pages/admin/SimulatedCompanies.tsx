@@ -101,14 +101,22 @@ export function CompanyList() {
         else { setSortField(field); setSortAsc(true); }
     };
 
+    const difficultyPill = (tier: string) => {
+        const cls = tier === 'nightmare' ? 'pill pill-coral' :
+                    tier === 'hard' ? 'pill pill-coral' :
+                    tier === 'medium' ? 'pill pill-amber' :
+                    'pill pill-green'
+        return <span className={cls}>{tier}</span>
+    }
+
     const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
         <th
-            className="p-4 cursor-pointer select-none hover:text-[rgb(var(--text-primary))] transition-colors"
+            className="cursor-pointer select-none hover:text-[rgb(var(--text-primary))] transition-colors"
             onClick={() => toggleSort(field)}
         >
             <span className="flex items-center gap-1">
                 {children}
-                {sortField === field && <span className="text-[rgb(var(--accent-primary))]">{sortAsc ? '↑' : '↓'}</span>}
+                {sortField === field && <span className="text-[#FF6B6B]">{sortAsc ? '↑' : '↓'}</span>}
             </span>
         </th>
     );
@@ -121,21 +129,48 @@ export function CompanyList() {
         );
     }
 
+    // Compute stats from live data
+    const totalCompanies = companies.length
+    const manualCount = companies.filter(c => c.source === 'manual').length
+    const crmCount = companies.filter(c => c.source === 'crm_sync').length
+    const totalPersonas = companies.reduce((sum, c) => sum + (c.simulated_personas?.[0]?.count || 0), 0)
+
     return (
         <div className="layout-shell p-6 md:p-12">
             <div className="max-w-7xl mx-auto">
-                <div className="mb-8 animate-in-up flex items-start justify-between">
+                {/* Page Header */}
+                <div className="flex items-start justify-between mb-5">
                     <div>
-                        <h1 className="text-4xl font-display font-bold text-[rgb(var(--text-primary))] mb-2">Simulated Companies</h1>
-                        <p className="text-[rgb(var(--text-secondary))]">Manage simulated accounts for sales training</p>
+                        <h1 className="page-title">Accounts</h1>
+                        <p className="page-desc">Account pipeline, deal stages, and health tracking.</p>
                     </div>
                     <button onClick={() => { setEditingId(undefined); setShowForm(true); }} className="btn-primary flex items-center gap-2 px-4 py-2">
                         <Plus className="h-4 w-4" /> New Company
                     </button>
                 </div>
 
+                {/* Stat Cards */}
+                <div className="grid grid-cols-4 gap-3 mb-5">
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                        <div className="stat-label">Total Accounts</div>
+                        <div className="stat-value text-[rgb(var(--text-primary))]">{totalCompanies}</div>
+                    </div>
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                        <div className="stat-label">Manual</div>
+                        <div className="stat-value text-[rgb(var(--text-primary))]">{manualCount}</div>
+                    </div>
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                        <div className="stat-label">CRM Synced</div>
+                        <div className="stat-value text-[rgb(var(--text-primary))]">{crmCount}</div>
+                    </div>
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                        <div className="stat-label">Total Personas</div>
+                        <div className="stat-value text-[#4ADE80]">{totalPersonas}</div>
+                    </div>
+                </div>
+
                 {/* Filters */}
-                <div className="mb-4 animate-in-up flex items-center gap-3" style={{ animationDelay: '0.1s' }}>
+                <div className="flex items-center gap-3 mb-5">
                     {industries.length > 1 && (
                         <select
                             value={industryFilter}
@@ -159,10 +194,13 @@ export function CompanyList() {
                 </div>
 
                 {/* Table */}
-                <div className="card-os p-0 overflow-hidden animate-in-up" style={{ animationDelay: '0.15s' }}>
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-0 overflow-hidden">
+                    <div className="p-5 pb-0">
+                        <div className="card-title">Accounts</div>
+                    </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] font-medium border-b border-[rgb(var(--border-default))]">
+                        <table className="table-os">
+                            <thead>
                                 <tr>
                                     <SortHeader field="name">Name</SortHeader>
                                     <SortHeader field="industry">Industry</SortHeader>
@@ -170,59 +208,52 @@ export function CompanyList() {
                                     <SortHeader field="difficulty_tier">Difficulty</SortHeader>
                                     <SortHeader field="personas">Personas</SortHeader>
                                     <SortHeader field="created_at">Created</SortHeader>
-                                    <th className="p-4 text-right">Actions</th>
+                                    <th className="text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-[rgb(var(--border-subtle))]">
+                            <tbody>
                                 {sorted.map(company => (
                                     <tr
                                         key={company.id}
-                                        className="hover:bg-[rgb(var(--bg-surface-raised))] transition-colors cursor-pointer"
+                                        className="cursor-pointer"
                                         onClick={() => navigate(`/admin/companies/${company.id}`)}
                                     >
-                                        <td className="p-4">
+                                        <td>
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-[rgb(var(--bg-canvas))] text-[rgb(var(--accent-primary))]">
+                                                <div className="p-1.5 bg-[rgba(255,107,107,0.12)] rounded-md text-[#FF6B6B]">
                                                     <Building2 className="h-4 w-4" />
                                                 </div>
                                                 <span className="text-[rgb(var(--text-primary))] font-medium">{company.name}</span>
                                                 {company.source === 'crm_sync' && (
-                                                    <span className="ml-2 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider bg-[rgb(var(--accent-primary))]/10 text-[rgb(var(--accent-primary))] border border-[rgb(var(--accent-primary))]/20">
+                                                    <span className="pill pill-blue text-[9px]">
                                                         {company.external_provider === 'salesforce' ? 'Salesforce' : 'HubSpot'}
                                                     </span>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="p-4 text-[rgb(var(--text-secondary))]">{company.industry?.display_name || company.industry_slug}</td>
-                                        <td className="p-4">
-                                            <span className="px-2 py-0.5 text-[10px] font-semibold uppercase bg-[rgb(var(--bg-canvas))] text-[rgb(var(--text-muted))] border border-[rgb(var(--border-subtle))]">
+                                        <td>{company.industry?.display_name || company.industry_slug}</td>
+                                        <td>
+                                            <span className="pill pill-amber">
                                                 {company.stage}
                                             </span>
                                         </td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                                                company.difficulty_tier === 'nightmare' ? 'text-status-danger bg-status-danger/10' :
-                                                company.difficulty_tier === 'hard' ? 'text-red-400 bg-red-400/10' :
-                                                company.difficulty_tier === 'medium' ? 'text-amber-400 bg-amber-400/10' :
-                                                'text-green-400 bg-green-400/10'
-                                            }`}>
-                                                {company.difficulty_tier}
-                                            </span>
+                                        <td>
+                                            {difficultyPill(company.difficulty_tier)}
                                         </td>
-                                        <td className="p-4 text-[rgb(var(--text-secondary))] font-mono">{company.simulated_personas?.[0]?.count || 0}</td>
-                                        <td className="p-4 text-[rgb(var(--text-muted))] text-xs">{new Date(company.created_at).toLocaleDateString()}</td>
-                                        <td className="p-4 text-right" onClick={e => e.stopPropagation()}>
+                                        <td style={{ fontFamily: "'JetBrains Mono', monospace" }}>{company.simulated_personas?.[0]?.count || 0}</td>
+                                        <td className="text-xs">{new Date(company.created_at).toLocaleDateString()}</td>
+                                        <td className="text-right" onClick={e => e.stopPropagation()}>
                                             <div className="flex items-center justify-end gap-1">
                                                 <button
                                                     onClick={() => { setEditingId(company.id); setShowForm(true); }}
-                                                    className="p-2 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] hover:bg-[rgb(var(--bg-canvas))] transition-colors"
+                                                    className="p-2 text-[#4a5567] hover:text-[rgb(var(--text-primary))] hover:bg-[rgba(255,255,255,0.03)] rounded transition-colors"
                                                     title="Edit"
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(company.id, company.name)}
-                                                    className="p-2 text-[rgb(var(--text-muted))] hover:text-status-danger hover:bg-status-danger/10 transition-colors"
+                                                    className="p-2 text-[#4a5567] hover:text-[#FF6B6B] hover:bg-[rgba(255,107,107,0.12)] rounded transition-colors"
                                                     title="Delete"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -233,7 +264,7 @@ export function CompanyList() {
                                 ))}
                                 {sorted.length === 0 && (
                                     <tr>
-                                        <td colSpan={7} className="p-8 text-center text-[rgb(var(--text-muted))]">
+                                        <td colSpan={7} className="p-8 text-center">
                                             No simulated companies yet. Create one to get started.
                                         </td>
                                     </tr>
@@ -308,6 +339,14 @@ export function CompanyDetail() {
         }
     };
 
+    const detailDifficultyPill = (tier: string) => {
+        const cls = tier === 'nightmare' ? 'pill pill-coral' :
+                    tier === 'hard' ? 'pill pill-coral' :
+                    tier === 'medium' ? 'pill pill-amber' :
+                    'pill pill-green'
+        return <span className={cls}>{tier}</span>
+    }
+
     if (loading) {
         return (
             <div className="layout-shell flex justify-center items-center">
@@ -319,7 +358,7 @@ export function CompanyDetail() {
     if (!company) {
         return (
             <div className="layout-shell p-6 md:p-12">
-                <p className="text-[rgb(var(--text-muted))]">Company not found.</p>
+                <p className="text-[#4a5567]">Company not found.</p>
             </div>
         );
     }
@@ -328,85 +367,78 @@ export function CompanyDetail() {
         <div className="layout-shell p-6 md:p-12">
             <div className="max-w-7xl mx-auto">
                 {/* Back + Header */}
-                <div className="mb-8 animate-in-up">
-                    <button onClick={() => navigate('/admin/companies')} className="flex items-center gap-2 text-sm text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] transition-colors mb-4">
+                <div className="mb-6">
+                    <button onClick={() => navigate('/admin/companies')} className="flex items-center gap-2 text-sm text-[#4a5567] hover:text-[rgb(var(--text-primary))] transition-colors mb-4">
                         <ArrowLeft className="h-4 w-4" /> Back to companies
                     </button>
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--accent-primary))]">
+                            <div className="p-3 bg-[rgba(255,107,107,0.12)] rounded-lg text-[#FF6B6B]">
                                 <Building2 className="h-8 w-8" />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-display font-bold text-[rgb(var(--text-primary))]">{company.name}</h1>
-                                <p className="text-[rgb(var(--text-secondary))] text-sm">
+                                <h1 className="page-title">{company.name}</h1>
+                                <p className="page-desc">
                                     {company.industry?.display_name || company.industry_slug} · {company.size} · {company.stage}
-                                    <span className={`ml-2 px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                                        company.difficulty_tier === 'nightmare' ? 'text-status-danger bg-status-danger/10' :
-                                        company.difficulty_tier === 'hard' ? 'text-red-400 bg-red-400/10' :
-                                        company.difficulty_tier === 'medium' ? 'text-amber-400 bg-amber-400/10' :
-                                        'text-green-400 bg-green-400/10'
-                                    }`}>
-                                        {company.difficulty_tier}
-                                    </span>
+                                    <span className="ml-2">{detailDifficultyPill(company.difficulty_tier)}</span>
                                 </p>
                             </div>
                         </div>
-                        <button onClick={() => setShowCompanyForm(true)} className="px-4 py-2 text-sm border border-[rgb(var(--border-default))] text-[rgb(var(--text-secondary))] hover:border-[rgb(var(--accent-primary))] transition-colors flex items-center gap-2">
+                        <button onClick={() => setShowCompanyForm(true)} className="px-4 py-2 text-sm border border-[rgb(var(--border-default))] rounded-lg text-[#7d8a98] hover:border-[#FF6B6B] hover:text-[rgb(var(--text-primary))] transition-colors flex items-center gap-2">
                             <Pencil className="h-4 w-4" /> Edit Company
                         </button>
                     </div>
                 </div>
 
                 {/* Personas Section */}
-                <div className="animate-in-up" style={{ animationDelay: '0.1s' }}>
+                <div>
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                            <Users className="h-5 w-5 text-[rgb(var(--text-muted))]" />
-                            <h2 className="text-lg font-display font-bold text-[rgb(var(--text-primary))]">Personas</h2>
-                            <span className="text-sm text-[rgb(var(--text-muted))]">({personas.length})</span>
+                            <Users className="h-5 w-5 text-[#4a5567]" />
+                            <h2 className="card-title mb-0">Personas</h2>
+                            <span className="text-sm text-[#4a5567]">({personas.length})</span>
                         </div>
                         <button onClick={() => { setEditingPersonaId(undefined); setShowPersonaForm(true); }} className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
                             <Plus className="h-4 w-4" /> Add Persona
                         </button>
                     </div>
 
-                    <div className="card-os p-0 overflow-hidden">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] font-medium border-b border-[rgb(var(--border-default))]">
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-0 overflow-hidden">
+                        <table className="table-os">
+                            <thead>
                                 <tr>
-                                    <th className="p-4">Name</th>
-                                    <th className="p-4">Title</th>
-                                    <th className="p-4">Seniority</th>
-                                    <th className="p-4">Style</th>
-                                    <th className="p-4">Created</th>
-                                    <th className="p-4 text-right">Actions</th>
+                                    <th>Name</th>
+                                    <th>Title</th>
+                                    <th>Seniority</th>
+                                    <th>Style</th>
+                                    <th>Created</th>
+                                    <th className="text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-[rgb(var(--border-subtle))]">
+                            <tbody>
                                 {personas.map(persona => (
-                                    <tr key={persona.id} className="hover:bg-[rgb(var(--bg-surface-raised))] transition-colors">
-                                        <td className="p-4 text-[rgb(var(--text-primary))] font-medium">{persona.name}</td>
-                                        <td className="p-4 text-[rgb(var(--text-secondary))]">{persona.title}</td>
-                                        <td className="p-4">
-                                            <span className="px-2 py-0.5 text-[10px] font-semibold uppercase bg-[rgb(var(--bg-canvas))] text-[rgb(var(--text-muted))] border border-[rgb(var(--border-subtle))]">
+                                    <tr key={persona.id}>
+                                        <td className="text-[rgb(var(--text-primary))] font-medium">{persona.name}</td>
+                                        <td>{persona.title}</td>
+                                        <td>
+                                            <span className="pill pill-amber">
                                                 {persona.seniority}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-[rgb(var(--text-muted))] text-xs">{persona.personality_profile?.communication_style || '—'}</td>
-                                        <td className="p-4 text-[rgb(var(--text-muted))] text-xs">{new Date(persona.created_at).toLocaleDateString()}</td>
-                                        <td className="p-4 text-right">
+                                        <td className="text-xs">{persona.personality_profile?.communication_style || '—'}</td>
+                                        <td className="text-xs">{new Date(persona.created_at).toLocaleDateString()}</td>
+                                        <td className="text-right">
                                             <div className="flex items-center justify-end gap-1">
                                                 <button
                                                     onClick={() => { setEditingPersonaId(persona.id); setShowPersonaForm(true); }}
-                                                    className="p-2 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] hover:bg-[rgb(var(--bg-canvas))] transition-colors"
+                                                    className="p-2 text-[#4a5567] hover:text-[rgb(var(--text-primary))] hover:bg-[rgba(255,255,255,0.03)] rounded transition-colors"
                                                     title="Edit"
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeletePersona(persona.id, persona.name)}
-                                                    className="p-2 text-[rgb(var(--text-muted))] hover:text-status-danger hover:bg-status-danger/10 transition-colors"
+                                                    className="p-2 text-[#4a5567] hover:text-[#FF6B6B] hover:bg-[rgba(255,107,107,0.12)] rounded transition-colors"
                                                     title="Delete"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -417,7 +449,7 @@ export function CompanyDetail() {
                                 ))}
                                 {personas.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="p-8 text-center text-[rgb(var(--text-muted))]">
+                                        <td colSpan={6} className="p-8 text-center">
                                             No personas yet. Add one to make this company available for training.
                                         </td>
                                     </tr>

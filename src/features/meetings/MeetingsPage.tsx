@@ -72,7 +72,7 @@ const PLATFORM_ICONS: Record<MeetingPlatform, string> = {
 
 function PlatformBadge({ platform }: { platform: MeetingPlatform }) {
     return (
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] uppercase tracking-widest border font-black ${PLATFORM_COLORS[platform]}`}>
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] uppercase tracking-widest border rounded-md font-semibold ${PLATFORM_COLORS[platform]}`}>
             {PLATFORM_ICONS[platform]} {platform}
         </span>
     );
@@ -123,11 +123,11 @@ function IntegrationCard({
     };
     const s = statusCfg[status];
     return (
-        <div className="card-os p-5 flex flex-col gap-3">
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 flex flex-col gap-3">
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-bg-raised border border-border flex items-center justify-center">
-                        <Icon className="w-4 h-4 text-text-secondary" />
+                    <div className="w-9 h-9 bg-[rgb(var(--bg-deep))] border border-[rgb(var(--border-default))] rounded-md flex items-center justify-center">
+                        <Icon className="w-4 h-4 text-[rgb(var(--text-secondary))]" />
                     </div>
                     <div>
                         <p className="text-sm text-text-primary">{name}</p>
@@ -211,261 +211,331 @@ export default function MeetingsPage() {
     const kpiTrends = analytics?.kpiTrends ?? [];
     const hasComparisonData = analytics?.hasCallData || analytics?.hasMeetingData;
 
+    // Derive upcoming vs past meetings
+    const upcomingMeetings = filteredMeetings.filter(m => {
+        if (!m.started_at) return false;
+        return new Date(m.started_at) > new Date();
+    });
+    const pastMeetings = filteredMeetings.filter(m => {
+        if (!m.started_at) return true;
+        return new Date(m.started_at) <= new Date();
+    });
+
+    // Compute stat card values from real data
+    const completedThisWeek = (() => {
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return pastMeetings.filter(m => m.started_at && new Date(m.started_at) >= weekAgo).length;
+    })();
+    const avgMeetingScore = (() => {
+        const scored = pastMeetings.filter(m => m.overall_score != null);
+        if (scored.length === 0) return 0;
+        return Math.round(scored.reduce((sum, m) => sum + (m.overall_score ?? 0), 0) / scored.length);
+    })();
+    const openActionItems = analytics?.actionItemsOpen ?? 0;
+
+    // Helper: score pill class
+    const getScorePillClass = (score: number) => {
+        if (score >= 80) return 'pill pill-green';
+        if (score >= 60) return 'pill pill-amber';
+        return 'pill pill-coral';
+    };
+
+    // Helper: score colour for stat
+    const getScoreColor = (score: number) => {
+        if (score >= 80) return 'var(--color-green)';
+        if (score >= 60) return 'var(--color-amber)';
+        return 'var(--color-coral)';
+    };
+
     return (
         <TierGate>
-            <div className="p-6 space-y-8 max-w-7xl mx-auto">
+            <div className="pb-12 space-y-5">
 
-                {/* ── Header ── */}
-                <div className="flex items-start justify-between">
+                {/* Page Header */}
+                <div className="flex justify-between items-start mb-5">
                     <div>
-                        <div className="flex items-center gap-3 mb-1">
-                            <MonitorPlay className="w-6 h-6 text-accent" />
-                            <h1 className="text-2xl text-text-primary tracking-tight">MEETING INTELLIGENCE</h1>
-                            <span className="text-[9px] uppercase tracking-[0.2em] px-2 py-0.5 border border-accent/30 text-accent bg-accent/5">
-                                Revenue Intel
-                            </span>
-                        </div>
-                        <p className="text-text-secondary text-sm">
-                            Full-session analysis for Teams, Zoom & Google Meet — body language, transcript, and prospect engagement.
-                        </p>
+                        <div className="page-kicker">Coaching</div>
+                        <div className="page-title">Meetings</div>
+                        <div className="page-desc">Coaching sessions, team reviews, and meeting history.</div>
                     </div>
                     <button
                         onClick={() => navigate('/settings/integrations')}
-                        className="btn-ghost text-xs flex items-center gap-2 border border-border px-4 py-2"
+                        className="btn-primary text-xs flex items-center gap-2"
                     >
                         <Settings className="w-3.5 h-3.5" />
                         Integrations
                     </button>
                 </div>
 
-                {/* ── Section 1: Recent Meetings ── */}
-                <section>
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xs uppercase tracking-[0.18em] text-text-muted">Recent Meetings</h2>
-                        <div className="flex gap-1">
-                            {PLATFORM_FILTERS.map(p => (
-                                <button
-                                    key={p}
-                                    onClick={() => setActivePlatform(p)}
-                                    className={`text-[11px] px-3 py-1 border transition-colors ${
-                                        activePlatform === p
-                                            ? 'bg-accent text-white border-accent'
-                                            : 'border-border text-text-muted hover:text-text-primary hover:border-border'
-                                    }`}
-                                >
-                                    {p}
-                                </button>
-                            ))}
+                {/* Stat Cards */}
+                <div className="grid grid-cols-4 gap-3">
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                        <div className="stat-label">Upcoming</div>
+                        <div className="stat-value" style={{ color: 'rgb(var(--text-primary))' }}>{upcomingMeetings.length}</div>
+                    </div>
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                        <div className="stat-label">Completed This Week</div>
+                        <div className="stat-value" style={{ color: 'rgb(var(--text-primary))' }}>{completedThisWeek}</div>
+                    </div>
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                        <div className="stat-label">Avg Meeting Score</div>
+                        <div className="stat-value" style={{ color: avgMeetingScore > 0 ? getScoreColor(avgMeetingScore) : 'rgb(var(--text-muted))' }}>
+                            {avgMeetingScore > 0 ? `${avgMeetingScore}%` : '—'}
                         </div>
                     </div>
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                        <div className="stat-label">Action Items Open</div>
+                        <div className="stat-value" style={{ color: 'var(--color-coral)' }}>{openActionItems}</div>
+                    </div>
+                </div>
 
-                    {loadingMeetings ? (
-                        <div className="card-os p-8 flex items-center justify-center">
-                            <span className="text-text-muted text-sm animate-pulse">Loading meetings…</span>
-                        </div>
-                    ) : filteredMeetings.length === 0 ? (
-                        <div className="card-os p-10 flex flex-col items-center justify-center gap-4 text-center">
-                            <MonitorPlay className="w-8 h-8 text-text-muted opacity-40" />
-                            <p className="text-text-muted text-sm">
-                                {meetings.length === 0
-                                    ? 'No meetings analysed yet. Connect a meeting platform in Integrations to start capturing sessions.'
-                                    : `No ${activePlatform} meetings found.`}
-                            </p>
-                            <button
-                                onClick={() => navigate('/settings/integrations')}
-                                className="btn-primary text-xs flex items-center gap-1.5"
-                            >
-                                <Settings className="w-3 h-3" /> Configure Integrations
-                            </button>
-                        </div>
-                    ) : (
-                    <div className="space-y-2">
-                        {filteredMeetings.map((meeting: DbMeeting) => {
-                            const platform = platformFromType(meeting.type, meeting.platform);
-                            const dateStr = meeting.started_at
-                                ? new Date(meeting.started_at).toISOString().slice(0, 10)
-                                : '—';
+                {/* Platform Filter */}
+                <div className="flex items-center gap-2">
+                    {PLATFORM_FILTERS.map(p => (
+                        <button
+                            key={p}
+                            onClick={() => setActivePlatform(p)}
+                            className={`text-[11px] px-3 py-1 border rounded-lg transition-colors ${
+                                activePlatform === p
+                                    ? 'bg-[rgb(var(--accent-primary))] text-white border-[rgb(var(--accent-primary))]'
+                                    : 'border-[rgb(var(--border-default))] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]'
+                            }`}
+                        >
+                            {p}
+                        </button>
+                    ))}
+                </div>
 
-                            return (
-                            <div
-                                key={meeting.id}
-                                onClick={() => navigate(`/sessions/${meeting.id}`)}
-                                className="card-os p-4 cursor-pointer hover:bg-bg-raised transition-colors group flex items-center gap-4"
-                            >
-                                {/* Platform + date */}
-                                <div className="flex flex-col gap-1.5 min-w-[110px]">
-                                    <PlatformBadge platform={platform} />
-                                    <span className="text-[11px] text-text-muted">{dateStr}</span>
+                {/* Upcoming Meetings */}
+                {loadingMeetings ? (
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 h-48 animate-pulse flex items-center justify-center">
+                        <span className="text-[rgb(var(--text-muted))] text-sm">Loading meetings...</span>
+                    </div>
+                ) : filteredMeetings.length === 0 ? (
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 flex flex-col items-center justify-center py-12 gap-4 text-center">
+                        <MonitorPlay className="w-8 h-8 text-[rgb(var(--text-muted))] opacity-40" />
+                        <p className="text-[rgb(var(--text-muted))] text-sm">
+                            {meetings.length === 0
+                                ? 'No meetings analysed yet. Connect a meeting platform in Integrations to start capturing sessions.'
+                                : `No ${activePlatform} meetings found.`}
+                        </p>
+                        <button
+                            onClick={() => navigate('/settings/integrations')}
+                            className="btn-primary text-xs flex items-center gap-1.5"
+                        >
+                            <Settings className="w-3 h-3" /> Configure Integrations
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        {/* Upcoming Meetings Card */}
+                        {upcomingMeetings.length > 0 && (
+                            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                                <div className="card-title">Upcoming Meetings</div>
+                                <div className="grid grid-cols-3 gap-4">
+                                    {upcomingMeetings.slice(0, 6).map((meeting) => {
+                                        const platform = platformFromType(meeting.type, meeting.platform);
+                                        const dateStr = meeting.started_at
+                                            ? new Date(meeting.started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                                            + ' · ' +
+                                            new Date(meeting.started_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+                                            : '—';
+
+                                        return (
+                                            <div
+                                                key={meeting.id}
+                                                onClick={() => navigate(`/sessions/${meeting.id}`)}
+                                                className="bg-[rgb(var(--bg-deep))] border border-[rgb(var(--border-default))] rounded-lg p-4 flex flex-col gap-2.5 cursor-pointer hover:border-[rgba(255,107,107,0.3)] transition-colors"
+                                            >
+                                                <div className="font-['Oswald'] text-xs font-semibold text-[rgb(var(--text-primary))]">{dateStr}</div>
+                                                <div className="flex items-center">
+                                                    <PlatformBadge platform={platform} />
+                                                </div>
+                                                <div className="text-[11px] text-[rgb(var(--text-secondary))] leading-snug line-clamp-2">
+                                                    {meeting.prospect_name || meeting.company_name || 'Meeting scheduled'}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
+                            </div>
+                        )}
 
-                                {/* Duration + Prospect */}
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-text-primary truncate">
-                                        {meeting.prospect_name || meeting.company_name || 'Unknown prospect'}
-                                    </p>
-                                    <div className="flex items-center gap-3 mt-1">
-                                        <span className="flex items-center gap-1 text-xs text-text-muted">
-                                            <Clock className="w-3 h-3" />{formatDuration(meeting.duration_seconds)}
-                                        </span>
-                                        {meeting.company_name && (
-                                            <span className="flex items-center gap-1 text-xs text-text-muted">
-                                                <Users className="w-3 h-3" />{meeting.company_name}
-                                            </span>
-                                        )}
-                                        <StatusDot status={meeting.status as MeetingStatus} />
+                        {/* Past Meetings Table */}
+                        {pastMeetings.length > 0 && (
+                            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                                <div className="card-title">Past Meetings</div>
+                                <table className="table-os">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Participants</th>
+                                            <th>Type</th>
+                                            <th>Duration</th>
+                                            <th>Status</th>
+                                            <th>Score</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pastMeetings.map((meeting) => {
+                                            const platform = platformFromType(meeting.type, meeting.platform);
+                                            const dateStr = meeting.started_at
+                                                ? new Date(meeting.started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                                                : '—';
+                                            const score = Math.round(meeting.overall_score ?? 0);
+
+                                            return (
+                                                <tr key={meeting.id}>
+                                                    <td style={{ color: 'rgb(var(--text-primary))', fontWeight: 500 }}>{dateStr}</td>
+                                                    <td>{meeting.prospect_name || meeting.company_name || '—'}</td>
+                                                    <td><PlatformBadge platform={platform} /></td>
+                                                    <td>{formatDuration(meeting.duration_seconds)}</td>
+                                                    <td><StatusDot status={meeting.status as MeetingStatus} /></td>
+                                                    <td>
+                                                        {meeting.overall_score != null ? (
+                                                            <span className={getScorePillClass(score)}>{score}%</span>
+                                                        ) : (
+                                                            <span className="text-[rgb(var(--text-muted))]">—</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); navigate(`/sessions/${meeting.id}`); }}
+                                                            className="text-[var(--color-coral)] font-semibold text-xs hover:underline"
+                                                        >
+                                                            View
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                                {meetingsCursor && activePlatform === 'All' && (
+                                    <div className="flex justify-center pt-4">
+                                        <button
+                                            onClick={handleLoadMoreMeetings}
+                                            disabled={loadingMoreMeetings}
+                                            className="btn-primary text-xs py-2 px-6"
+                                        >
+                                            {loadingMoreMeetings ? 'Loading...' : 'Load more'}
+                                        </button>
                                     </div>
-                                </div>
-
-                                {/* Score bars */}
-                                <div className="hidden lg:flex flex-col gap-1 w-48">
-                                    <ScoreBar label="MEDDIC"  value={Math.round(meeting.meddic_score ?? 0)} />
-                                    <ScoreBar label="Talk"    value={Math.round(meeting.talk_ratio ?? 0)}   color="bg-blue-400" />
-                                    <ScoreBar label="Presence" value={Math.round(meeting.presence_score ?? 0)} color="bg-purple-400" />
-                                </div>
-
-                                {/* Overall score */}
-                                <div className="flex items-center gap-2">
-                                    <ScoreBadge score={Math.round(meeting.overall_score ?? 0)} size="lg" />
-                                    <ChevronRight className="w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </div>
-                            </div>
-                            );
-                        })}
-                        {meetingsCursor && activePlatform === 'All' && (
-                            <div className="flex justify-center pt-2">
-                                <button
-                                    onClick={handleLoadMoreMeetings}
-                                    disabled={loadingMoreMeetings}
-                                    className="btn-ghost text-xs py-2 px-6"
-                                >
-                                    {loadingMoreMeetings ? 'Loading…' : 'Load more'}
-                                </button>
+                                )}
                             </div>
                         )}
-                    </div>
-                    )}
-                </section>
+                    </>
+                )}
 
-                {/* ── Section 2: Performance Comparison ── */}
-                <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 card-os p-6">
-                        <h2 className="text-xs uppercase tracking-[0.18em] text-text-muted mb-1">Call vs Meeting Performance</h2>
-                        <p className="text-[11px] text-text-muted mb-4">Same rep, different channel — where the gap lives.</p>
-                        {!hasComparisonData ? (
-                            <div className="flex flex-col items-center justify-center py-12 text-center">
-                                <MonitorPlay className="w-8 h-8 text-text-muted opacity-30 mb-3" />
-                                <p className="text-text-muted text-sm">No call or meeting data yet.</p>
-                                <p className="text-xs text-text-muted mt-1">Complete live calls and meeting sessions to see the channel comparison.</p>
+                {/* Performance Comparison -- hidden below fold */}
+                {hasComparisonData && (
+                    <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div className="lg:col-span-2 bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                            <div className="card-title">Call vs Meeting Performance</div>
+                            <p className="text-[11px] text-[rgb(var(--text-muted))] mb-4">Same rep, different channel -- where the gap lives.</p>
+                            <ResponsiveContainer width="100%" height={260}>
+                                <RadarChart data={radarData}>
+                                    <PolarGrid stroke="rgb(var(--border-default))" />
+                                    <PolarAngleAxis
+                                        dataKey="subject"
+                                        tick={{ fill: 'rgb(var(--text-muted))', fontSize: 10, fontFamily: 'Oswald' }}
+                                    />
+                                    <Radar name="Phone Calls" dataKey="calls" stroke="#ff6b6b" fill="#ff6b6b" fillOpacity={0.15} strokeWidth={2} />
+                                    <Radar name="Video Meetings" dataKey="meetings" stroke="#818cf8" fill="#818cf8" fillOpacity={0.12} strokeWidth={2} />
+                                </RadarChart>
+                            </ResponsiveContainer>
+                            <div className="flex gap-4 mt-2">
+                                <span className="flex items-center gap-1.5 text-[11px] text-[rgb(var(--text-muted))]">
+                                    <span className="w-3 h-0.5 bg-[rgb(var(--accent-primary))] inline-block rounded" /> Phone Calls
+                                </span>
+                                <span className="flex items-center gap-1.5 text-[11px] text-[rgb(var(--text-muted))]">
+                                    <span className="w-3 h-0.5 bg-[#818cf8] inline-block rounded" /> Video Meetings
+                                </span>
                             </div>
-                        ) : (
-                            <>
-                                <ResponsiveContainer width="100%" height={260}>
-                                    <RadarChart data={radarData}>
-                                        <PolarGrid stroke="rgb(var(--color-border))" />
-                                        <PolarAngleAxis
-                                            dataKey="subject"
-                                            tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 10, fontFamily: 'Oswald' }}
-                                        />
-                                        <Radar name="Phone Calls" dataKey="calls" stroke="#ff6b6b" fill="#ff6b6b" fillOpacity={0.15} strokeWidth={2} />
-                                        <Radar name="Video Meetings" dataKey="meetings" stroke="#818cf8" fill="#818cf8" fillOpacity={0.12} strokeWidth={2} />
-                                    </RadarChart>
-                                </ResponsiveContainer>
-                                <div className="flex gap-4 mt-2">
-                                    <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                                        <span className="w-3 h-0.5 bg-accent inline-block" /> Phone Calls
-                                    </span>
-                                    <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                                        <span className="w-3 h-0.5 bg-[#818cf8] inline-block" /> Video Meetings
-                                    </span>
+                        </div>
+
+                        <div className="flex flex-col gap-4">
+                            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 border-l-4 border-l-[rgb(var(--accent-primary))] flex-1">
+                                <p className="stat-label mb-2">Key Insight</p>
+                                {delta > 0 ? (
+                                    <p className="text-[rgb(var(--text-primary))] text-sm leading-relaxed">
+                                        You score{' '}
+                                        <span style={{ color: 'var(--color-coral)' }}>{delta} points higher</span>{' '}
+                                        on phone calls than video meetings.
+                                    </p>
+                                ) : delta < 0 ? (
+                                    <p className="text-[rgb(var(--text-primary))] text-sm leading-relaxed">
+                                        You score{' '}
+                                        <span style={{ color: 'var(--color-green)' }}>{Math.abs(delta)} points higher</span>{' '}
+                                        in video meetings than phone calls.
+                                    </p>
+                                ) : (
+                                    <p className="text-[rgb(var(--text-primary))] text-sm leading-relaxed">
+                                        Your performance is consistent across calls and video meetings.
+                                    </p>
+                                )}
+                            </div>
+                            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 flex flex-col gap-3">
+                                <p className="stat-label">Averages</p>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-[rgb(var(--text-secondary))]">Phone Calls</span>
+                                    <span style={{ color: 'var(--color-coral)' }} className="text-sm">{callAvg > 0 ? callAvg : '—'}</span>
                                 </div>
-                            </>
-                        )}
-                    </div>
-
-                    {/* Insight callout */}
-                    <div className="flex flex-col gap-4">
-                        <div className="card-os p-5 border-l-4 border-l-accent flex-1">
-                            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Key Insight</p>
-                            {!hasComparisonData ? (
-                                <p className="text-text-muted text-sm">Connect a meeting platform and complete live calls to see channel comparison insights.</p>
-                            ) : delta > 0 ? (
-                                <p className="text-text-primary text-sm leading-relaxed">
-                                    You score{' '}
-                                    <span className="text-accent">{delta} points higher</span>{' '}
-                                    on phone calls than video meetings. On-camera presence may be limiting your meeting conversions.
-                                </p>
-                            ) : delta < 0 ? (
-                                <p className="text-text-primary text-sm leading-relaxed">
-                                    You score{' '}
-                                    <span className="text-status-success">{Math.abs(delta)} points higher</span>{' '}
-                                    in video meetings than phone calls. Your on-camera presence is strong.
-                                </p>
-                            ) : (
-                                <p className="text-text-primary text-sm leading-relaxed">
-                                    Your performance is consistent across calls and video meetings.
-                                </p>
-                            )}
-                        </div>
-                        <div className="card-os p-5 flex flex-col gap-3">
-                            <p className="text-[10px] uppercase tracking-widest text-text-muted">Averages</p>
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs text-text-secondary">Phone Calls</span>
-                                <span className="text-accent text-sm">{callAvg > 0 ? callAvg : '—'}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs text-text-secondary">Video Meetings</span>
-                                <span className="text-[#818cf8] text-sm">{meetingAvg > 0 ? meetingAvg : '—'}</span>
-                            </div>
-                            <div className="border-t border-border pt-3">
-                                <button
-                                    onClick={() => navigate('/drills')}
-                                    className="btn-primary text-xs w-full flex items-center justify-center gap-1.5"
-                                >
-                                    <Zap className="w-3 h-3" /> On-Camera Drills
-                                </button>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-[rgb(var(--text-secondary))]">Video Meetings</span>
+                                    <span className="text-[#818cf8] text-sm">{meetingAvg > 0 ? meetingAvg : '—'}</span>
+                                </div>
+                                <div className="border-t border-[rgb(var(--border-default))] pt-3">
+                                    <button
+                                        onClick={() => navigate('/drills')}
+                                        className="btn-primary text-xs w-full flex items-center justify-center gap-1.5"
+                                    >
+                                        <Zap className="w-3 h-3" /> On-Camera Drills
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                )}
 
-                {/* ── Section 3: Presence Insights ── */}
+                {/* Presence Insights */}
                 <section>
-                    <h2 className="text-xs uppercase tracking-[0.18em] text-text-muted mb-4">Presence Insights — Last 30 Days</h2>
+                    <div className="card-title mb-4">Presence Insights -- Last 30 Days</div>
 
-                    {/* KPI row — values and deltas from useMeetingAnalytics */}
-                    <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="grid grid-cols-3 gap-4 mb-4">
                         {[
                             { kpi: kpiTrends[0], icon: Eye },
                             { kpi: kpiTrends[1], icon: Activity },
                             { kpi: kpiTrends[2], icon: MonitorPlay },
                         ].map(({ kpi, icon: Icon }, i) => {
-                            if (!kpi) return <div key={i} className="card-os p-5 border border-border h-28 animate-pulse bg-bg-raised" />;
+                            if (!kpi) return <div key={i} className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 h-28 animate-pulse" />;
                             const trendLabel = kpi.trendLabel ?? '—';
                             return (
-                                <div key={kpi.label} className="card-os p-5 flex flex-col gap-2">
-                                    <div className="flex items-center gap-2 text-text-muted">
+                                <div key={kpi.label} className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 flex flex-col gap-2">
+                                    <div className="flex items-center gap-2 text-[rgb(var(--text-muted))]">
                                         <Icon className="w-4 h-4" />
-                                        <span className="text-[10px] uppercase tracking-widest">{kpi.label}</span>
+                                        <span className="stat-label mb-0">{kpi.label}</span>
                                     </div>
-                                    <p className="text-3xl text-text-primary">{kpi.value}</p>
+                                    <p className="stat-value" style={{ color: 'rgb(var(--text-primary))' }}>{kpi.value}</p>
                                     {kpi.delta !== null ? (
-                                        <span className={`flex items-center gap-1 text-xs ${kpi.up ? 'text-status-success' : 'text-status-danger'}`}>
+                                        <span className={`flex items-center gap-1 text-xs ${kpi.up ? 'text-[var(--color-green)]' : 'text-[var(--color-coral)]'}`}>
                                             {kpi.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                                             {trendLabel}
                                         </span>
                                     ) : (
-                                        <span className="text-xs text-text-muted">No prior data</span>
+                                        <span className="text-xs text-[rgb(var(--text-muted))]">No prior data</span>
                                     )}
                                 </div>
                             );
                         })}
                     </div>
 
-                    {/* Trend chart — built from real meeting presence scores */}
-                    <div className="card-os p-6">
-                        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-4">Presence Score Trend</p>
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                        <p className="stat-label mb-4">Presence Score Trend</p>
                         {scoredMeetings.length < 2 ? (
-                            <p className="text-text-muted text-xs py-6 text-center">
+                            <p className="text-[rgb(var(--text-muted))] text-xs py-6 text-center">
                                 Complete more meetings to see your presence trend.
                             </p>
                         ) : (
@@ -477,19 +547,19 @@ export default function MeetingsPage() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgb(30 41 59)" />
                                 <XAxis
                                     dataKey="date"
-                                    tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 9, fontFamily: 'Oswald' }}
+                                    tick={{ fill: 'rgb(var(--text-muted))', fontSize: 9, fontFamily: 'Oswald' }}
                                     interval={Math.max(0, Math.floor(scoredMeetings.length / 8) - 1)}
                                 />
                                 <YAxis
                                     domain={[0, 100]}
-                                    tick={{ fill: 'rgb(var(--color-text-muted))', fontSize: 9, fontFamily: 'Oswald' }}
+                                    tick={{ fill: 'rgb(var(--text-muted))', fontSize: 9, fontFamily: 'Oswald' }}
                                     width={28}
                                 />
                                 <Tooltip
                                     contentStyle={{
                                         background: 'rgb(15 23 42)',
                                         border: '1px solid rgb(30 41 59)',
-                                        borderRadius: 0,
+                                        borderRadius: 8,
                                         fontFamily: 'Oswald',
                                         fontSize: 11,
                                     }}
@@ -510,13 +580,13 @@ export default function MeetingsPage() {
                     </div>
                 </section>
 
-                {/* ── Section 4: Integration Status ── */}
+                {/* Integration Status */}
                 <section>
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xs uppercase tracking-[0.18em] text-text-muted">Integration Status</h2>
+                        <div className="card-title mb-0">Integration Status</div>
                         <button
                             onClick={() => navigate('/settings/integrations')}
-                            className="text-xs text-accent flex items-center gap-1 hover:underline"
+                            className="text-xs text-[var(--color-coral)] flex items-center gap-1 hover:underline"
                         >
                             Configure <ExternalLink className="w-3 h-3" />
                         </button>
@@ -549,7 +619,7 @@ export default function MeetingsPage() {
                         />
                         <IntegrationCard
                             name="Recall.ai Bot"
-                            description="Universal meeting bot — any platform"
+                            description="Universal meeting bot -- any platform"
                             status={getPlatformStatus('recall_ai')}
                             icon={Wifi}
                             actionLabel={getPlatformStatus('recall_ai') === 'connected' ? 'Configure Bot' : 'Setup Bot'}
