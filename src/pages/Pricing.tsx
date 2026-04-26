@@ -189,6 +189,38 @@ export default function Pricing() {
                 </p>
             </section>
 
+            {/* FAQ Section */}
+            <section style={{ background: '#111820', padding: '80px 24px' }}>
+                <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                        <p style={{ fontFamily: "'Oswald', sans-serif", fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#FF6B6B', marginBottom: '12px' }}>
+                            FAQ
+                        </p>
+                        <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '36px', fontWeight: 600, textTransform: 'uppercase', color: '#c9d1d9' }}>
+                            COMMON QUESTIONS
+                        </h2>
+                    </div>
+
+                    {[
+                        { q: 'IS THERE A MINIMUM TEAM SIZE?', a: 'No minimum. OAST works for teams of 3 to 300+. Pricing is per-user, so you pay for exactly what you need.' },
+                        { q: 'CAN I SWITCH TIERS?', a: 'Yes. Upgrade or downgrade at any time. When upgrading, you get immediate access to the new features. When downgrading, changes take effect at the next billing cycle.' },
+                        { q: "WHAT'S INCLUDED IN THE ANNUAL DISCOUNT?", a: 'Annual billing saves 15% compared to monthly. Performance drops to ~£55/user/mo and Revenue Intelligence to ~£157/user/mo.' },
+                        { q: 'IS MEETING INTELLIGENCE REALLY EXCLUSIVE TO REVENUE INTELLIGENCE?', a: 'Yes. Meeting transcription, scoring, and action item extraction are only available on the Revenue Intelligence tier and above. This is a deliberate product decision to differentiate the tiers.' },
+                        { q: 'WHAT INTEGRATIONS ARE AVAILABLE?', a: 'All tiers include API access. Revenue Intelligence includes CRM sync (Salesforce, HubSpot). Revenue Readiness includes custom integration development with our engineering team.' },
+                        { q: 'HOW IS AI USAGE BILLED?', a: 'AI usage (call simulations, coaching, analysis) is included in your per-user price. No additional API charges or usage caps on standard tiers.' },
+                    ].map((item) => (
+                        <div key={item.q} style={{ borderBottom: '1px solid #1e2a38', padding: '20px 0' }}>
+                            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '16px', fontWeight: 600, textTransform: 'uppercase', color: '#c9d1d9', marginBottom: '8px' }}>
+                                {item.q}
+                            </div>
+                            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#7d8a98', lineHeight: 1.6 }}>
+                                {item.a}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
         </div>
     );
 }
