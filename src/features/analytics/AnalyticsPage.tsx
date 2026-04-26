@@ -21,11 +21,12 @@ const ACCENT = '#ff6b6b';
 const FUNNEL_COLORS = ['#ff6b6b', '#ff8080', '#ff9494', '#ffaaaa', '#ffbfbf', '#ffd4d4'];
 
 const tooltipStyle = {
-  backgroundColor: 'rgb(15 23 42)',
-  border: '1px solid rgb(30 41 59)',
-  color: '#f8fafc',
+  backgroundColor: '#151c25',
+  border: '1px solid #1e2a38',
+  borderRadius: '8px',
+  color: '#c9d1d9',
   fontSize: 12,
-  fontFamily: 'Oswald, sans-serif',
+  fontFamily: 'DM Sans, sans-serif',
 };
 
 export default function AnalyticsPage() {
@@ -46,8 +47,9 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-[rgb(var(--text-primary))] uppercase tracking-tight">Analytics</h1>
-          <p className="text-sm text-[rgb(var(--text-muted))] mt-0.5">Performance trends and skill insights</p>
+          <div className="page-kicker">Performance</div>
+          <div className="page-title">Analytics</div>
+          <div className="page-desc">Session metrics, score trends, and training analysis</div>
         </div>
         <FilterBar
           filters={DATE_RANGES}
@@ -69,13 +71,13 @@ export default function AnalyticsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-6"
+        className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5"
       >
-        <h2 className="text-sm font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-6">
+        <h2 className="card-title">
           Session Volume — Last {days} Days
         </h2>
         {loading ? (
-          <div className="h-[220px] animate-pulse bg-[rgb(var(--bg-canvas))]" />
+          <div className="h-[220px] animate-pulse bg-[rgb(var(--bg-deep))] rounded-lg" />
         ) : chartData.every(d => d.calls === 0) ? (
           <div className="h-[220px] flex items-center justify-center">
             <p className="text-sm text-[rgb(var(--text-muted))]">No session data in this period. Complete a practice session to see trends.</p>
@@ -97,15 +99,15 @@ export default function AnalyticsPage() {
                   <stop offset="100%" stopColor={ACCENT} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="rgb(30 41 59)" strokeDasharray="3 3" vertical={false} />
+              <CartesianGrid stroke="#1e2a38" strokeDasharray="3 3" vertical={false} />
               <XAxis
                 dataKey="date"
-                tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'Oswald' }}
+                tick={{ fill: '#4a5567', fontSize: 10, fontFamily: 'JetBrains Mono' }}
                 tickLine={false} axisLine={false}
                 tickFormatter={v => v.slice(5)}
                 interval={Math.max(1, Math.floor(chartData.length / 6))}
               />
-              <YAxis tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'Oswald' }} tickLine={false} axisLine={false} allowDecimals={false} />
+              <YAxis tick={{ fill: '#4a5567', fontSize: 10, fontFamily: 'JetBrains Mono' }} tickLine={false} axisLine={false} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} />
               <Line dataKey="calls"    stroke={ACCENT}    strokeWidth={2} dot={false} activeDot={{ r: 4, fill: ACCENT }}    name="Sessions" />
               <Line dataKey="won"      stroke="#60a5fa"   strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#60a5fa' }} name="Passed (≥70)" />
@@ -133,11 +135,11 @@ export default function AnalyticsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-6"
+          className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5"
         >
-          <h2 className="text-sm font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-4">Skill Radar</h2>
+          <h2 className="card-title mb-4">Skill Radar</h2>
           {loading ? (
-            <div className="h-[280px] animate-pulse bg-[rgb(var(--bg-canvas))]" />
+            <div className="h-[280px] animate-pulse bg-[rgb(var(--bg-deep))] rounded-lg" />
           ) : skillRadar.length === 0 ? (
             <div className="h-[280px] flex items-center justify-center">
               <p className="text-sm text-[rgb(var(--text-muted))] text-center">Complete sessions to build your skill radar.</p>
@@ -146,8 +148,8 @@ export default function AnalyticsPage() {
             <>
               <ResponsiveContainer width="100%" height={280}>
                 <RadarChart data={skillRadar} cx="50%" cy="50%">
-                  <PolarGrid stroke="rgb(30 41 59)" />
-                  <PolarAngleAxis dataKey="skill" tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'Oswald' }} />
+                  <PolarGrid stroke="#1e2a38" />
+                  <PolarAngleAxis dataKey="skill" tick={{ fill: '#4a5567', fontSize: 10, fontFamily: 'DM Sans' }} />
                   <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                   <Radar dataKey="score" stroke={ACCENT} fill="rgba(255,107,107,0.15)" fillOpacity={1} strokeWidth={2} />
                   <Tooltip contentStyle={tooltipStyle} />
@@ -172,11 +174,11 @@ export default function AnalyticsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
-          className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-6"
+          className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5"
         >
-          <h2 className="text-sm font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-4">Score Funnel</h2>
+          <h2 className="card-title mb-4">Score Funnel</h2>
           {loading ? (
-            <div className="h-[200px] animate-pulse bg-[rgb(var(--bg-canvas))]" />
+            <div className="h-[200px] animate-pulse bg-[rgb(var(--bg-deep))] rounded-lg" />
           ) : funnel.length === 0 || funnel[0].value === 0 ? (
             <div className="h-[200px] flex items-center justify-center">
               <p className="text-sm text-[rgb(var(--text-muted))] text-center">No sessions to display yet.</p>
@@ -196,7 +198,7 @@ export default function AnalyticsPage() {
                         {stage.value} {i > 0 && <span style={{ color: '#f59e0b' }}>({convRate}% conv.)</span>}
                       </span>
                     </div>
-                    <div className="h-8 bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] relative overflow-hidden">
+                    <div className="h-8 bg-[rgb(var(--bg-deep))] border border-[rgb(var(--border-default))] rounded-lg relative overflow-hidden">
                       <div
                         className="h-full transition-all duration-700"
                         style={{ width: `${pct}%`, background: FUNNEL_COLORS[i], opacity: 0.85 - i * 0.1 }}

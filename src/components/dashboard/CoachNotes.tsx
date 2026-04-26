@@ -54,44 +54,44 @@ export default function CoachNotes({ delay = 0 }: CoachNotesProps) {
     };
 
     return (
-        <KineticCard delay={delay} className="p-6 h-full flex flex-col">
-            <div className="flex items-center gap-3 mb-4 text-[rgb(var(--text-primary))]">
-                <MessageSquareQuote className="w-5 h-5 text-[rgb(var(--accent-primary))]" />
-                <h3 className="text-lg font-display font-bold">Coach's Notes</h3>
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 h-full flex flex-col">
+            <div className="flex items-center gap-2 mb-4">
+                <MessageSquareQuote className="w-4 h-4 text-[#FF6B6B]" />
+                <h3 className="card-title !mb-0">Coach's Notes</h3>
             </div>
 
             <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-y-auto">
                 {loading && (
-                    <p className="text-[rgb(var(--text-muted))] text-sm italic">Loading memories…</p>
+                    <p className="text-[rgb(var(--text-muted))] text-xs">Loading memories…</p>
                 )}
                 {!loading && memories.length === 0 && (
-                    <p className="text-[rgb(var(--text-muted))] text-sm italic">
+                    <p className="text-[rgb(var(--text-muted))] text-xs">
                         No coach memories yet. Complete a training session to build your profile.
                     </p>
                 )}
                 {memories.map((m) => (
                     <div
                         key={m.id}
-                        className="group bg-[rgb(var(--bg-canvas))] p-3 border border-[rgb(var(--border-subtle))] flex items-start gap-2"
+                        className="group bg-[rgb(var(--bg-deep))] p-3 border border-[rgb(var(--border-default))] rounded-lg flex items-start gap-2"
                     >
                         <div className="flex-1 min-w-0">
-                            <span className={`inline-block text-[10px] font-semibold px-1.5 py-0.5 mb-1 ${TYPE_COLOURS[m.memory_type]}`}>
+                            <span className={`inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded mb-1 ${TYPE_COLOURS[m.memory_type]}`}>
                                 {TYPE_LABELS[m.memory_type]}
                             </span>
-                            <p className="text-[rgb(var(--text-secondary))] text-sm leading-relaxed">
+                            <p className="text-[rgb(var(--text-secondary))] text-[11px] leading-relaxed">
                                 {m.memory_text}
                             </p>
                         </div>
                         <button
                             onClick={() => handleDelete(m.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--accent-primary))]"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-[rgb(var(--text-muted))] hover:text-[#FF6B6B]"
                             aria-label="Delete memory"
                         >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3 h-3" />
                         </button>
                     </div>
                 ))}
             </div>
-        </KineticCard>
+        </div>
     );
 }

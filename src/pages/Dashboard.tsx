@@ -31,7 +31,7 @@ function TransferGapWidget() {
 
     if (!isRevIntel) return null;
     if (isLoading) return (
-        <div className="card-os border border-border p-5 animate-pulse h-24 bg-bg-raised" />
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 animate-pulse h-24" />
     );
     if (!efficacy || efficacy.total_reps_analysed === 0) return null;
 
@@ -41,7 +41,7 @@ function TransferGapWidget() {
     return (
         <button
             onClick={() => navigate('/transfer-gap')}
-            className="w-full text-left card-os border border-border p-5 hover:border-accent/40 hover:bg-bg-raised transition-all group"
+            className="w-full text-left bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 hover:border-[rgba(255,107,107,0.3)] hover:bg-[rgb(var(--bg-surface-raised))] transition-all group"
         >
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export default function Dashboard() {
                     {isRevIntel && (
                         <button
                             onClick={() => setDealPrepOpen(true)}
-                            className="card-os border border-accent/30 p-5 text-left hover:border-accent/60 transition-all group"
+                            className="bg-[rgb(var(--bg-surface-raised))] border border-[rgba(255,107,107,0.3)] rounded-lg p-5 text-left hover:border-[rgba(255,107,107,0.5)] transition-all group"
                         >
                             <div className="flex items-center gap-2 mb-2">
                                 <Briefcase className="w-4 h-4 text-accent" />
@@ -139,8 +139,8 @@ export default function Dashboard() {
                         </button>
                     )}
                 </div>
-                <div className="border border-border bg-bg-surface p-10 text-center max-w-2xl mx-auto space-y-6">
-                    <div className="w-14 h-14 flex items-center justify-center bg-accent/10 border border-accent/30 mx-auto">
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-10 text-center max-w-2xl mx-auto space-y-6">
+                    <div className="w-14 h-14 flex items-center justify-center bg-[rgba(255,107,107,0.12)] border border-[rgba(255,107,107,0.3)] rounded-lg mx-auto">
                         <Zap className="w-7 h-7 text-accent" />
                     </div>
                     <div>
@@ -159,7 +159,7 @@ export default function Dashboard() {
                             <Link
                                 key={label}
                                 to={href}
-                                className="flex items-start gap-3 p-4 border border-border bg-bg-canvas hover:bg-bg-raised hover:border-accent/40 transition-all"
+                                className="flex items-start gap-3 p-3 border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-deep))] rounded-lg hover:bg-[rgb(var(--bg-surface-raised))] hover:border-[rgba(255,107,107,0.3)] transition-all"
                             >
                                 <Icon className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                                 <div>
@@ -232,7 +232,7 @@ export default function Dashboard() {
                 {isRevIntel && (
                     <button
                         onClick={() => setDealPrepOpen(true)}
-                        className="card-os border border-accent/30 p-5 text-left hover:border-accent/60 transition-all group"
+                        className="bg-[rgb(var(--bg-surface-raised))] border border-[rgba(255,107,107,0.3)] rounded-lg p-5 text-left hover:border-[rgba(255,107,107,0.5)] transition-all group"
                     >
                         <div className="flex items-center gap-2 mb-2">
                             <Briefcase className="w-4 h-4 text-accent" />
@@ -260,13 +260,13 @@ export default function Dashboard() {
                 </div>
 
                 {/* Col 2: Reps Table (Span 2) */}
-                <div className="card-os lg:col-span-2 min-h-[400px]">
+                <div className="lg:col-span-2 min-h-[400px]">
                     <RepsAtRiskTable />
                 </div>
             </div>
 
             {/* Row 2: Growth Heatmap — full width */}
-            <div className="card-os min-h-[350px]">
+            <div className="min-h-[350px]">
                 <GrowthHeatmap />
             </div>
 

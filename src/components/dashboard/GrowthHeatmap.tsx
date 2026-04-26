@@ -34,95 +34,62 @@ export default function GrowthHeatmap() {
         fetchHeatmap();
     }, []);
 
-    const getScoreColor = (score: number) => {
-        if (score >= 85) return 'bg-status-success';
-        if (score >= 65) return 'bg-status-warning';
-        return 'bg-status-danger';
-    };
+    const scoreColor = (score: number) =>
+        score >= 80 ? '#4ADE80' : score >= 60 ? '#FBBF24' : '#FF6B6B';
+    const scoreBg = (score: number) =>
+        score >= 80 ? 'rgba(74,222,128,0.12)' : score >= 60 ? 'rgba(251,191,36,0.12)' : 'rgba(255,107,107,0.12)';
 
-    if (loading) return <div className="h-48 animate-pulse bg-[rgb(var(--bg-surface-raised))] rounded-xl" />;
+    if (loading) return <div className="h-48 animate-pulse bg-[rgb(var(--bg-surface-raised))] rounded-lg" />;
 
     return (
-        <div className="card-os p-6 h-full flex flex-col bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-subtle))]">
-            <div className="flex items-center justify-between mb-6">
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 h-full flex flex-col">
+            <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-[rgb(var(--accent-primary))]" />
-                    <h3 className="text-lg font-display font-bold text-[rgb(var(--text-primary))]">
-                        Skill Growth Heatmap
-                    </h3>
+                    <Activity className="h-4 w-4 text-[#FF6B6B]" />
+                    <h3 className="card-title !mb-0">Skill Growth Heatmap</h3>
                 </div>
-                <div className="flex items-center gap-4 text-xs font-medium text-[rgb(var(--text-muted))]">
-                    <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-status-danger" /> Needs Work
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-status-warning" /> Progressing
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-status-success" /> Mastered
-                    </div>
+                <div className="flex items-center gap-3 text-[10px] text-[rgb(var(--text-muted))]">
+                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ background: '#FF6B6B' }} /> Needs Work</span>
+                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ background: '#FBBF24' }} /> Progressing</span>
+                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full" style={{ background: '#4ADE80' }} /> Mastered</span>
                 </div>
             </div>
 
             <div className="flex-1 overflow-x-auto">
-                <table className="w-full text-left border-separate border-spacing-y-2">
+                <table className="table-os w-full">
                     <thead>
-                        <tr className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider">
-                            <th className="pb-2 font-medium">Session</th>
-                            <th className="pb-2 font-medium text-center">Discovery</th>
-                            <th className="pb-2 font-medium text-center">Pitch</th>
-                            <th className="pb-2 font-medium text-center">Closing</th>
-                            <th className="pb-2 font-medium text-center">Peak Delta</th>
+                        <tr>
+                            <th>Session</th>
+                            <th className="text-center">Discovery</th>
+                            <th className="text-center">Pitch</th>
+                            <th className="text-center">Closing</th>
+                            <th className="text-center">Peak Delta</th>
                         </tr>
                     </thead>
-                    <tbody className="space-y-2">
+                    <tbody>
                         {data.map((row, i) => (
-                            <tr key={row.training_session_id} className="group">
-                                <td className="py-2">
-                                    <div className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                            <tr key={row.training_session_id}>
+                                <td>
+                                    <span className="text-[11px] font-medium" style={{ color: 'rgb(var(--text-primary))' }}>
                                         {new Date(row.session_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                    </div>
-                                    <div className="text-[10px] text-[rgb(var(--text-muted))]">
-                                        Session #{data.length - i}
-                                    </div>
+                                    </span>
+                                    <span className="block text-[9px] font-mono text-[rgb(var(--text-muted))]">#{data.length - i}</span>
                                 </td>
-                                <td className="py-2">
-                                    <div className="flex justify-center">
-                                        <div
-                                            className={`w-12 h-8 rounded-md ${getScoreColor(row.discovery_score)} opacity-80 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] font-bold text-white`}
-                                            title={`Discovery Score: ${Math.round(row.discovery_score)}%`}
+                                {[row.discovery_score, row.pitch_score, row.closing_score].map((score, si) => (
+                                    <td key={si} className="text-center">
+                                        <span
+                                            className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold"
+                                            style={{ background: scoreBg(score), color: scoreColor(score) }}
                                         >
-                                            {Math.round(row.discovery_score)}%
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="py-2">
-                                    <div className="flex justify-center">
-                                        <div
-                                            className={`w-12 h-8 rounded-md ${getScoreColor(row.pitch_score)} opacity-80 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] font-bold text-white`}
-                                            title={`Pitch Score: ${Math.round(row.pitch_score)}%`}
-                                        >
-                                            {Math.round(row.pitch_score)}%
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="py-2">
-                                    <div className="flex justify-center">
-                                        <div
-                                            className={`w-12 h-8 rounded-md ${getScoreColor(row.closing_score)} opacity-80 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] font-bold text-white`}
-                                            title={`Closing Score: ${Math.round(row.closing_score)}%`}
-                                        >
-                                            {Math.round(row.closing_score)}%
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="py-2">
-                                    <div className="flex items-center justify-center gap-2">
-                                        <div className="text-sm font-semibold text-[rgb(var(--accent-primary))]">
-                                            +{Math.round(row.peak_performance)}
-                                        </div>
-                                        <TrendingUp className="h-3 w-3 text-status-success" />
-                                    </div>
+                                            {Math.round(score)}%
+                                        </span>
+                                    </td>
+                                ))}
+                                <td className="text-center">
+                                    <span className="flex items-center justify-center gap-1 text-[11px] font-semibold text-[#FF6B6B]">
+                                        +{Math.round(row.peak_performance)}
+                                        <TrendingUp className="h-3 w-3 text-[#4ADE80]" />
+                                    </span>
                                 </td>
                             </tr>
                         ))}
@@ -130,9 +97,9 @@ export default function GrowthHeatmap() {
                 </table>
 
                 {data.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-48 text-[rgb(var(--text-muted))] border-2 border-dashed border-[rgb(var(--border-subtle))] rounded-xl">
-                        <BarChart3 className="h-8 w-8 mb-2 opacity-20" />
-                        <p className="text-sm">Complete your first session to see growth data</p>
+                    <div className="flex flex-col items-center justify-center h-32 text-[rgb(var(--text-muted))]">
+                        <BarChart3 className="h-6 w-6 mb-2 opacity-30" />
+                        <p className="text-xs">Complete your first session to see growth data</p>
                     </div>
                 )}
             </div>

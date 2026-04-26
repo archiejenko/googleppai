@@ -7,51 +7,54 @@ const mockReps = [
 ];
 
 export default function RepsAtRiskTable() {
+    const scoreColor = (s: number) => s >= 80 ? '#4ADE80' : s >= 60 ? '#FBBF24' : '#FF6B6B';
+    const scoreBg = (s: number) => s >= 80 ? 'rgba(74,222,128,0.12)' : s >= 60 ? 'rgba(251,191,36,0.12)' : 'rgba(255,107,107,0.12)';
+
     return (
-        <div className="card-os p-0 h-full flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-[rgb(var(--border-subtle))] flex justify-between items-center">
-                <h3 className="text-lg font-display font-bold text-[rgb(var(--text-primary))]">
-                    Focus Areas
-                </h3>
-                <button className="text-xs text-[rgb(var(--accent-primary))] hover:underline font-medium">View All</button>
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg h-full flex flex-col overflow-hidden">
+            <div className="px-5 py-4 border-b border-[rgb(var(--border-default))] flex justify-between items-center">
+                <h3 className="card-title !mb-0">Focus Areas</h3>
+                <button className="text-[10px] text-[#FF6B6B] hover:underline font-semibold uppercase tracking-wider">View All</button>
             </div>
 
             <div className="flex-1 overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                    <thead className="bg-[rgb(var(--bg-canvas)/0.5)] text-[rgb(var(--text-muted))]">
+                <table className="table-os w-full">
+                    <thead>
                         <tr>
-                            <th className="px-6 py-3 font-medium">Rep Name</th>
-                            <th className="px-6 py-3 font-medium">Metric Gap</th>
-                            <th className="px-6 py-3 font-medium">Score</th>
-                            <th className="px-6 py-3 font-medium">Last Active</th>
+                            <th>Rep Name</th>
+                            <th>Metric Gap</th>
+                            <th>Score</th>
+                            <th>Last Active</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-[rgb(var(--border-subtle))]">
+                    <tbody>
                         {mockReps.map((rep) => (
-                            <tr key={rep.id} className="hover:bg-[rgb(var(--bg-surface-raised))] transition-colors group">
-                                <td className="px-6 py-4 font-medium text-[rgb(var(--text-primary))] flex items-center gap-3">
-                                    <div className={`w-2 h-2 rounded-full ${rep.risk === 'High' ? 'bg-status-danger' : rep.risk === 'Medium' ? 'bg-status-warning' : 'bg-status-success'}`} />
-                                    {rep.name}
-                                </td>
-                                <td className="px-6 py-4 text-[rgb(var(--text-secondary))]">
-                                    {rep.metric}
-                                </td>
-                                <td className="px-6 py-4">
+                            <tr key={rep.id}>
+                                <td className="font-medium" style={{ color: 'rgb(var(--text-primary))' }}>
                                     <div className="flex items-center gap-2">
-                                        <div className="flex-1 w-16 h-1.5 bg-[rgb(var(--bg-canvas))] rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full ${rep.score < 50 ? 'bg-status-danger' : rep.score < 70 ? 'bg-status-warning' : 'bg-status-success'}`}
-                                                style={{ width: `${rep.score}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-xs font-mono text-[rgb(var(--text-muted))]">{rep.score}%</span>
+                                        <span
+                                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                            style={{ background: rep.risk === 'High' ? '#F87171' : rep.risk === 'Medium' ? '#FBBF24' : '#4ADE80' }}
+                                        />
+                                        {rep.name}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-[rgb(var(--text-muted))]">
-                                    {rep.activity}
+                                <td>{rep.metric}</td>
+                                <td>
+                                    <span className="pill" style={{ background: scoreBg(rep.score), color: scoreColor(rep.score) }}>
+                                        {rep.score}%
+                                    </span>
                                 </td>
+                                <td className="font-mono text-[10px]">{rep.activity}</td>
                             </tr>
                         ))}
+                        {mockReps.length === 0 && (
+                            <tr>
+                                <td colSpan={4} className="text-center py-8 text-[rgb(var(--text-muted))]">
+                                    No data yet
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
