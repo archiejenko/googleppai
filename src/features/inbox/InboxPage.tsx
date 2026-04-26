@@ -221,118 +221,183 @@ export default function InboxPage() {
   const filtered = threads.filter(t => activeFilter === 'all' || t.type === activeFilter);
   const unreadCount = threads.filter(t => t.unread).length;
 
+  /* Avatar colour palette for deterministic assignment */
+  const AVATAR_COLORS = [
+    { bg: 'var(--color-green-dim)',  text: 'var(--color-green)'  },
+    { bg: 'var(--color-blue-dim)',   text: 'var(--color-blue)'   },
+    { bg: 'var(--color-purple-dim)', text: 'var(--color-purple)' },
+    { bg: 'var(--color-amber-dim)',  text: 'var(--color-amber)'  },
+    { bg: 'var(--color-coral-dim)',  text: 'var(--color-coral)'  },
+    { bg: 'rgba(74,85,103,0.15)',    text: 'rgb(var(--text-muted))' },
+  ];
+
+  function avatarColor(name: string) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+  }
+
+  function initials(name: string) {
+    return name.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  const markAllRead = async () => {
+    if (!user?.id) return;
+    await supabase
+      .from('inbox_messages')
+      .update({ read: true })
+      .eq('recipient_id', user.id)
+      .eq('read', false);
+    setThreads(prev => prev.map(t => ({ ...t, unread: false })));
+  };
+
   return (
     <div className="pb-12">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-black text-[rgb(var(--text-primary))] uppercase tracking-tight">Inbox</h1>
-          {unreadCount > 0 && (
-            <span className="px-2 py-0.5 text-xs font-black bg-[rgb(var(--accent-primary))] text-white">
-              {unreadCount}
-            </span>
-          )}
-        </div>
+      {/* Page header */}
+      <div className="mb-5">
+        <div className="page-kicker">Coaching</div>
+        <div className="page-title">Inbox</div>
+        <div className="page-desc">Messages, coaching notes, and team communications.</div>
+      </div>
+
+      {/* Top row: unread count + mark all read */}
+      <div className="flex justify-between items-center mb-4">
+        {unreadCount > 0 && <span className="pill pill-coral">{unreadCount} unread</span>}
+        {unreadCount > 0 && (
+          <button
+            onClick={markAllRead}
+            className="text-xs text-[rgb(var(--text-muted))] underline cursor-pointer hover:text-[rgb(var(--text-primary))] transition-colors"
+          >
+            Mark all read
+          </button>
+        )}
+      </div>
+
+      {/* Filter pills */}
+      <div className="flex gap-1.5 mb-4">
+        {FILTER_TABS.map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveFilter(tab.value)}
+            className={`text-[11px] font-semibold py-1.5 px-3.5 rounded-md border transition-colors cursor-pointer
+              ${activeFilter === tab.value
+                ? 'bg-[var(--color-coral)] text-white border-[var(--color-coral)]'
+                : 'bg-transparent text-[rgb(var(--text-secondary))] border-[rgb(var(--border-default))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))]'
+              }`}
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
-        <div className="h-[500px] bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] animate-pulse" />
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg overflow-hidden">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-[72px] border-b border-[rgb(var(--border-default))] animate-pulse last:border-b-0" />
+          ))}
+        </div>
       ) : fetchError ? (
-        <div className="flex flex-col items-center justify-center py-20 border border-[rgb(var(--border-default))] text-center">
-          <p className="text-text-secondary text-sm">{fetchError}</p>
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-[rgb(var(--text-secondary))] text-xs">{fetchError}</p>
         </div>
       ) : threads.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 border border-[rgb(var(--border-default))] text-center">
-          <span className="text-4xl mb-4">📬</span>
-          <p className="text-[rgb(var(--text-primary))] font-black mb-1">No messages yet</p>
-          <p className="text-[rgb(var(--text-muted))] text-sm">Feedback and coaching notes will appear here</p>
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-[rgb(var(--text-primary))] font-semibold text-sm mb-1" style={{ fontFamily: "'Oswald', sans-serif" }}>No messages yet</p>
+          <p className="text-[rgb(var(--text-muted))] text-xs">Feedback and coaching notes will appear here</p>
         </div>
       ) : (
-        <div className="flex h-[calc(100vh-200px)] min-h-[500px] border border-[rgb(var(--border-default))]">
-          {/* Left: Thread List */}
-          <div className="w-72 flex-shrink-0 border-r border-[rgb(var(--border-default))] flex flex-col">
-            {/* Filter tabs */}
-            <div className="border-b border-[rgb(var(--border-default))] overflow-x-auto scrollbar-hide">
-              <div className="flex">
-                {FILTER_TABS.map(tab => (
-                  <button
-                    key={tab.value}
-                    onClick={() => setActiveFilter(tab.value)}
-                    className={`px-3 py-2.5 text-xs font-bold whitespace-nowrap transition-colors flex-shrink-0
-                      ${activeFilter === tab.value
-                        ? 'border-b-2 border-[rgb(var(--accent-primary))] text-[rgb(var(--accent-primary))]'
-                        : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]'
-                      }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+        <>
+          {/* Message list card */}
+          <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg overflow-hidden">
+            {filtered.map((thread) => {
+              const ac = avatarColor(thread.sender);
+              const lastMsg = thread.messages[thread.messages.length - 1];
+              return (
+                <div
+                  key={thread.id}
+                  onClick={() => handleSelect(thread)}
+                  className={`flex flex-row items-start gap-3 px-4 py-3.5 border-b border-[rgb(var(--border-default))] cursor-pointer transition-colors last:border-b-0
+                    ${thread.unread ? 'bg-[rgb(var(--bg-deep))]' : 'bg-[rgb(var(--bg-surface-raised))] hover:bg-[rgba(255,255,255,0.02)]'}`}
+                >
+                  {/* Unread dot or placeholder */}
+                  {thread.unread ? (
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-[9px]" style={{ background: 'var(--color-coral)' }} />
+                  ) : (
+                    <div className="w-1.5 h-1.5 flex-shrink-0 mt-[9px]" />
+                  )}
 
-            {/* Threads */}
-            <div className="flex-1 overflow-y-auto">
-              {filtered.map(thread => {
-                const isActive = selectedThread?.id === thread.id;
-                return (
-                  <div
-                    key={thread.id}
-                    onClick={() => handleSelect(thread)}
-                    className={`px-4 py-3 cursor-pointer border-b border-[rgb(var(--border-default)/0.5)] transition-colors flex items-start gap-3
-                      ${isActive ? 'bg-[rgb(var(--accent-primary)/0.08)] border-l-2 border-l-[rgb(var(--accent-primary))]' : 'hover:bg-[rgb(var(--bg-raised))]'}`}
+                  {/* Avatar */}
+                  <span
+                    className="w-7 h-7 rounded-md inline-flex items-center justify-center flex-shrink-0 text-[10px] font-bold"
+                    style={{ background: ac.bg, color: ac.text, fontFamily: "'Oswald', sans-serif" }}
                   >
-                    <div className="flex-shrink-0 w-8 h-8 border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-raised))] flex items-center justify-center">
-                      <span className="text-xs font-black text-[rgb(var(--text-muted))] uppercase leading-none">
-                        {thread.sender.slice(0, 2)}
-                      </span>
+                    {initials(thread.sender)}
+                  </span>
+
+                  {/* Message body */}
+                  <div className="flex-1 min-w-0">
+                    <div
+                      className="text-[9px] font-semibold uppercase tracking-wider mb-px"
+                      style={{ fontFamily: "'Oswald', sans-serif", letterSpacing: '0.1em', color: TYPE_COLORS[thread.type] || 'rgb(var(--text-muted))' }}
+                    >
+                      {thread.type === 'system' ? 'System Alerts'
+                        : thread.type === 'coaching' ? 'Coaching Notes'
+                        : thread.type === 'team' ? 'Team Announcements'
+                        : 'Rep Updates'}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <p className={`text-xs font-black truncate ${thread.unread ? 'text-[rgb(var(--text-primary))]' : 'text-[rgb(var(--text-secondary))]'}`}>
-                          {thread.sender}
-                        </p>
-                        <span className="text-[10px] text-[rgb(var(--text-muted))] flex-shrink-0 ml-1">{thread.timestamp}</span>
-                      </div>
-                      <p className="text-xs text-[rgb(var(--text-muted))] truncate">{thread.preview}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] px-1 py-0.5 font-bold" style={{ color: TYPE_COLORS[thread.type], background: `${TYPE_COLORS[thread.type]}18` }}>
-                          {thread.type}
-                        </span>
-                        {thread.unread && <span className="w-2 h-2 flex-shrink-0" style={{ background: '#ff6b6b' }} />}
-                      </div>
+                    <div className={`text-xs mb-px ${thread.unread ? 'font-semibold text-[rgb(var(--text-primary))]' : 'font-normal text-[rgb(var(--text-secondary))]'}`}>
+                      {thread.sender}
+                    </div>
+                    <div className={`text-xs mb-px ${thread.unread ? 'font-semibold text-[rgb(var(--text-primary))]' : 'font-normal text-[rgb(var(--text-secondary))]'}`}>
+                      {lastMsg?.text.slice(0, 40) || thread.preview.slice(0, 40)}
+                    </div>
+                    <div className="text-[11px] text-[rgb(var(--text-muted))] truncate">
+                      {thread.preview}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* Timestamp */}
+                  <span
+                    className="text-[10px] text-[rgb(var(--text-muted))] flex-shrink-0 whitespace-nowrap mt-0.5"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    {thread.timestamp}
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Right: Message view */}
+          {/* Selected thread detail (reply composer) - shown below list when a thread is selected */}
           {selectedThread && (
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg mt-4 overflow-hidden">
               {/* Thread header */}
-              <div className="px-6 py-4 border-b border-[rgb(var(--border-default))] flex items-center justify-between flex-shrink-0">
+              <div className="px-5 py-3 border-b border-[rgb(var(--border-default))] flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-raised))] flex items-center justify-center">
-                    <span className="text-xs font-black text-[rgb(var(--text-muted))] uppercase leading-none">
-                      {selectedThread.sender.slice(0, 2)}
-                    </span>
-                  </div>
+                  <span
+                    className="w-7 h-7 rounded-md inline-flex items-center justify-center flex-shrink-0 text-[10px] font-bold"
+                    style={{
+                      background: avatarColor(selectedThread.sender).bg,
+                      color: avatarColor(selectedThread.sender).text,
+                      fontFamily: "'Oswald', sans-serif",
+                    }}
+                  >
+                    {initials(selectedThread.sender)}
+                  </span>
                   <div>
-                    <p className="text-sm font-black text-[rgb(var(--text-primary))]">{selectedThread.sender}</p>
-                    <span className="text-xs" style={{ color: TYPE_COLORS[selectedThread.type] }}>
-                      {selectedThread.type}
-                    </span>
+                    <p className="text-xs font-semibold text-[rgb(var(--text-primary))]">{selectedThread.sender}</p>
+                    <span className="text-[10px] text-[rgb(var(--text-muted))]">{selectedThread.type}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-[rgb(var(--accent-primary))] border border-[rgb(var(--accent-primary)/0.3)] px-2 py-1">
+                <div className="flex items-center gap-1.5 text-[10px] text-[rgb(var(--text-muted))]">
                   <Link className="w-3 h-3" />
                   {selectedThread.messages.length} messages
                 </div>
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="max-h-[300px] overflow-y-auto p-5 space-y-3">
                 {selectedThread.messages.map((msg, i) => (
                   <motion.div
                     key={msg.id}
@@ -342,11 +407,11 @@ export default function InboxPage() {
                     className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}
                   >
                     <div className={`max-w-[70%] ${msg.isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                      <p className="text-xs text-[rgb(var(--text-muted))]">{msg.isMe ? 'You' : msg.from} · {msg.time}</p>
+                      <p className="text-[10px] text-[rgb(var(--text-muted))]">{msg.isMe ? 'You' : msg.from} · {msg.time}</p>
                       <div
-                        className={`px-4 py-3 text-sm leading-relaxed ${msg.isMe
-                          ? 'bg-[rgb(var(--accent-primary)/0.15)] border border-[rgb(var(--accent-primary)/0.3)] text-[rgb(var(--text-primary))]'
-                          : 'bg-[rgb(var(--bg-raised))] border border-[rgb(var(--border-default))] text-[rgb(var(--text-secondary))]'
+                        className={`px-3 py-2 text-xs leading-relaxed rounded-lg ${msg.isMe
+                          ? 'bg-[var(--color-coral-dim)] border border-[rgba(255,107,107,0.3)] text-[rgb(var(--text-primary))]'
+                          : 'bg-[rgb(var(--bg-deep))] border border-[rgb(var(--border-default))] text-[rgb(var(--text-secondary))]'
                           }`}
                       >
                         {msg.text}
@@ -359,10 +424,10 @@ export default function InboxPage() {
                               <button
                                 key={r}
                                 onClick={() => toggleReaction(msg.id, r)}
-                                className={`text-sm w-7 h-7 flex items-center justify-center border transition-colors
+                                className={`text-xs w-6 h-6 flex items-center justify-center rounded-md border transition-colors
                                   ${active
-                                    ? 'border-[rgb(var(--accent-primary)/0.6)] bg-[rgb(var(--accent-primary)/0.12)]'
-                                    : 'border-[rgb(var(--border-default))] hover:border-[rgb(var(--accent-primary)/0.4)]'
+                                    ? 'border-[rgba(255,107,107,0.6)] bg-[var(--color-coral-dim)]'
+                                    : 'border-[rgb(var(--border-default))] hover:border-[rgba(255,107,107,0.4)]'
                                   }`}
                               >
                                 {r}
@@ -377,26 +442,26 @@ export default function InboxPage() {
               </div>
 
               {/* Reply composer */}
-              <div className="p-4 border-t border-[rgb(var(--border-default))] flex items-end gap-3 flex-shrink-0">
+              <div className="p-4 border-t border-[rgb(var(--border-default))] flex items-end gap-3">
                 <textarea
                   value={reply}
                   onChange={e => setReply(e.target.value)}
                   placeholder="Reply..."
-                  rows={3}
-                  className="input-os flex-1 resize-none text-sm"
+                  rows={2}
+                  className="input-os flex-1 resize-none text-xs"
                   onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) handleSend(); }}
                 />
                 <button
-                  className="btn-primary flex items-center gap-2 px-4 py-3 self-end disabled:opacity-50"
+                  className="btn-primary flex items-center gap-2 px-3 py-2 self-end disabled:opacity-50"
                   onClick={handleSend}
                   disabled={sending || !reply.trim()}
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

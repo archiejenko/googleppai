@@ -3,36 +3,25 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../utils/supabase';
 import type { DBNotification } from './NotificationsDropdown';
+import { Trophy, AlertTriangle, Info, Star } from 'lucide-react';
 
-const TYPE_ICONS: Record<DBNotification['type'], string> = {
-  achievement:     '🏆',
-  feedback:        '💬',
-  reminder:        '📅',
-  leaderboard:     '📈',
-  goal:            '🎯',
-  library:         '📁',
-  coaching_digest: '🧠',
-};
+/* ── colour / icon mapping by notification type ── */
 
-const TYPE_COLORS: Record<DBNotification['type'], string> = {
-  achievement:     '#FFD700',
-  feedback:        '#ff6b6b',
-  reminder:        '#60a5fa',
-  leaderboard:     '#a78bfa',
-  goal:            '#34d399',
-  library:         '#f59e0b',
-  coaching_digest: '#ff6b6b',
+const TYPE_ICON_CONFIG: Record<DBNotification['type'], { icon: typeof Trophy; color: string; dimBg: string }> = {
+  achievement:     { icon: Trophy,         color: 'var(--color-green)',  dimBg: 'var(--color-green-dim)'  },
+  feedback:        { icon: AlertTriangle,  color: 'var(--color-coral)',  dimBg: 'var(--color-coral-dim)'  },
+  reminder:        { icon: Info,           color: 'var(--color-blue)',   dimBg: 'var(--color-blue-dim)'   },
+  leaderboard:     { icon: Star,           color: 'var(--color-amber)',  dimBg: 'var(--color-amber-dim)'  },
+  goal:            { icon: Trophy,         color: 'var(--color-green)',  dimBg: 'var(--color-green-dim)'  },
+  library:         { icon: Info,           color: 'var(--color-blue)',   dimBg: 'var(--color-blue-dim)'   },
+  coaching_digest: { icon: Info,           color: 'var(--color-blue)',   dimBg: 'var(--color-blue-dim)'   },
 };
 
 const FILTER_TABS = [
   { value: 'all',             label: 'All'          },
-  { value: 'coaching_digest', label: 'Coaching'     },
   { value: 'achievement',     label: 'Achievements' },
-  { value: 'feedback',        label: 'Feedback'     },
-  { value: 'reminder',        label: 'Reminders'    },
-  { value: 'leaderboard',     label: 'Leaderboard'  },
-  { value: 'goal',            label: 'Goals'        },
-  { value: 'library',         label: 'Library'      },
+  { value: 'feedback',        label: 'Alerts'       },
+  { value: 'library',         label: 'System'       },
 ];
 
 function relativeTime(iso: string): string {
@@ -84,38 +73,44 @@ export default function NotificationsPage() {
   const visible = filtered.slice(0, visibleCount);
 
   return (
-    <div className="pb-12 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-black text-[rgb(var(--text-primary))] uppercase tracking-tight">Notifications</h1>
-          {unreadCount > 0 && (
-            <span className="px-2 py-0.5 text-xs font-black bg-[rgb(var(--accent-primary))] text-white">
-              {unreadCount} unread
-            </span>
-          )}
+    <div className="pb-12">
+      {/* Page header */}
+      <div className="flex justify-between items-start mb-5">
+        <div>
+          <div className="page-kicker">Coaching</div>
+          <div className="page-title">
+            Notifications
+            {unreadCount > 0 && (
+              <span className="ml-2.5 inline-block align-middle text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[var(--color-coral)] text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+                {unreadCount} unread
+              </span>
+            )}
+          </div>
+          <div className="page-desc">Achievements, alerts, and system updates.</div>
         </div>
         {unreadCount > 0 && (
           <button
             onClick={markAllRead}
-            className="text-sm text-[rgb(var(--text-muted))] hover:text-[rgb(var(--accent-primary))] transition-colors border border-[rgb(var(--border-default))] px-4 py-2"
+            className="text-[11px] font-semibold py-1.5 px-3.5 rounded-lg border border-[rgb(var(--border-subtle))] bg-transparent text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))] transition-colors cursor-pointer"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
             Mark all as read
           </button>
         )}
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex items-center border-b border-[rgb(var(--border-default))] overflow-x-auto scrollbar-hide">
+      {/* Filter pills */}
+      <div className="flex gap-1.5 mb-5">
         {FILTER_TABS.map(tab => (
           <button
             key={tab.value}
             onClick={() => setFilter(tab.value)}
-            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-colors flex-shrink-0
+            className={`text-[11px] font-semibold py-1.5 px-3.5 rounded-md border transition-colors cursor-pointer
               ${filter === tab.value
-                ? 'border-b-2 border-[rgb(var(--accent-primary))] text-[rgb(var(--accent-primary))]'
-                : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]'
+                ? 'bg-[var(--color-coral)] text-white border-[var(--color-coral)]'
+                : 'bg-transparent text-[rgb(var(--text-secondary))] border-[rgb(var(--border-default))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))]'
               }`}
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
             {tab.label}
           </button>
@@ -124,65 +119,75 @@ export default function NotificationsPage() {
 
       {/* Loading skeleton */}
       {loading && (
-        <div className="space-y-2">
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-20 bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] animate-pulse" />
+            <div key={i} className="h-16 bg-[rgb(var(--bg-surface))] rounded-lg animate-pulse mb-3 last:mb-0" />
           ))}
         </div>
       )}
 
       {/* Notifications list */}
-      {!loading && (
-        <div className="space-y-2">
-          {visible.map((n, i) => (
-            <motion.div
-              key={n.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04 }}
-              onClick={() => markRead(n.id)}
-              className={`flex items-start gap-4 p-4 border cursor-pointer transition-colors
-                ${n.unread
-                  ? 'bg-[rgb(var(--bg-surface))] border-[rgb(var(--border-default))] border-l-2'
-                  : 'bg-[rgb(var(--bg-canvas))] border-[rgb(var(--border-default)/0.5)] hover:bg-[rgb(var(--bg-surface))]'
-                }`}
-              style={n.unread ? { borderLeftColor: TYPE_COLORS[n.type] } : undefined}
-            >
-              <div
-                className="w-10 h-10 flex items-center justify-center text-xl flex-shrink-0 border"
-                style={{ borderColor: `${TYPE_COLORS[n.type]}40`, background: `${TYPE_COLORS[n.type]}12` }}
+      {!loading && visible.length > 0 && (
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+          {visible.map((n, i) => {
+            const cfg = TYPE_ICON_CONFIG[n.type] || TYPE_ICON_CONFIG.achievement;
+            const IconComponent = cfg.icon;
+            return (
+              <motion.div
+                key={n.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className={`flex items-start gap-3 py-3 border-b border-[rgb(var(--border-default))] last:border-b-0 ${!n.unread ? 'opacity-80' : ''}`}
               >
-                {TYPE_ICONS[n.type]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                  <p className={`text-sm font-black ${n.unread ? 'text-[rgb(var(--text-primary))]' : 'text-[rgb(var(--text-secondary))]'}`}>
+                {/* Unread dot or spacer */}
+                {n.unread ? (
+                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-[7px]" style={{ background: 'var(--color-coral)' }} />
+                ) : (
+                  <div className="w-1.5 flex-shrink-0" />
+                )}
+
+                {/* Type icon */}
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: cfg.dimBg }}
+                >
+                  <IconComponent size={12} style={{ color: cfg.color }} />
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs leading-snug ${n.unread ? 'font-semibold text-[rgb(var(--text-primary))]' : 'font-medium text-[rgb(var(--text-primary))]'}`}>
                     {n.title}
                   </p>
-                  <span className="text-xs text-[rgb(var(--text-muted))] flex-shrink-0">{relativeTime(n.created_at)}</span>
+                  <p className="text-[11px] text-[rgb(var(--text-secondary))] leading-snug mt-0.5">{n.body}</p>
+                  <p className="text-[10px] text-[rgb(var(--text-muted))] mt-0.5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {relativeTime(n.created_at)}
+                  </p>
                 </div>
-                <p className="text-sm text-[rgb(var(--text-muted))] mt-1 leading-relaxed">{n.body}</p>
-                <span
-                  className="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 uppercase tracking-widest"
-                  style={{ color: TYPE_COLORS[n.type], background: `${TYPE_COLORS[n.type]}18` }}
-                >
-                  {n.type}
-                </span>
-              </div>
-              {n.unread && (
-                <span className="w-2.5 h-2.5 flex-shrink-0 mt-1.5" style={{ background: '#ff6b6b' }} />
-              )}
-            </motion.div>
-          ))}
+
+                {/* Actions */}
+                <div className="flex flex-col gap-1 items-end flex-shrink-0 pt-0.5">
+                  <button onClick={() => markRead(n.id)} className="text-[10px] font-medium text-[var(--color-coral)] hover:underline cursor-pointer">
+                    View
+                  </button>
+                  <button onClick={() => markRead(n.id)} className="text-[10px] font-medium text-[var(--color-coral)] hover:underline cursor-pointer">
+                    Dismiss
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
       {/* Load more */}
       {!loading && visibleCount < filtered.length && (
-        <div className="flex justify-center">
+        <div className="flex justify-center mt-5">
           <button
             onClick={() => setVisibleCount(c => c + 10)}
-            className="btn-ghost border border-[rgb(var(--border-default))] px-8 py-3 text-sm"
+            className="text-[11px] font-semibold py-1.5 px-3.5 rounded-lg border border-[rgb(var(--border-subtle))] bg-transparent text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))] transition-colors cursor-pointer"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
             Load more ({filtered.length - visibleCount} remaining)
           </button>
@@ -191,9 +196,8 @@ export default function NotificationsPage() {
 
       {/* Empty state */}
       {!loading && visible.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <span className="text-4xl mb-4">🔔</span>
-          <p className="text-[rgb(var(--text-muted))]">
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-[rgb(var(--text-muted))] text-xs">
             {filter === 'all' ? 'No notifications yet' : 'No notifications in this category'}
           </p>
         </div>

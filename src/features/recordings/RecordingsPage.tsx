@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Share2, BookOpen, ChevronLeft, Clock, Pause } from 'lucide-react';
+import { Play, Share2, BookOpen, ChevronLeft, Clock, Pause, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../utils/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -121,7 +121,7 @@ function AudioPlayer({ recording }: { recording: PitchRecord }) {
   const seed = recording.id.charCodeAt(0) + recording.id.charCodeAt(3);
 
   return (
-    <div className="bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] p-4">
+    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
       <div className="relative cursor-pointer mb-3" onClick={e => {
         const rect = e.currentTarget.getBoundingClientRect();
         seek(((e.clientX - rect.left) / rect.width) * 100);
@@ -134,7 +134,7 @@ function AudioPlayer({ recording }: { recording: PitchRecord }) {
         <button
           onClick={recording.audio_url ? togglePlay : undefined}
           disabled={!recording.audio_url}
-          className="w-10 h-10 flex items-center justify-center bg-[rgb(var(--accent-primary))] text-white disabled:opacity-40"
+          className="w-10 h-10 rounded-full border-[1.5px] border-[#FF6B6B] bg-transparent flex items-center justify-center text-[#FF6B6B] hover:bg-[rgba(255,107,107,0.12)] disabled:opacity-40 transition-colors"
         >
           {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
         </button>
@@ -171,21 +171,21 @@ function RecordingDetail({ recording, onBack }: { recording: PitchRecord; onBack
 
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-black text-[rgb(var(--text-primary))]">{recording.title}</h2>
-          <p className="text-sm text-[rgb(var(--text-muted))] mt-0.5">{recording.date}</p>
+          <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] uppercase tracking-tight" style={{ fontFamily: "'Oswald', sans-serif" }}>{recording.title}</h2>
+          <p className="text-xs text-[rgb(var(--text-muted))] mt-0.5">{recording.date}</p>
         </div>
         <div className="flex items-center gap-2">
           <ScoreBadge score={recording.score} size="lg" showLabel />
-          <button className="btn-ghost flex items-center gap-2 text-xs border border-[rgb(var(--border-default))] px-3 py-2">
+          <button className="btn-ghost flex items-center gap-2 text-xs border border-[rgb(var(--border-default))] rounded-lg px-3 py-2">
             <Share2 className="w-3.5 h-3.5" /> Share
           </button>
-          <button className="btn-ghost flex items-center gap-2 text-xs border border-[rgb(var(--border-default))] px-3 py-2">
+          <button className="btn-ghost flex items-center gap-2 text-xs border border-[rgb(var(--border-default))] rounded-lg px-3 py-2">
             <BookOpen className="w-3.5 h-3.5" /> Add to Library
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
           <AudioPlayer recording={recording} />
 
@@ -194,8 +194,9 @@ function RecordingDetail({ recording, onBack }: { recording: PitchRecord; onBack
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-colors
-                  ${activeTab === tab ? 'border-b-2 border-[rgb(var(--accent-primary))] text-[rgb(var(--accent-primary))]' : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]'}`}
+                className={`px-4 py-2 text-xs font-semibold uppercase tracking-widest transition-colors
+                  ${activeTab === tab ? 'border-b-2 border-[#FF6B6B] text-[#FF6B6B]' : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]'}`}
+                style={{ fontFamily: "'Oswald', sans-serif" }}
               >
                 {tab}
               </button>
@@ -208,8 +209,8 @@ function RecordingDetail({ recording, onBack }: { recording: PitchRecord; onBack
                 ? <p className="text-sm text-[rgb(var(--text-muted))]">No transcript available.</p>
                 : recording.transcript.map((line, i) => (
                   <div key={i} className={`flex gap-3 ${line.speaker === 'You' ? 'flex-row-reverse' : ''}`}>
-                    <div className={`flex-1 px-3 py-2 text-sm ${line.speaker === 'You'
-                      ? 'bg-[rgb(var(--accent-primary)/0.1)] border-l-2 border-[rgb(var(--accent-primary))] text-[rgb(var(--text-secondary))]'
+                    <div className={`flex-1 px-3 py-2 text-sm rounded-lg ${line.speaker === 'You'
+                      ? 'bg-[rgba(255,107,107,0.1)] border-l-2 border-[#FF6B6B] text-[rgb(var(--text-secondary))]'
                       : 'bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] text-[rgb(var(--text-muted))]'
                     }`}>
                       <span className="font-bold text-xs block mb-0.5">{line.speaker}</span>
@@ -226,11 +227,11 @@ function RecordingDetail({ recording, onBack }: { recording: PitchRecord; onBack
                 : recording.skillBreakdown.map(s => (
                   <div key={s.skill}>
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="font-bold text-[rgb(var(--text-secondary))]">{s.skill}</span>
-                      <span className="font-black" style={{ color: s.score >= 80 ? '#22c55e' : s.score >= 60 ? '#f59e0b' : '#ef4444' }}>{s.score}</span>
+                      <span className="font-semibold text-[rgb(var(--text-secondary))]">{s.skill}</span>
+                      <span className="font-semibold" style={{ color: s.score >= 80 ? '#4ADE80' : s.score >= 60 ? '#FBBF24' : '#FF6B6B' }}>{s.score}</span>
                     </div>
-                    <div className="h-2 bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))]">
-                      <div className="h-full" style={{ width: `${s.score}%`, background: s.score >= 80 ? '#22c55e' : s.score >= 60 ? '#f59e0b' : '#ef4444' }} />
+                    <div className="h-bar">
+                      <div className="h-bar-fill" style={{ width: `${s.score}%`, background: s.score >= 80 ? '#4ADE80' : s.score >= 60 ? '#FBBF24' : '#FF6B6B' }} />
                     </div>
                   </div>
                 ))
@@ -241,33 +242,33 @@ function RecordingDetail({ recording, onBack }: { recording: PitchRecord; onBack
 
         <div className="space-y-4">
           {recording.coachFeedback && (
-            <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-4">
-              <p className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-3">AI Coaching Feedback</p>
-              <p className="text-sm text-[rgb(var(--text-secondary))] leading-relaxed">{recording.coachFeedback}</p>
+            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+              <div className="card-title">AI Coaching Feedback</div>
+              <p className="text-xs text-[rgb(var(--text-secondary))] leading-relaxed">{recording.coachFeedback}</p>
             </div>
           )}
           {recording.coachNotes.length > 0 && (
-            <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-4">
-              <p className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-3">Weaknesses to Address</p>
+            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+              <div className="card-title">Weaknesses to Address</div>
               <div className="space-y-3">
                 {recording.coachNotes.map((note, i) => (
-                  <div key={i} className="border-l-2 border-[#f59e0b] pl-3">
+                  <div key={i} className="border-l-2 border-[#FBBF24] pl-3">
                     <p className="text-xs text-[rgb(var(--text-secondary))] mt-0.5">{note.note}</p>
                   </div>
                 ))}
               </div>
             </div>
           )}
-          <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-4">
-            <p className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-3">Skills Assessed</p>
+          <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+            <div className="card-title">Skills Assessed</div>
             <div className="flex flex-wrap gap-2">
               {recording.skills.map(s => (
-                <span key={s} className="px-2 py-1 text-xs font-bold border border-[rgb(var(--accent-primary)/0.3)] text-[rgb(var(--accent-primary))]">{s}</span>
+                <span key={s} className="px-2 py-1 text-xs font-semibold rounded-md border border-[rgba(255,107,107,0.3)] text-[#FF6B6B]">{s}</span>
               ))}
             </div>
           </div>
-          <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-4">
-            <p className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-3">Overall Score</p>
+          <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+            <div className="card-title">Overall Score</div>
             <ScoreBadge score={recording.score} size="lg" showLabel />
           </div>
         </div>
@@ -331,31 +332,55 @@ export default function RecordingsPage() {
     );
   }
 
+  // Helper: get score pill class
+  const pillClass = (score: number) =>
+    score >= 80 ? 'pill pill-green' : score >= 60 ? 'pill pill-amber' : 'pill pill-coral';
+
+  // Compute summary stats from loaded recordings
+  const totalRecordings = recordings.length;
+  const avgScore = totalRecordings > 0 ? Math.round(recordings.reduce((sum, r) => sum + r.score, 0) / totalRecordings) : 0;
+  const avgScoreColor = avgScore >= 80 ? '#4ADE80' : avgScore >= 60 ? '#FBBF24' : '#FF6B6B';
+
   return (
-    <div className="pb-12 space-y-6">
+    <div className="pb-12 space-y-5">
+      {/* Page header */}
       <div>
-        <h1 className="text-2xl font-black text-[rgb(var(--text-primary))] uppercase tracking-tight">Recordings</h1>
-        <p className="text-sm text-[rgb(var(--text-muted))] mt-0.5">Review and analyse your call recordings</p>
+        <div className="page-kicker">Coaching</div>
+        <div className="page-title">Recordings</div>
+        <div className="page-desc">Session recordings, playback, and review.</div>
       </div>
 
-      <div className="space-y-3">
-        <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search recordings..."
-          filters={SCORE_FILTERS}
-          activeFilter={scoreFilter}
-          onFilterChange={setScoreFilter}
-          tags={allSkills}
-          activeTags={skillFilter}
-          onTagToggle={tag => setSkillFilter(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
-        />
-      </div>
+      {/* Top Stats Row */}
+      {!loading && totalRecordings > 0 && (
+        <div className="flex items-baseline gap-7">
+          <div>
+            <span className="text-[22px] font-semibold text-[rgb(var(--text-primary))]" style={{ fontFamily: "'Oswald', sans-serif", lineHeight: 1 }}>{totalRecordings}</span>
+            <span className="text-[11px] text-[rgb(var(--text-muted))] ml-1.5">Total Recordings</span>
+          </div>
+          <div>
+            <span className="text-[22px] font-semibold" style={{ fontFamily: "'Oswald', sans-serif", lineHeight: 1, color: avgScoreColor }}>{avgScore}%</span>
+            <span className="text-[11px] text-[rgb(var(--text-muted))] ml-1.5">Avg Score</span>
+          </div>
+        </div>
+      )}
+
+      {/* Filter Bar */}
+      <FilterBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search recordings..."
+        filters={SCORE_FILTERS}
+        activeFilter={scoreFilter}
+        onFilterChange={setScoreFilter}
+        tags={allSkills}
+        activeTags={skillFilter}
+        onTagToggle={tag => setSkillFilter(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
+      />
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="space-y-2">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-40 bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] animate-pulse" />
+            <div key={i} className="h-16 bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -366,48 +391,56 @@ export default function RecordingsPage() {
           action={{ label: 'Start Training', onClick: () => window.location.href = '/training' }}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.map((rec, i) => {
-            const seed = rec.id.charCodeAt(0) + (rec.id.charCodeAt(3) || 0);
-            return (
-              <motion.div
-                key={rec.id}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                onClick={() => setSelectedRecording(rec)}
-                className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-4 cursor-pointer
-                  hover:border-[rgb(var(--accent-primary)/0.4)] transition-colors group relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-[rgb(var(--accent-primary)/0)] group-hover:bg-[rgb(var(--accent-primary)/0.04)] transition-colors pointer-events-none" />
-                <div className="absolute top-3 right-3">
-                  <ScoreBadge score={rec.score} size="sm" />
+        <div className="space-y-2">
+          {filtered.map((rec, i) => (
+            <motion.div
+              key={rec.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.03 }}
+              onClick={() => setSelectedRecording(rec)}
+              className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg
+                px-5 py-3.5 flex items-center justify-between cursor-pointer
+                hover:bg-[rgb(var(--bg-deep))] transition-colors"
+            >
+              {/* Left: play + avatar + name/scenario */}
+              <div className="flex items-center gap-3">
+                <button
+                  className="w-8 h-8 rounded-full border-[1.5px] border-[#FF6B6B] bg-transparent flex items-center justify-center flex-shrink-0 hover:bg-[rgba(255,107,107,0.12)] transition-colors"
+                  onClick={e => { e.stopPropagation(); setSelectedRecording(rec); }}
+                >
+                  <Play className="w-3.5 h-3.5 text-[#FF6B6B]" fill="#FF6B6B" />
+                </button>
+                <div className="w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                  style={{
+                    fontFamily: "'Oswald', sans-serif",
+                    background: rec.score >= 80 ? 'rgba(74,222,128,0.12)' : rec.score >= 60 ? 'rgba(251,191,36,0.12)' : 'rgba(255,107,107,0.12)',
+                    color: rec.score >= 80 ? '#4ADE80' : rec.score >= 60 ? '#FBBF24' : '#FF6B6B',
+                  }}
+                >
+                  {rec.title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                 </div>
-
-                <h3 className="text-sm font-black text-[rgb(var(--text-primary))] group-hover:text-[rgb(var(--accent-primary))] transition-colors pr-16 leading-tight mb-1">
-                  {rec.title}
-                </h3>
-                <p className="text-xs text-[rgb(var(--text-muted))] mb-3">{rec.date}</p>
-
-                <div className="mb-3 relative">
-                  <Waveform seed={seed} height={40} color={rec.score >= 80 ? '#22c55e' : rec.score >= 60 ? '#f59e0b' : '#ef4444'} />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="w-10 h-10 bg-[rgb(var(--accent-primary))] flex items-center justify-center">
-                      <Play className="w-5 h-5 text-white ml-0.5" />
-                    </div>
-                  </div>
+                <div>
+                  <div className="text-xs font-medium text-[rgb(var(--text-primary))]">{rec.title}</div>
+                  <div className="text-[11px] text-[rgb(var(--text-secondary))]">{rec.scenario}</div>
                 </div>
+              </div>
 
-                <div className="flex flex-wrap gap-1">
-                  {rec.skills.slice(0, 4).map(s => (
-                    <span key={s} className="text-[10px] px-1.5 py-0.5 border border-[rgb(var(--border-default))] text-[rgb(var(--text-muted))] font-bold">
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-            );
-          })}
+              {/* Middle: date + skills */}
+              <div className="flex items-center gap-4">
+                {rec.skills.length > 0 && (
+                  <span className="text-[11px] text-[rgb(var(--text-muted))]">{rec.skills.slice(0, 2).join(' / ')}</span>
+                )}
+                <span className="text-[10px] text-[rgb(var(--text-muted))]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{rec.date}</span>
+              </div>
+
+              {/* Right: score pill */}
+              <div className="flex items-center gap-3">
+                <span className={pillClass(rec.score)}>{rec.score}%</span>
+                <Star className="w-4 h-4 text-[rgb(var(--text-muted))]" />
+              </div>
+            </motion.div>
+          ))}
         </div>
       )}
     </div>

@@ -116,12 +116,12 @@ function BookSessionModal({ onClose, onBooked, userId }: BookSessionModalProps) 
         initial={{ opacity: 0, scale: 0.96, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 20 }}
-        className="relative w-full max-w-md bg-[rgb(var(--bg-surface))] border-2 border-[rgb(var(--border-default))] p-8 z-10"
+        className="relative w-full max-w-md bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-8 z-10"
       >
         <button onClick={onClose} className="absolute top-4 right-4 p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]">
           <X className="w-5 h-5" />
         </button>
-        <h2 className="text-xl font-black uppercase tracking-tight mb-6">Book a Session</h2>
+        <h2 className="text-xl font-semibold uppercase tracking-tight mb-6" style={{ fontFamily: "'Oswald', sans-serif" }}>Book a Session</h2>
 
         <div className="space-y-4">
           <div>
@@ -181,10 +181,10 @@ function BookSessionModal({ onClose, onBooked, userId }: BookSessionModalProps) 
         </div>
 
         <div className="flex gap-3 mt-6">
-          <button className="btn-primary flex-1 disabled:opacity-50" onClick={handleBook} disabled={saving}>
+          <button className="btn-primary flex-1 rounded-lg disabled:opacity-50" onClick={handleBook} disabled={saving}>
             {saving ? 'Booking...' : 'Book Session'}
           </button>
-          <button className="btn-ghost flex-1 border border-[rgb(var(--border-default))]" onClick={onClose}>Cancel</button>
+          <button className="btn-ghost flex-1 rounded-lg border border-[rgb(var(--border-default))]" onClick={onClose}>Cancel</button>
         </div>
       </motion.div>
     </div>
@@ -276,29 +276,38 @@ export default function SchedulePage() {
   const currentDayLabel = currentDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const currentDayEvents = getEventsForDay(currentDayStr);
 
+  // Today's events for the agenda panel
+  const todayEvents = getEventsForDay(todayStr);
+
   return (
-    <div className="pb-12 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="pb-12 space-y-5">
+      {/* Page Header */}
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-black text-[rgb(var(--text-primary))] uppercase tracking-tight">Schedule</h1>
-          <p className="text-sm text-[rgb(var(--text-muted))] mt-0.5">Coaching sessions and practice calendar</p>
+          <div className="page-kicker">Coaching</div>
+          <div className="page-title">Schedule</div>
+          <div className="page-desc">Weekly calendar, session planning, and availability.</div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex border border-[rgb(var(--border-default))]">
+        <div className="flex gap-2 items-center">
+          <div className="flex rounded-lg border border-[rgb(var(--border-default))] overflow-hidden">
             {(['month', 'week', 'day'] as const).map(v => (
               <button
                 key={v}
                 onClick={() => setView(v)}
-                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-widest transition-colors
-                  ${view === v ? 'bg-[rgb(var(--accent-primary))] text-white' : 'text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--bg-raised))]'}`}
+                className={`px-3 py-1.5 text-[11px] font-semibold transition-colors
+                  ${view === v ? 'bg-[rgba(255,107,107,0.12)] text-[#FF6B6B]' : 'text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))]'}`}
+                style={{ fontFamily: "'DM Sans', sans-serif" }}
               >
-                {v}
+                {v.charAt(0).toUpperCase() + v.slice(1)}
               </button>
             ))}
           </div>
-          <button onClick={() => setShowBookModal(true)} className="btn-primary flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Book Session
+          <button
+            onClick={() => setShowBookModal(true)}
+            className="text-[11px] font-semibold px-3.5 py-[7px] rounded-lg bg-[#FF6B6B] text-white border border-[#FF6B6B] hover:opacity-90 transition-opacity flex items-center gap-2"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+          >
+            <Plus className="w-3.5 h-3.5" /> New Session
           </button>
         </div>
       </div>
@@ -307,33 +316,33 @@ export default function SchedulePage() {
       <div className="flex items-center gap-4">
         {(Object.entries(EVENT_COLORS) as [EventType, string][]).map(([type, color]) => (
           <span key={type} className="flex items-center gap-1.5 text-xs text-[rgb(var(--text-muted))]">
-            <span className="w-3 h-3 flex-shrink-0" style={{ background: color }} />
+            <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: color }} />
             {EVENT_LABELS[type]}
           </span>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar — conditional on view */}
-        <div className="lg:col-span-2 bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))]">
+      {/* Calendar + Agenda: 2fr / 1fr */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
+
+        {/* Left: Calendar */}
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
 
           {/* ── MONTH VIEW ── */}
           {view === 'month' && (<>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[rgb(var(--border-default))]">
-              <button onClick={prevMonth} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]">
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={prevMonth} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] transition-colors">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <h2 className="font-black text-[rgb(var(--text-primary))] uppercase tracking-tight">
-                {MONTH_NAMES[month]} {year}
-              </h2>
-              <button onClick={nextMonth} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]">
+              <div className="card-title mb-0">{MONTH_NAMES[month]} {year}</div>
+              <button onClick={nextMonth} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] transition-colors">
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
 
             <div className="grid grid-cols-7 border-b border-[rgb(var(--border-default))]">
               {DAYS.map(d => (
-                <div key={d} className="py-2 text-center text-xs font-black text-[rgb(var(--text-muted))] uppercase tracking-widest">
+                <div key={d} className="py-2 text-center text-[11px] font-semibold text-[rgb(var(--text-secondary))] uppercase tracking-wide" style={{ fontFamily: "'Oswald', sans-serif" }}>
                   {d}
                 </div>
               ))}
@@ -341,7 +350,7 @@ export default function SchedulePage() {
 
             <div className="grid grid-cols-7">
               {Array.from({ length: firstDay }).map((_, i) => (
-                <div key={`e-${i}`} className="h-20 border-r border-b border-[rgb(var(--border-default)/0.4)] bg-[rgb(var(--bg-canvas)/0.4)]" />
+                <div key={`e-${i}`} className="h-20 border-r border-b border-[rgb(var(--border-default))] bg-[rgb(var(--bg-deep))]" style={{ borderColor: 'rgb(var(--border-default) / 0.4)' }} />
               ))}
 
               {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -355,18 +364,22 @@ export default function SchedulePage() {
                   <div
                     key={ds}
                     onClick={() => setSelectedDay(ds)}
-                    className={`h-20 border-r border-b border-[rgb(var(--border-default)/0.4)] p-1.5 cursor-pointer transition-colors
-                      ${isSelected ? 'bg-[rgb(var(--accent-primary)/0.1)]' : 'hover:bg-[rgb(var(--bg-raised)/0.5)]'}`}
+                    className={`h-20 border-r border-b p-1.5 cursor-pointer transition-colors
+                      ${isToday ? 'bg-[rgba(255,107,107,0.03)]' : ''}
+                      ${isSelected ? 'bg-[rgba(255,107,107,0.08)]' : 'hover:bg-[rgba(255,255,255,0.02)]'}`}
+                    style={{ borderColor: isToday ? 'rgba(255,107,107,0.15)' : 'rgb(30 42 56 / 0.4)' }}
                   >
-                    <div className={`text-xs font-black w-6 h-6 flex items-center justify-center mb-1
-                      ${isToday ? 'bg-[rgb(var(--accent-primary))] text-white' : isSelected ? 'text-[rgb(var(--accent-primary))]' : 'text-[rgb(var(--text-muted))]'}`}>
+                    <div className={`text-xs font-semibold w-6 h-6 flex items-center justify-center mb-1 rounded
+                      ${isToday ? 'bg-[#FF6B6B] text-white' : isSelected ? 'text-[#FF6B6B]' : 'text-[rgb(var(--text-muted))]'}`}
+                      style={{ fontFamily: "'Oswald', sans-serif" }}
+                    >
                       {day}
                     </div>
                     <div className="space-y-0.5">
                       {evts.slice(0, 2).map(evt => (
                         <div
                           key={evt.id}
-                          className="text-[10px] font-bold px-1 py-0.5 truncate leading-tight"
+                          className="text-[10px] font-medium px-1.5 py-0.5 truncate leading-tight rounded"
                           style={{ background: `${EVENT_COLORS[evt.type]}22`, color: EVENT_COLORS[evt.type], borderLeft: `2px solid ${EVENT_COLORS[evt.type]}` }}
                         >
                           {evt.title}
@@ -384,14 +397,12 @@ export default function SchedulePage() {
 
           {/* ── WEEK VIEW ── */}
           {view === 'week' && (<>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[rgb(var(--border-default))]">
-              <button onClick={prevWeek} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]">
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={prevWeek} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] transition-colors">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <h2 className="font-black text-[rgb(var(--text-primary))] uppercase tracking-tight text-sm">
-                {weekLabel}
-              </h2>
-              <button onClick={nextWeek} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]">
+              <div className="card-title mb-0 text-sm">{weekLabel}</div>
+              <button onClick={nextWeek} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] transition-colors">
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
@@ -404,11 +415,13 @@ export default function SchedulePage() {
                   <div
                     key={ds}
                     onClick={() => { setSelectedDay(ds); }}
-                    className="py-3 text-center cursor-pointer hover:bg-[rgb(var(--bg-raised)/0.5)] transition-colors"
+                    className="py-3 text-center cursor-pointer hover:bg-[rgba(255,255,255,0.02)] transition-colors"
                   >
-                    <div className="text-[10px] font-black text-[rgb(var(--text-muted))] uppercase tracking-widest">{WEEK_DAYS[i]}</div>
-                    <div className={`text-sm font-black mt-0.5 w-7 h-7 flex items-center justify-center mx-auto
-                      ${isToday ? 'bg-[rgb(var(--accent-primary))] text-white' : 'text-[rgb(var(--text-primary))]'}`}>
+                    <div className="text-[10px] font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wide" style={{ fontFamily: "'Oswald', sans-serif" }}>{WEEK_DAYS[i]}</div>
+                    <div className={`text-sm font-semibold mt-0.5 w-7 h-7 flex items-center justify-center mx-auto rounded
+                      ${isToday ? 'bg-[#FF6B6B] text-white' : 'text-[rgb(var(--text-primary))]'}`}
+                      style={{ fontFamily: "'Oswald', sans-serif" }}
+                    >
                       {d.getDate()}
                     </div>
                   </div>
@@ -421,12 +434,15 @@ export default function SchedulePage() {
                 const ds = toDateStr(d);
                 const evts = getEventsForDay(ds);
                 const isSelected = selectedDay === ds;
+                const isToday = ds === todayStr;
                 return (
                   <div
                     key={ds}
                     onClick={() => setSelectedDay(ds)}
-                    className={`border-r border-[rgb(var(--border-default)/0.4)] p-1.5 cursor-pointer transition-colors min-h-[320px]
-                      ${isSelected ? 'bg-[rgb(var(--accent-primary)/0.06)]' : 'hover:bg-[rgb(var(--bg-raised)/0.3)]'}`}
+                    className={`border-r p-1.5 cursor-pointer transition-colors min-h-[320px]
+                      ${isToday ? 'bg-[rgba(255,107,107,0.03)]' : ''}
+                      ${isSelected ? 'bg-[rgba(255,107,107,0.06)]' : 'hover:bg-[rgba(255,255,255,0.02)]'}`}
+                    style={{ borderColor: isToday ? 'rgba(255,107,107,0.15)' : 'rgb(30 42 56 / 0.4)' }}
                   >
                     {evts.length === 0 ? (
                       <p className="text-[9px] text-[rgb(var(--text-muted))] text-center mt-4 opacity-50">No sessions</p>
@@ -435,10 +451,10 @@ export default function SchedulePage() {
                         {evts.map(evt => (
                           <div
                             key={evt.id}
-                            className="p-1.5 text-[10px] font-bold leading-tight"
+                            className="p-1.5 text-[10px] font-medium leading-tight rounded"
                             style={{ background: `${EVENT_COLORS[evt.type]}22`, color: EVENT_COLORS[evt.type], borderLeft: `2px solid ${EVENT_COLORS[evt.type]}` }}
                           >
-                            <div className="font-mono opacity-70 mb-0.5">{evt.startTime}</div>
+                            <div className="opacity-70 mb-0.5" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px' }}>{evt.startTime}</div>
                             <div className="truncate">{evt.title}</div>
                           </div>
                         ))}
@@ -452,26 +468,25 @@ export default function SchedulePage() {
 
           {/* ── DAY VIEW ── */}
           {view === 'day' && (<>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[rgb(var(--border-default))]">
-              <button onClick={prevDay} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]">
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={prevDay} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] transition-colors">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <h2 className="font-black text-[rgb(var(--text-primary))] uppercase tracking-tight text-sm">
-                {currentDayLabel}
-              </h2>
-              <button onClick={nextDay} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]">
+              <div className="card-title mb-0 text-sm">{currentDayLabel}</div>
+              <button onClick={nextDay} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] transition-colors">
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 min-h-[360px]">
+            <div className="min-h-[360px]">
               {currentDayEvents.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
                   <Clock className="w-8 h-8 text-[rgb(var(--text-muted))] opacity-30" />
                   <p className="text-sm text-[rgb(var(--text-muted))]">No sessions scheduled</p>
                   <button
                     onClick={() => setShowBookModal(true)}
-                    className="btn-primary text-xs flex items-center gap-1.5"
+                    className="text-[11px] font-semibold px-3.5 py-[7px] rounded-lg bg-[#FF6B6B] text-white border border-[#FF6B6B] hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                    style={{ fontFamily: "'DM Sans', sans-serif" }}
                   >
                     <Plus className="w-3 h-3" /> Schedule a session
                   </button>
@@ -479,17 +494,17 @@ export default function SchedulePage() {
               ) : (
                 <div className="space-y-3">
                   {currentDayEvents.map(evt => (
-                    <div key={evt.id} className="flex items-start gap-4 p-4 border border-[rgb(var(--border-default))] hover:bg-[rgb(var(--bg-raised)/0.4)] transition-colors">
-                      <div className="text-xs font-mono text-[rgb(var(--text-muted))] w-20 shrink-0 pt-0.5">
+                    <div key={evt.id} className="flex items-start gap-4 p-4 border border-[rgb(var(--border-default))] rounded-lg hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                      <div className="text-xs text-[rgb(var(--text-muted))] w-20 shrink-0 pt-0.5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
                         {evt.startTime}<br/>
                         <span className="opacity-60">{evt.endTime}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-black text-[rgb(var(--text-primary))]">{evt.title}</p>
+                          <p className="text-sm font-semibold text-[rgb(var(--text-primary))]">{evt.title}</p>
                           <span
-                            className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5"
-                            style={{ background: `${EVENT_COLORS[evt.type]}22`, color: EVENT_COLORS[evt.type] }}
+                            className="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                            style={{ background: `${EVENT_COLORS[evt.type]}22`, color: EVENT_COLORS[evt.type], fontFamily: "'DM Sans', sans-serif" }}
                           >
                             {EVENT_LABELS[evt.type]}
                           </span>
@@ -497,7 +512,8 @@ export default function SchedulePage() {
                         {evt.notes && <p className="text-xs text-[rgb(var(--text-muted))] italic mb-2">{evt.notes}</p>}
                         <button
                           onClick={() => navigate(`/training?scenario=${EVENT_SCENARIO[evt.type]}&title=${encodeURIComponent(evt.title)}`)}
-                          className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[rgb(var(--accent-primary))] hover:opacity-80 transition-opacity"
+                          className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#FF6B6B] hover:opacity-80 transition-opacity"
+                          style={{ fontFamily: "'Oswald', sans-serif" }}
                         >
                           <Zap className="w-3 h-3" /> Start Training
                         </button>
@@ -510,38 +526,56 @@ export default function SchedulePage() {
           </>)}
         </div>
 
-        {/* Right panel */}
+        {/* Right: Today's Agenda + Selected Day */}
         <div className="space-y-4">
+          {/* Today's Agenda */}
+          <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+            <div className="card-title">Today's Agenda</div>
+            {todayEvents.length === 0 ? (
+              <p className="text-xs text-[rgb(var(--text-muted))] py-4 text-center">No sessions today</p>
+            ) : (
+              <div>
+                {todayEvents.map(evt => (
+                  <div key={evt.id} className="flex items-center gap-2.5 py-3 border-b border-[rgb(var(--border-default))] last:border-b-0">
+                    <div className="text-[11px] font-semibold text-[rgb(var(--text-primary))] min-w-[42px]" style={{ fontFamily: "'Oswald', sans-serif" }}>{evt.startTime}</div>
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: EVENT_COLORS[evt.type] }} />
+                    <div className="text-xs text-[rgb(var(--text-secondary))]">{evt.title}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Selected day events */}
-          <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-4">
-            <p className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-3">
-              {selectedDay || 'Select a day'}
-            </p>
+          <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+            <div className="card-title">{selectedDay || 'Select a day'}</div>
             {selectedEvents.length === 0 ? (
               <p className="text-xs text-[rgb(var(--text-muted))] py-4 text-center">No events</p>
             ) : (
               <div className="space-y-3">
                 {selectedEvents.map(evt => (
                   <div key={evt.id} className="border-l-2 pl-3 py-2 space-y-1.5" style={{ borderColor: EVENT_COLORS[evt.type] }}>
-                    <p className="text-sm font-black text-[rgb(var(--text-primary))]">{evt.title}</p>
+                    <p className="text-sm font-semibold text-[rgb(var(--text-primary))]">{evt.title}</p>
                     <div className="flex items-center gap-3 text-xs text-[rgb(var(--text-muted))]">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />{evt.startTime} – {evt.endTime}
                       </span>
                       {evt.with && <span className="flex items-center gap-1"><Users className="w-3 h-3" />{evt.with}</span>}
-                      {evt.recurring && <RefreshCw className="w-3 h-3 text-[rgb(var(--accent-primary))]" />}
+                      {evt.recurring && <RefreshCw className="w-3 h-3 text-[#FF6B6B]" />}
                     </div>
                     {evt.notes && <p className="text-xs text-[rgb(var(--text-muted))] italic">{evt.notes}</p>}
                     <div className="flex items-center gap-3 mt-1">
                       <button
                         onClick={() => navigate(`/training?scenario=${EVENT_SCENARIO[evt.type]}&title=${encodeURIComponent(evt.title)}`)}
-                        className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[rgb(var(--accent-primary))] hover:opacity-80 transition-opacity"
+                        className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#FF6B6B] hover:opacity-80 transition-opacity"
+                        style={{ fontFamily: "'Oswald', sans-serif" }}
                       >
                         <Zap className="w-3 h-3" /> Start Training
                       </button>
                       <button
                         onClick={() => navigate(`/call-prep/${evt.id}?title=${encodeURIComponent(evt.title)}&type=${evt.type}`)}
-                        className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] transition-colors"
+                        className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] transition-colors"
+                        style={{ fontFamily: "'Oswald', sans-serif" }}
                       >
                         <BookOpen className="w-3 h-3" /> Prep
                       </button>
@@ -553,21 +587,21 @@ export default function SchedulePage() {
           </div>
 
           {/* Upcoming sessions */}
-          <div className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-4">
-            <p className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-3">Upcoming</p>
+          <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+            <div className="card-title">Upcoming</div>
             {upcomingEvents.length === 0 ? (
               <p className="text-xs text-[rgb(var(--text-muted))] text-center py-2">No upcoming sessions</p>
             ) : (
               <div className="space-y-3">
                 {upcomingEvents.map(evt => (
                   <div key={evt.id} className="flex items-start gap-3">
-                    <div className="w-1.5 h-full self-stretch flex-shrink-0 mt-1" style={{ background: EVENT_COLORS[evt.type] }} />
+                    <div className="w-1.5 self-stretch flex-shrink-0 mt-1 rounded-sm" style={{ background: EVENT_COLORS[evt.type] }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-[rgb(var(--text-primary))] truncate">{evt.title}</p>
+                      <p className="text-xs font-semibold text-[rgb(var(--text-primary))] truncate">{evt.title}</p>
                       <p className="text-xs text-[rgb(var(--text-muted))]">{evt.date} · {evt.startTime}</p>
                     </div>
                     <span
-                      className="text-xs font-black px-1.5 py-0.5 flex-shrink-0"
+                      className="text-xs font-semibold px-1.5 py-0.5 flex-shrink-0 rounded"
                       style={{ background: `${EVENT_COLORS[evt.type]}22`, color: EVENT_COLORS[evt.type] }}
                     >
                       {getCountdown(evt.date, evt.startTime)}
@@ -576,6 +610,26 @@ export default function SchedulePage() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Stats Row */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+          <div className="stat-label">Sessions Scheduled</div>
+          <div className="stat-value" style={{ color: 'rgb(var(--text-primary))' }}>{events.length}</div>
+        </div>
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+          <div className="stat-label">Coaching Hours</div>
+          <div className="stat-value" style={{ color: 'rgb(var(--text-primary))' }}>
+            {events.length > 0 ? (events.length * 1.0).toFixed(1) : '0'}
+          </div>
+        </div>
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+          <div className="stat-label">Available Slots</div>
+          <div className="stat-value" style={{ color: '#4ADE80' }}>
+            {Math.max(0, 20 - events.length)}
           </div>
         </div>
       </div>
