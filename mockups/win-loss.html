@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>OAST - Win / Loss</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg-primary: #0d1117; --bg-secondary: #111820; --bg-card: #151c25;
+    --border: #1e2a38; --border-light: #253345;
+    --text-primary: #c9d1d9; --text-secondary: #7d8a98; --text-muted: #4a5567;
+    --coral: #FF6B6B; --coral-dim: rgba(255,107,107,0.12);
+    --green: #4ADE80; --green-dim: rgba(74,222,128,0.12);
+    --amber: #FBBF24; --amber-dim: rgba(251,191,36,0.12);
+    --blue: #60A5FA; --blue-dim: rgba(96,165,250,0.12);
+    --purple: #A78BFA; --purple-dim: rgba(167,139,250,0.12);
+    --cyan: #22D3EE; --red: #F87171;
+    --sidebar-w: 200px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 14px 0; z-index: 10; overflow-y: auto; scrollbar-width: none; }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .sidebar-logo { padding: 0 16px 16px; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 22px; color: var(--text-primary); }
+  .sidebar-logo span { font-size: 9px; font-weight: 400; color: var(--text-muted); margin-left: 3px; vertical-align: super; font-family: 'DM Sans'; }
+  .sidebar-section { padding: 14px 16px 6px; font-size: 9px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 7px 16px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-left: 3px solid transparent; position: relative; }
+  .sidebar-item.active { color: var(--coral); border-left-color: var(--coral); background: rgba(255,107,107,0.06); }
+  .sidebar-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .sidebar-item .badge { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: var(--coral); width: 8px; height: 8px; border-radius: 50%; }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 8px 16px; }
+  .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--border); padding-top: 8px; }
+  .sidebar-collapse { padding: 8px 16px; color: var(--text-muted); cursor: pointer; font-size: 14px; text-align: center; }
+  .topbar { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 48px; background: var(--bg-primary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 10; }
+  .search-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; color: var(--text-muted); font-size: 12px; width: 200px; display: flex; align-items: center; gap: 6px; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .notif-badge { position: relative; } .notif-badge .notif-dot { position: absolute; top: -2px; right: -4px; background: var(--coral); width: 8px; height: 8px; border-radius: 50%; }
+  .avatar { width: 28px; height: 28px; border-radius: 6px; background: var(--coral); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; color: #fff; }
+  .user-info { font-size: 12px; font-weight: 600; } .user-info small { display: block; font-size: 10px; color: var(--text-muted); font-weight: 400; }
+  .signout-link { font-size: 11px; color: var(--text-muted); }
+
+  .main { margin-left: var(--sidebar-w); padding: 68px 28px 28px; }
+  .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .page-kicker { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; }
+  .page-title { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 600; text-transform: uppercase; }
+  .page-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+  .filter-pill { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 500; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; }
+  .filter-pill.active { background: var(--coral-dim); border-color: var(--coral); color: var(--coral); }
+
+  .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 5px; }
+  .stat-value { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 600; }
+  .stat-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .stat-change { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 600; padding: 2px 5px; border-radius: 3px; margin-top: 4px; }
+  .stat-change.up { color: var(--green); background: var(--green-dim); }
+  .stat-change.down { color: var(--red); background: rgba(248,113,113,0.12); }
+
+  .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .content-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .card-title { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .card-subtitle { font-size: 10px; color: var(--text-muted); margin-bottom: 14px; }
+
+  /* Donut chart */
+  .donut-container { display: flex; align-items: center; gap: 20px; }
+  .donut { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+  .donut svg { width: 120px; height: 120px; transform: rotate(-90deg); }
+  .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+  .donut-center-val { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 600; }
+  .donut-center-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .donut-legend { flex: 1; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .legend-label { font-size: 11px; color: var(--text-secondary); flex: 1; }
+  .legend-value { font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; }
+  .legend-pct { font-size: 10px; color: var(--text-muted); width: 32px; text-align: right; }
+
+  /* Loss reason bars */
+  .reason-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .reason-label { width: 110px; font-size: 11px; color: var(--text-secondary); text-align: right; }
+  .reason-bar-bg { flex: 1; height: 20px; background: rgba(255,255,255,0.03); border-radius: 4px; overflow: hidden; position: relative; }
+  .reason-bar { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 9px; font-weight: 600; }
+  .reason-count { width: 28px; font-size: 11px; font-weight: 600; text-align: right; }
+
+  /* Win pattern cards */
+  .pattern-card {
+    padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 8px;
+  }
+  .pattern-card:last-child { margin-bottom: 0; }
+  .pattern-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .pattern-icon { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .pattern-title { font-size: 12px; font-weight: 600; }
+  .pattern-stat { font-size: 11px; font-weight: 600; margin-left: auto; }
+  .pattern-text { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* Deal timeline table */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: top; }
+  .deal-name-cell { font-weight: 600; }
+  .deal-name-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; }
+  .outcome-pill { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; }
+  .stage-flow { display: flex; align-items: center; gap: 3px; }
+  .stage-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .stage-line { width: 12px; height: 1px; }
+  .score-pill { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 3px; }
+  .loss-tag { font-size: 9px; color: var(--text-muted); font-style: italic; }
+
+  /* Skill correlation */
+  .corr-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .corr-label { width: 80px; font-size: 11px; color: var(--text-secondary); }
+  .corr-bars { flex: 1; display: flex; height: 18px; border-radius: 4px; overflow: hidden; gap: 2px; }
+  .corr-win { display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; }
+  .corr-loss { display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; }
+  .corr-delta { width: 40px; font-size: 10px; font-weight: 600; text-align: right; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">OAST.<span>v1.2</span></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Practice</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Journey</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Drills</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Analytics</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>Library</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Team</div>
+  <div class="sidebar-section">Coaching</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Leaderboard</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Goals</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>Recordings</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Meetings</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>Schedule</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 9 8 12 2 12"/></svg>Inbox</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>Notifications<span class="badge"></span></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Settings</div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Objections</div>
+  <div class="sidebar-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Win / Loss</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2"/></svg>Pre-Call Prep</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Coaching</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Accounts</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Audit Log</div>
+  <div class="sidebar-section">Intelligence</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Revenue Intel</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/></svg>Live Scores</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Insights</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="3"/><circle cx="15" cy="15" r="3"/></svg>Transfer Gap</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Billing</div>
+  <div class="sidebar-bottom"><div class="sidebar-collapse">‹</div><div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</div></div>
+</nav>
+
+<header class="topbar">
+  <div class="search-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>Search...</div>
+  <div class="topbar-right"><div class="notif-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><span class="notif-dot"></span></div><div class="avatar">OA</div><div class="user-info">OAST Admin<small>Admin</small></div><div class="signout-link">Sign Out</div></div>
+</header>
+
+<main class="main">
+  <div class="page-header"><div><div class="page-kicker">Revenue Intelligence</div><div class="page-title">Win / Loss Analysis</div><div class="page-desc">AI-analysed deal outcomes with root cause attribution and skill correlation.</div></div></div>
+
+  <div class="filter-bar"><div class="filter-pill active">Last 30 Days</div><div class="filter-pill">Last 90 Days</div><div class="filter-pill">This Quarter</div><div class="filter-pill">All Time</div></div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total Deals</div><div class="stat-value" style="color:var(--text-primary);">68</div><div class="stat-sub">Closed this period</div></div>
+    <div class="stat-card"><div class="stat-label">Won</div><div class="stat-value" style="color:var(--green);">23</div><div class="stat-sub">£423K total value</div><div class="stat-change up">↑ 4 more than last period</div></div>
+    <div class="stat-card"><div class="stat-label">Lost</div><div class="stat-value" style="color:var(--coral);">31</div><div class="stat-sub">£286K lost value</div><div class="stat-change down">↓ 2 fewer than last period</div></div>
+    <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value" style="color:var(--green);">34%</div><div class="stat-sub">Target: 40%</div><div class="stat-change up">↑ 4.2pp</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Cycle (Won)</div><div class="stat-value" style="color:var(--text-primary);">24d</div><div class="stat-sub">vs 38d for losses</div><div class="stat-change up">↑ 3d faster</div></div>
+  </div>
+
+  <!-- Donut + Loss Reasons -->
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-title">Outcome Distribution</div>
+      <div class="card-subtitle">Deal results breakdown for this period.</div>
+      <div class="donut-container">
+        <div class="donut">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="48" stroke="rgba(255,255,255,0.05)" stroke-width="14" fill="none"/>
+            <!-- Won: 34% = 108.6 of 301.6 -->
+            <circle cx="60" cy="60" r="48" stroke="var(--green)" stroke-width="14" fill="none" stroke-dasharray="102.5 199.1" stroke-linecap="round"/>
+            <!-- Lost: 45.6% -->
+            <circle cx="60" cy="60" r="48" stroke="var(--coral)" stroke-width="14" fill="none" stroke-dasharray="137.5 164.1" stroke-dashoffset="-102.5" stroke-linecap="round"/>
+            <!-- In Progress: 20.6% -->
+            <circle cx="60" cy="60" r="48" stroke="var(--amber)" stroke-width="14" fill="none" stroke-dasharray="62 239.6" stroke-dashoffset="-240" stroke-linecap="round"/>
+          </svg>
+          <div class="donut-center">
+            <div class="donut-center-val" style="color:var(--green);">34%</div>
+            <div class="donut-center-label">Win Rate</div>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green);"></div><div class="legend-label">Won</div><div class="legend-value" style="color:var(--green);">23</div><div class="legend-pct">34%</div></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--coral);"></div><div class="legend-label">Lost</div><div class="legend-value" style="color:var(--coral);">31</div><div class="legend-pct">46%</div></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--amber);"></div><div class="legend-label">In Progress</div><div class="legend-value" style="color:var(--amber);">14</div><div class="legend-pct">20%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Loss Reasons</div>
+      <div class="card-subtitle">AI-classified root cause for each lost deal.</div>
+      <div class="reason-row"><div class="reason-label">Price / Budget</div><div class="reason-bar-bg"><div class="reason-bar" style="width:42%;background:var(--coral);">42%</div></div><div class="reason-count" style="color:var(--coral);">13</div></div>
+      <div class="reason-row"><div class="reason-label">Competitor</div><div class="reason-bar-bg"><div class="reason-bar" style="width:23%;background:rgba(255,107,107,0.7);">23%</div></div><div class="reason-count" style="color:var(--coral);">7</div></div>
+      <div class="reason-row"><div class="reason-label">No Decision</div><div class="reason-bar-bg"><div class="reason-bar" style="width:19%;background:rgba(255,107,107,0.55);">19%</div></div><div class="reason-count" style="color:var(--coral);">6</div></div>
+      <div class="reason-row"><div class="reason-label">Poor Discovery</div><div class="reason-bar-bg"><div class="reason-bar" style="width:10%;background:rgba(255,107,107,0.4);">10%</div></div><div class="reason-count" style="color:var(--coral);">3</div></div>
+      <div class="reason-row"><div class="reason-label">Timing</div><div class="reason-bar-bg"><div class="reason-bar" style="width:6%;background:rgba(255,107,107,0.3);"></div></div><div class="reason-count" style="color:var(--coral);">2</div></div>
+    </div>
+  </div>
+
+  <!-- Win patterns + Skill correlation -->
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-title">Win Patterns</div>
+      <div class="card-subtitle">Behaviours that correlate with won deals.</div>
+
+      <div class="pattern-card">
+        <div class="pattern-header"><div class="pattern-icon" style="background:var(--green-dim);color:var(--green);">1</div><div class="pattern-title">Fast follow-up</div><div class="pattern-stat" style="color:var(--green);">2.4x</div></div>
+        <div class="pattern-text">Reps who sent a follow-up within 24 hours of the discovery call won 2.4x more deals than those who waited longer.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-header"><div class="pattern-icon" style="background:var(--green-dim);color:var(--green);">2</div><div class="pattern-title">Multi-threading</div><div class="pattern-stat" style="color:var(--green);">1.8x</div></div>
+        <div class="pattern-text">Deals involving 2+ stakeholders from the buyer side closed at 1.8x the rate of single-threaded deals.</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-header"><div class="pattern-icon" style="background:var(--green-dim);color:var(--green);">3</div><div class="pattern-title">High discovery score</div><div class="pattern-stat" style="color:var(--green);">1.6x</div></div>
+        <div class="pattern-text">Reps scoring 75%+ on discovery in training had a 1.6x higher close rate. Transfer Gap below 15% on this dimension.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Skill Score: Won vs Lost</div>
+      <div class="card-subtitle">Average OAST call scores on deals that won versus deals that lost.</div>
+
+      <div class="corr-row"><div class="corr-label">Opening</div><div class="corr-bars"><div class="corr-win" style="width:78%;background:var(--green);">78%</div><div class="corr-loss" style="width:62%;background:var(--coral);">62%</div></div><div class="corr-delta" style="color:var(--green);">+16</div></div>
+      <div class="corr-row"><div class="corr-label">Discovery</div><div class="corr-bars"><div class="corr-win" style="width:82%;background:var(--green);">82%</div><div class="corr-loss" style="width:54%;background:var(--coral);">54%</div></div><div class="corr-delta" style="color:var(--green);">+28</div></div>
+      <div class="corr-row"><div class="corr-label">Pitch</div><div class="corr-bars"><div class="corr-win" style="width:74%;background:var(--green);">74%</div><div class="corr-loss" style="width:61%;background:var(--coral);">61%</div></div><div class="corr-delta" style="color:var(--green);">+13</div></div>
+      <div class="corr-row"><div class="corr-label">Objection</div><div class="corr-bars"><div class="corr-win" style="width:80%;background:var(--green);">80%</div><div class="corr-loss" style="width:44%;background:var(--coral);">44%</div></div><div class="corr-delta" style="color:var(--green);">+36</div></div>
+      <div class="corr-row"><div class="corr-label">Closing</div><div class="corr-bars"><div class="corr-win" style="width:76%;background:var(--green);">76%</div><div class="corr-loss" style="width:48%;background:var(--coral);">48%</div></div><div class="corr-delta" style="color:var(--green);">+28</div></div>
+      <div class="corr-row"><div class="corr-label">Rapport</div><div class="corr-bars"><div class="corr-win" style="width:80%;background:var(--green);">80%</div><div class="corr-loss" style="width:68%;background:var(--coral);">68%</div></div><div class="corr-delta" style="color:var(--amber);">+12</div></div>
+
+      <div style="margin-top:12px;padding:10px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);border-radius:6px;">
+        <div style="font-size:10px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">Key Insight</div>
+        <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;">Objection handling shows the largest gap (+36) between won and lost deals. This is the single highest-leverage skill to improve win rate.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deal Table -->
+  <div class="card">
+    <div class="card-title">Recent Deals</div>
+    <div class="card-subtitle">Individual deal outcomes with call scores and loss attribution.</div>
+    <table>
+      <thead><tr><th>Deal</th><th>Rep</th><th>Value</th><th>Outcome</th><th>Cycle</th><th>Call Score</th><th>Transfer Gap</th><th>Loss Reason</th></tr></thead>
+      <tbody>
+        <tr><td><div class="deal-name-cell">TechVault Ltd</div><div class="deal-name-sub">B2B SaaS · Mid-Market</div></td><td style="color:var(--text-secondary);">J. Walker</td><td style="font-family:'Oswald',sans-serif;font-weight:600;">£28K</td><td><span class="outcome-pill" style="background:var(--green-dim);color:var(--green);">Won</span></td><td style="color:var(--text-secondary);">18d</td><td><span class="score-pill" style="background:var(--green-dim);color:var(--green);">82%</span></td><td style="color:var(--green);font-weight:600;">7%</td><td style="color:var(--text-muted);">-</td></tr>
+        <tr><td><div class="deal-name-cell">Meridian SaaS</div><div class="deal-name-sub">FinTech · Enterprise</div></td><td style="color:var(--text-secondary);">S. Patel</td><td style="font-family:'Oswald',sans-serif;font-weight:600;">£42K</td><td><span class="outcome-pill" style="background:var(--amber-dim);color:var(--amber);">Open</span></td><td style="color:var(--text-secondary);">31d</td><td><span class="score-pill" style="background:var(--amber-dim);color:var(--amber);">68%</span></td><td style="color:var(--amber);font-weight:600;">18%</td><td style="color:var(--text-muted);">-</td></tr>
+        <tr><td><div class="deal-name-cell">K3 Advisory Group</div><div class="deal-name-sub">Consulting · SMB</div></td><td style="color:var(--text-secondary);">M. Chen</td><td style="font-family:'Oswald',sans-serif;font-weight:600;">£12K</td><td><span class="outcome-pill" style="background:var(--coral-dim);color:var(--coral);">Lost</span></td><td style="color:var(--text-secondary);">42d</td><td><span class="score-pill" style="background:var(--coral-dim);color:var(--coral);">44%</span></td><td style="color:var(--coral);font-weight:600;">37%</td><td><span class="loss-tag">Compliance objection unresolved</span></td></tr>
+        <tr><td><div class="deal-name-cell">NovaPay</div><div class="deal-name-sub">Payments · Mid-Market</div></td><td style="color:var(--text-secondary);">D. Okonkwo</td><td style="font-family:'Oswald',sans-serif;font-weight:600;">£35K</td><td><span class="outcome-pill" style="background:var(--green-dim);color:var(--green);">Won</span></td><td style="color:var(--text-secondary);">14d</td><td><span class="score-pill" style="background:var(--green-dim);color:var(--green);">88%</span></td><td style="color:var(--green);font-weight:600;">4%</td><td style="color:var(--text-muted);">-</td></tr>
+        <tr><td><div class="deal-name-cell">Cloudsmith</div><div class="deal-name-sub">DevTools · SMB</div></td><td style="color:var(--text-secondary);">R. Thompson</td><td style="font-family:'Oswald',sans-serif;font-weight:600;">£8K</td><td><span class="outcome-pill" style="background:var(--coral-dim);color:var(--coral);">Lost</span></td><td style="color:var(--text-secondary);">56d</td><td><span class="score-pill" style="background:var(--coral-dim);color:var(--coral);">38%</span></td><td style="color:var(--coral);font-weight:600;">40%</td><td><span class="loss-tag">No decision, stalled at proposal</span></td></tr>
+        <tr><td><div class="deal-name-cell">BrightEdge HR</div><div class="deal-name-sub">HR Tech · Mid-Market</div></td><td style="color:var(--text-secondary);">A. Martinez</td><td style="font-family:'Oswald',sans-serif;font-weight:600;">£22K</td><td><span class="outcome-pill" style="background:var(--coral-dim);color:var(--coral);">Lost</span></td><td style="color:var(--text-secondary);">38d</td><td><span class="score-pill" style="background:var(--amber-dim);color:var(--amber);">58%</span></td><td style="color:var(--amber);font-weight:600;">27%</td><td><span class="loss-tag">Lost to competitor (Gong)</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+</body>
+</html>

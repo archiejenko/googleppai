@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>OAST - Live Call Simulation</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg-primary: #0d1117; --bg-secondary: #111820; --bg-card: #151c25; --border: #1e2a38;
+    --text-primary: #c9d1d9; --text-secondary: #7d8a98; --text-muted: #4a5567;
+    --coral: #FF6B6B; --coral-dim: rgba(255,107,107,0.12);
+    --green: #4ADE80; --green-dim: rgba(74,222,128,0.12);
+    --amber: #FBBF24; --amber-dim: rgba(251,191,36,0.12);
+    --blue: #60A5FA; --blue-dim: rgba(96,165,250,0.12);
+    --purple: #A78BFA; --red: #F87171;
+    --sidebar-w: 200px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+
+  /* Sidebar - same as other pages */
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 14px 0; z-index: 10; overflow-y: auto; scrollbar-width: none; }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .sidebar-logo { padding: 0 16px 16px; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 22px; color: var(--text-primary); }
+  .sidebar-logo span { font-size: 9px; font-weight: 400; color: var(--text-muted); margin-left: 3px; vertical-align: super; font-family: 'DM Sans'; }
+  .sidebar-section { padding: 14px 16px 6px; font-size: 9px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 7px 16px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-left: 3px solid transparent; position: relative; }
+  .sidebar-item.active { color: var(--coral); border-left-color: var(--coral); background: rgba(255,107,107,0.06); }
+  .sidebar-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .sidebar-item .badge { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: var(--coral); width: 8px; height: 8px; border-radius: 50%; }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 8px 16px; }
+  .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--border); padding-top: 8px; }
+  .sidebar-collapse { padding: 8px 16px; color: var(--text-muted); cursor: pointer; font-size: 14px; text-align: center; }
+
+  /* Topbar */
+  .topbar { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 48px; background: var(--bg-primary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 10; }
+  .search-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; color: var(--text-muted); font-size: 12px; width: 200px; display: flex; align-items: center; gap: 6px; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .notif-badge { position: relative; } .notif-badge .notif-dot { position: absolute; top: -2px; right: -4px; background: var(--coral); width: 8px; height: 8px; border-radius: 50%; }
+  .avatar { width: 28px; height: 28px; border-radius: 6px; background: var(--coral); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; color: #fff; }
+  .user-info { font-size: 12px; font-weight: 600; } .user-info small { display: block; font-size: 10px; color: var(--text-muted); font-weight: 400; }
+  .signout-link { font-size: 11px; color: var(--text-muted); }
+
+  /* Main layout */
+  .main { margin-left: var(--sidebar-w); padding: 68px 28px 28px; }
+
+  /* Call header bar */
+  .call-header {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 20px; margin-bottom: 16px;
+  }
+  .call-header-left { display: flex; align-items: center; gap: 16px; }
+  .call-live-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--coral);
+    animation: pulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(255,107,107,0.5);
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+  }
+  .call-status { font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--coral); }
+  .call-timer { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 500; color: var(--text-primary); letter-spacing: 2px; }
+  .call-scenario { font-size: 12px; color: var(--text-secondary); }
+  .call-scenario strong { color: var(--text-primary); }
+  .call-header-right { display: flex; align-items: center; gap: 10px; }
+  .call-btn {
+    padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    border: none; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .call-btn.mute { background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-secondary); }
+  .call-btn.end { background: var(--coral); color: #fff; }
+  .call-btn svg { width: 14px; height: 14px; }
+
+  /* Main grid: transcript left, panels right */
+  .call-grid { display: grid; grid-template-columns: 1fr 380px; gap: 16px; }
+
+  /* Transcript panel */
+  .transcript-panel {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    display: flex; flex-direction: column; height: 640px;
+  }
+  .transcript-header {
+    padding: 16px 20px 12px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .transcript-title { font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .transcript-badge { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 3px 8px; border-radius: 4px; }
+
+  .transcript-body { flex: 1; overflow-y: auto; padding: 16px 20px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .transcript-body::-webkit-scrollbar { width: 4px; }
+  .transcript-body::-webkit-scrollbar-track { background: transparent; }
+  .transcript-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg { margin-bottom: 16px; display: flex; gap: 10px; }
+  .msg-avatar {
+    width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; margin-top: 2px;
+  }
+  .msg-avatar.ai { background: rgba(96,165,250,0.2); color: var(--blue); }
+  .msg-avatar.rep { background: rgba(74,222,128,0.2); color: var(--green); }
+  .msg-content { flex: 1; }
+  .msg-name { font-size: 10px; font-weight: 600; margin-bottom: 3px; }
+  .msg-name.ai { color: var(--blue); }
+  .msg-name.rep { color: var(--green); }
+  .msg-text { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); }
+  .msg-time { font-size: 9px; color: var(--text-muted); margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+  .msg-tag {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px;
+    margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  /* Waveform */
+  .waveform-bar {
+    padding: 12px 20px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .waveform-label { font-size: 9px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; width: 50px; }
+  .waveform { display: flex; align-items: center; gap: 1.5px; flex: 1; height: 28px; }
+  .waveform-line { width: 2.5px; border-radius: 1.5px; transition: height 0.1s; }
+
+  /* Right column panels */
+  .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+  .panel {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .panel-title {
+    font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .panel-title svg { width: 14px; height: 14px; }
+
+  /* Live score ring */
+  .score-ring-container { display: flex; align-items: center; gap: 20px; }
+  .score-ring { position: relative; width: 90px; height: 90px; flex-shrink: 0; }
+  .score-ring svg { width: 90px; height: 90px; transform: rotate(-90deg); }
+  .score-ring-value {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-family: 'Oswald', sans-serif; font-size: 26px; font-weight: 600;
+  }
+  .score-ring-label {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, calc(-50% + 16px));
+    font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;
+  }
+  .score-breakdown { flex: 1; }
+  .score-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .score-dim { font-size: 11px; color: var(--text-secondary); }
+  .score-val { font-size: 11px; font-weight: 600; }
+  .score-mini-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; margin: 0 8px; }
+  .score-mini-fill { height: 100%; border-radius: 2px; }
+
+  /* Talk ratio */
+  .talk-ratio-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px; margin-bottom: 8px; }
+  .talk-ratio-rep { background: var(--green); }
+  .talk-ratio-ai { background: var(--blue); }
+  .talk-ratio-labels { display: flex; justify-content: space-between; font-size: 10px; }
+  .talk-ratio-stat { display: flex; align-items: center; gap: 4px; }
+  .talk-ratio-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Coaching nudge */
+  .nudge {
+    background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 8px; padding: 12px; margin-bottom: 8px;
+  }
+  .nudge:last-child { margin-bottom: 0; }
+  .nudge-type { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .nudge-text { font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; }
+  .nudge.objection { background: rgba(255,107,107,0.08); border-color: rgba(255,107,107,0.2); }
+  .nudge.positive { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.2); }
+
+  /* Objection tracker */
+  .objection-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 8px 10px; background: rgba(255,255,255,0.02); border-radius: 6px; }
+  .objection-type-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .objection-label { font-size: 11px; color: var(--text-secondary); flex: 1; }
+  .objection-status { font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Key moments */
+  .moment-item { display: flex; gap: 8px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .moment-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .moment-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); width: 40px; flex-shrink: 0; margin-top: 1px; }
+  .moment-text { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+  .moment-tag { font-size: 9px; font-weight: 600; margin-top: 2px; display: inline-block; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">OAST.<span>v1.2</span></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+  <div class="sidebar-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06"/></svg>Practice</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Journey</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Drills</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Analytics</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Library</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Team</div>
+  <div class="sidebar-section">Coaching</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Leaderboard</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Goals</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>Recordings</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Meetings</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedule</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 9 8 12 2 12"/></svg>Inbox</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>Notifications<span class="badge"></span></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Settings</div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Objections</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Win / Loss</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2"/></svg>Pre-Call Prep</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Coaching</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Accounts</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Audit Log</div>
+  <div class="sidebar-section">Intelligence</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Revenue Intel</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/></svg>Live Scores</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Insights</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="3"/><circle cx="15" cy="15" r="3"/></svg>Transfer Gap</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Billing</div>
+  <div class="sidebar-bottom"><div class="sidebar-collapse">‹</div><div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</div></div>
+</nav>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="search-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>Search...</div>
+  <div class="topbar-right"><div class="notif-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><span class="notif-dot"></span></div><div class="avatar">OA</div><div class="user-info">OAST Admin<small>Admin</small></div><div class="signout-link">Sign Out</div></div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- Call header bar -->
+  <div class="call-header">
+    <div class="call-header-left">
+      <div class="call-live-dot"></div>
+      <div>
+        <div class="call-status">Live Simulation</div>
+        <div class="call-scenario">Scenario: <strong>Cold Call, SaaS CTO, Mid-Market</strong> &nbsp;·&nbsp; Persona: <strong>Draco (Skeptical Buyer)</strong></div>
+      </div>
+    </div>
+    <div class="call-timer">04:32</div>
+    <div class="call-header-right">
+      <button class="call-btn mute">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+        Mute
+      </button>
+      <button class="call-btn end">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3"/></svg>
+        End Call
+      </button>
+    </div>
+  </div>
+
+  <!-- Main content grid -->
+  <div class="call-grid">
+
+    <!-- LEFT: Transcript -->
+    <div class="transcript-panel">
+      <div class="transcript-header">
+        <div class="transcript-title">Live Transcript</div>
+        <div class="transcript-badge" style="background:var(--green-dim);color:var(--green);">Deepgram STT</div>
+      </div>
+      <div class="transcript-body">
+
+        <div class="msg">
+          <div class="msg-avatar ai">AI</div>
+          <div class="msg-content">
+            <div class="msg-name ai">Draco (AI Buyer)</div>
+            <div class="msg-text">Hello, this is James from TechVault. I've got about five minutes, what's this regarding?</div>
+            <div class="msg-time">00:00</div>
+          </div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-avatar rep">JW</div>
+          <div class="msg-content">
+            <div class="msg-name rep">J. Walker (Rep)</div>
+            <div class="msg-text">Hi James, thanks for picking up. I'm Jake from OAST. I know you're busy so I'll keep this tight. We work with SaaS companies like yours to close the gap between how reps train and how they actually perform on calls. Quick question: how are you currently measuring whether your training is actually translating to better conversations?</div>
+            <div class="msg-time">00:08</div>
+            <div class="msg-tag" style="background:var(--green-dim);color:var(--green);">Strong opener · Permission-based</div>
+          </div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-avatar ai">AI</div>
+          <div class="msg-content">
+            <div class="msg-name ai">Draco (AI Buyer)</div>
+            <div class="msg-text">Honestly? We're not really measuring that in any structured way. We do quarterly reviews but it's mostly anecdotal. Managers sit in on calls occasionally. Why, what are you seeing with other companies?</div>
+            <div class="msg-time">00:32</div>
+          </div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-avatar rep">JW</div>
+          <div class="msg-content">
+            <div class="msg-name rep">J. Walker (Rep)</div>
+            <div class="msg-text">That's really common actually. Most companies we speak to are in the same position. What we've found is there's typically a 25 to 35 percent gap between how reps score in training exercises versus their actual live call performance. We call it the Transfer Gap. The interesting thing is, once you can see it, you can actually coach to it. So instead of generic training, you're addressing the specific skills that aren't transferring.</div>
+            <div class="msg-time">00:48</div>
+            <div class="msg-tag" style="background:var(--green-dim);color:var(--green);">Transfer Gap framing · Data-led</div>
+          </div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-avatar ai">AI</div>
+          <div class="msg-content">
+            <div class="msg-name ai">Draco (AI Buyer)</div>
+            <div class="msg-text">Interesting concept. But we've looked at tools like Gong before and the reps just found it invasive. They didn't want every call recorded and picked apart. How is this different?</div>
+            <div class="msg-time">01:24</div>
+            <div class="msg-tag" style="background:var(--coral-dim);color:var(--coral);">Objection · Competitor comparison + Rep adoption</div>
+          </div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-avatar rep">JW</div>
+          <div class="msg-content">
+            <div class="msg-name rep">J. Walker (Rep)</div>
+            <div class="msg-text">That's a fair concern and we hear it a lot. The key difference is that OAST starts with AI-simulated practice calls, not live call surveillance. Reps train against realistic AI buyers in a safe environment, get scored, and improve before they ever get on a real call. The live call scoring layer is opt-in and positioned as a coaching tool, not a monitoring tool. Reps actually want to use it because they've already seen how the scoring helps them in practice.</div>
+            <div class="msg-time">01:38</div>
+            <div class="msg-tag" style="background:var(--green-dim);color:var(--green);">Objection handled · Reframed from surveillance to coaching</div>
+          </div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-avatar ai">AI</div>
+          <div class="msg-content">
+            <div class="msg-name ai">Draco (AI Buyer)</div>
+            <div class="msg-text">OK, that's a different angle. What does the pricing look like? We've got about 15 reps and I'm not looking to blow the budget on another tool that might not stick.</div>
+            <div class="msg-time">02:18</div>
+            <div class="msg-tag" style="background:var(--amber-dim);color:var(--amber);">Objection · Price sensitivity + Risk aversion</div>
+          </div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-avatar rep">JW</div>
+          <div class="msg-content">
+            <div class="msg-name rep">J. Walker (Rep)</div>
+            <div class="msg-text">Totally understand. For a team of 15, you'd be looking at around £65 per rep per month on the Performance tier, which gives you the AI practice calls, scoring engine, and the Transfer Gap analytics. But honestly, the best way to see if it sticks is to run a pilot. We can do a two-week trial with three or four of your reps, no commitment, and you'll see the Transfer Gap data from day one. If the numbers don't move, you walk away.</div>
+            <div class="msg-time">02:42</div>
+            <div class="msg-tag" style="background:var(--green-dim);color:var(--green);">Price anchored · Risk reversal with pilot offer</div>
+          </div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-avatar ai">AI</div>
+          <div class="msg-content">
+            <div class="msg-name ai">Draco (AI Buyer)</div>
+            <div class="msg-text">A two-week pilot could work. Who would I need to involve on our side to set that up?</div>
+            <div class="msg-time">03:28</div>
+            <div class="msg-tag" style="background:var(--blue-dim);color:var(--blue);">Buying signal · Logistics question</div>
+          </div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-avatar rep">JW</div>
+          <div class="msg-content">
+            <div class="msg-name rep">J. Walker (Rep)</div>
+            <div class="msg-text">Great question. Usually it's just you as the sponsor and then whoever manages the reps day to day, your sales manager. We handle all the setup. I can send over a one-pager and get a 20-minute call booked with you and your manager for later this week to scope the pilot. Does Thursday or Friday work better?</div>
+            <div class="msg-time">03:40</div>
+            <div class="msg-tag" style="background:var(--green-dim);color:var(--green);">Closed with specific next step · Either/or close</div>
+          </div>
+        </div>
+
+        <div class="msg" style="opacity: 0.7;">
+          <div class="msg-avatar ai">AI</div>
+          <div class="msg-content">
+            <div class="msg-name ai">Draco (AI Buyer)</div>
+            <div class="msg-text" style="display: flex; align-items: center; gap: 6px;">
+              <span style="display:inline-flex;gap:3px;">
+                <span style="width:4px;height:4px;border-radius:50%;background:var(--blue);animation:pulse 1s ease-in-out infinite;"></span>
+                <span style="width:4px;height:4px;border-radius:50%;background:var(--blue);animation:pulse 1s ease-in-out 0.2s infinite;"></span>
+                <span style="width:4px;height:4px;border-radius:50%;background:var(--blue);animation:pulse 1s ease-in-out 0.4s infinite;"></span>
+              </span>
+              <span style="font-size:11px;color:var(--text-muted);font-style:italic;">Responding...</span>
+            </div>
+            <div class="msg-time">04:28</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Waveform -->
+      <div class="waveform-bar">
+        <div class="waveform-label">Audio</div>
+        <div class="waveform" id="waveform"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Scoring + Panels -->
+    <div class="right-col">
+
+      <!-- Live Score -->
+      <div class="panel">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Live Score
+        </div>
+        <div class="score-ring-container">
+          <div class="score-ring">
+            <svg viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="38" stroke="rgba(255,255,255,0.06)" stroke-width="6" fill="none"/>
+              <circle cx="45" cy="45" r="38" stroke="var(--green)" stroke-width="6" fill="none"
+                stroke-dasharray="238.76" stroke-dashoffset="47.75" stroke-linecap="round"/>
+            </svg>
+            <div class="score-ring-value" style="color:var(--green);">80</div>
+            <div class="score-ring-label">Overall</div>
+          </div>
+          <div class="score-breakdown">
+            <div class="score-row">
+              <span class="score-dim">Opening</span>
+              <div class="score-mini-bar"><div class="score-mini-fill" style="width:90%;background:var(--green);"></div></div>
+              <span class="score-val" style="color:var(--green);">90</span>
+            </div>
+            <div class="score-row">
+              <span class="score-dim">Discovery</span>
+              <div class="score-mini-bar"><div class="score-mini-fill" style="width:82%;background:var(--green);"></div></div>
+              <span class="score-val" style="color:var(--green);">82</span>
+            </div>
+            <div class="score-row">
+              <span class="score-dim">Pitch</span>
+              <div class="score-mini-bar"><div class="score-mini-fill" style="width:78%;background:var(--amber);"></div></div>
+              <span class="score-val" style="color:var(--amber);">78</span>
+            </div>
+            <div class="score-row">
+              <span class="score-dim">Objection</span>
+              <div class="score-mini-bar"><div class="score-mini-fill" style="width:85%;background:var(--green);"></div></div>
+              <span class="score-val" style="color:var(--green);">85</span>
+            </div>
+            <div class="score-row">
+              <span class="score-dim">Closing</span>
+              <div class="score-mini-bar"><div class="score-mini-fill" style="width:72%;background:var(--amber);"></div></div>
+              <span class="score-val" style="color:var(--amber);">72</span>
+            </div>
+            <div class="score-row">
+              <span class="score-dim">Rapport</span>
+              <div class="score-mini-bar"><div class="score-mini-fill" style="width:76%;background:var(--amber);"></div></div>
+              <span class="score-val" style="color:var(--amber);">76</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Talk Ratio -->
+      <div class="panel">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+          Talk Ratio
+        </div>
+        <div class="talk-ratio-bar">
+          <div class="talk-ratio-rep" style="width: 62%;"></div>
+          <div class="talk-ratio-ai" style="width: 38%;"></div>
+        </div>
+        <div class="talk-ratio-labels">
+          <div class="talk-ratio-stat"><div class="talk-ratio-dot" style="background:var(--green);"></div><span style="font-size:11px;color:var(--text-secondary);">Rep: 62%</span></div>
+          <div class="talk-ratio-stat"><div class="talk-ratio-dot" style="background:var(--blue);"></div><span style="font-size:11px;color:var(--text-secondary);">Buyer: 38%</span></div>
+        </div>
+        <div style="margin-top:10px;font-size:10px;color:var(--amber);">⚠ Slightly rep-heavy. Aim for 55/45 or below.</div>
+      </div>
+
+      <!-- Objection Tracker -->
+      <div class="panel">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Objections Detected
+        </div>
+        <div class="objection-item">
+          <div class="objection-type-dot" style="background:var(--green);"></div>
+          <div class="objection-label">Competitor comparison (Gong)</div>
+          <div class="objection-status" style="background:var(--green-dim);color:var(--green);">Handled</div>
+        </div>
+        <div class="objection-item">
+          <div class="objection-type-dot" style="background:var(--green);"></div>
+          <div class="objection-label">Rep adoption / invasiveness</div>
+          <div class="objection-status" style="background:var(--green-dim);color:var(--green);">Handled</div>
+        </div>
+        <div class="objection-item">
+          <div class="objection-type-dot" style="background:var(--green);"></div>
+          <div class="objection-label">Price sensitivity</div>
+          <div class="objection-status" style="background:var(--green-dim);color:var(--green);">Handled</div>
+        </div>
+        <div class="objection-item">
+          <div class="objection-type-dot" style="background:var(--amber);"></div>
+          <div class="objection-label">Risk aversion / "might not stick"</div>
+          <div class="objection-status" style="background:var(--amber-dim);color:var(--amber);">Partial</div>
+        </div>
+      </div>
+
+      <!-- Coaching Nudges -->
+      <div class="panel">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 12 18.469"/></svg>
+          Live Coaching
+        </div>
+        <div class="nudge positive">
+          <div class="nudge-type" style="color:var(--green);">Strength</div>
+          <div class="nudge-text">Strong permission-based opener. Led with value, not product features. Good use of the Transfer Gap data point to ground credibility.</div>
+        </div>
+        <div class="nudge">
+          <div class="nudge-type" style="color:var(--amber);">Suggestion</div>
+          <div class="nudge-text">Talk ratio is trending high. On the next exchange, try asking one more open question before presenting the pilot. Let the buyer articulate their own pain.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+  // Animate waveform
+  const waveform = document.getElementById('waveform');
+  const barCount = 80;
+  const bars = [];
+  for (let i = 0; i < barCount; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'waveform-line';
+    bar.style.background = i < barCount * 0.62 ? 'var(--green)' : 'var(--blue)';
+    bar.style.opacity = '0.6';
+    waveform.appendChild(bar);
+    bars.push(bar);
+  }
+  function animateWaveform() {
+    bars.forEach((bar, i) => {
+      const base = Math.sin(Date.now() / 300 + i * 0.3) * 0.5 + 0.5;
+      const noise = Math.random() * 0.3;
+      const height = Math.max(3, (base + noise) * 24);
+      bar.style.height = height + 'px';
+    });
+    requestAnimationFrame(animateWaveform);
+  }
+  animateWaveform();
+</script>
+
+</body>
+</html>

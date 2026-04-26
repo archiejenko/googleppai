@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>OAST - Pre-Call Setup</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg-primary: #0d1117; --bg-secondary: #111820; --bg-card: #151c25; --bg-deep: #0a0e14;
+    --border: #1e2a38; --border-light: #253345; --border-active: #3a4f66;
+    --text-primary: #c9d1d9; --text-secondary: #7d8a98; --text-muted: #4a5567;
+    --coral: #FF6B6B; --coral-dim: rgba(255,107,107,0.12);
+    --green: #4ADE80; --green-dim: rgba(74,222,128,0.12);
+    --amber: #FBBF24; --amber-dim: rgba(251,191,36,0.12);
+    --blue: #60A5FA; --blue-dim: rgba(96,165,250,0.12);
+    --purple: #A78BFA; --purple-dim: rgba(167,139,250,0.12);
+    --cyan: #22D3EE; --cyan-dim: rgba(34,211,238,0.12);
+    --sidebar-w: 200px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 14px 0; z-index: 10; overflow-y: auto; scrollbar-width: none; }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .sidebar-logo { padding: 0 16px 16px; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 22px; color: var(--text-primary); }
+  .sidebar-logo span { font-size: 9px; font-weight: 400; color: var(--text-muted); margin-left: 3px; vertical-align: super; font-family: 'DM Sans'; }
+  .sidebar-section { padding: 14px 16px 6px; font-size: 9px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 7px 16px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-left: 3px solid transparent; position: relative; }
+  .sidebar-item.active { color: var(--coral); border-left-color: var(--coral); background: rgba(255,107,107,0.06); }
+  .sidebar-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .sidebar-item .badge { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: var(--coral); width: 8px; height: 8px; border-radius: 50%; }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 8px 16px; }
+  .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--border); padding-top: 8px; }
+  .sidebar-collapse { padding: 8px 16px; color: var(--text-muted); cursor: pointer; font-size: 14px; text-align: center; }
+
+  .topbar { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 48px; background: var(--bg-primary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 10; }
+  .search-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; color: var(--text-muted); font-size: 12px; width: 200px; display: flex; align-items: center; gap: 6px; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .notif-badge { position: relative; } .notif-badge .notif-dot { position: absolute; top: -2px; right: -4px; background: var(--coral); width: 8px; height: 8px; border-radius: 50%; }
+  .avatar { width: 28px; height: 28px; border-radius: 6px; background: var(--coral); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; color: #fff; }
+  .user-info { font-size: 12px; font-weight: 600; } .user-info small { display: block; font-size: 10px; color: var(--text-muted); font-weight: 400; }
+  .signout-link { font-size: 11px; color: var(--text-muted); }
+
+  .main { margin-left: var(--sidebar-w); padding: 68px 28px 28px; }
+  .page-header { margin-bottom: 24px; }
+  .page-kicker { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; }
+  .page-title { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 600; text-transform: uppercase; }
+  .page-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* Layout: left config, right preview */
+  .setup-grid { display: grid; grid-template-columns: 1fr 360px; gap: 20px; }
+
+  /* Sections */
+  .setup-section { margin-bottom: 20px; }
+  .section-label {
+    font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .section-label svg { width: 14px; height: 14px; }
+  .section-label .step-num {
+    width: 18px; height: 18px; border-radius: 50%; background: var(--coral-dim);
+    color: var(--coral); font-size: 9px; font-weight: 700; display: flex;
+    align-items: center; justify-content: center; font-family: 'Oswald', sans-serif;
+  }
+
+  /* Voice persona cards */
+  .voice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .voice-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; cursor: pointer; transition: all 0.15s; position: relative;
+  }
+  .voice-card:hover { border-color: var(--border-light); background: var(--bg-secondary); }
+  .voice-card.selected { border-color: var(--coral); background: rgba(255,107,107,0.04); }
+  .voice-card.selected::after {
+    content: '✓'; position: absolute; top: 10px; right: 10px;
+    width: 18px; height: 18px; border-radius: 50%; background: var(--coral);
+    color: #fff; font-size: 10px; font-weight: 700; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .voice-avatar {
+    width: 40px; height: 40px; border-radius: 10px; display: flex;
+    align-items: center; justify-content: center; margin-bottom: 10px;
+    font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 700;
+  }
+  .voice-name { font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .voice-archetype { font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
+  .voice-traits { display: flex; flex-wrap: wrap; gap: 4px; }
+  .voice-trait {
+    font-size: 8px; font-weight: 600; padding: 2px 6px; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .voice-preview {
+    margin-top: 8px; display: flex; align-items: center; gap: 6px;
+    font-size: 10px; color: var(--text-muted); cursor: pointer;
+  }
+  .voice-preview svg { width: 12px; height: 12px; }
+  .voice-preview:hover { color: var(--coral); }
+
+  /* Select chips */
+  .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 500;
+    background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary);
+    cursor: pointer; transition: all 0.12s; display: flex; align-items: center; gap: 6px;
+  }
+  .chip:hover { border-color: var(--border-light); color: var(--text-primary); }
+  .chip.selected { border-color: var(--coral); color: var(--coral); background: var(--coral-dim); }
+  .chip svg { width: 14px; height: 14px; }
+  .chip-icon { font-size: 14px; }
+
+  /* Dropdown / input fields */
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .field-row.full { grid-template-columns: 1fr; }
+  .field {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .field-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+  .field-value { font-size: 13px; font-weight: 500; color: var(--text-primary); display: flex; align-items: center; justify-content: space-between; }
+  .field-value svg { width: 12px; height: 12px; color: var(--text-muted); }
+
+  /* Difficulty slider visual */
+  .difficulty-track { display: flex; align-items: center; gap: 0; margin-top: 4px; }
+  .difficulty-seg {
+    flex: 1; height: 6px; border-radius: 0; position: relative;
+  }
+  .difficulty-seg:first-child { border-radius: 3px 0 0 3px; }
+  .difficulty-seg:last-child { border-radius: 0 3px 3px 0; }
+  .difficulty-labels { display: flex; justify-content: space-between; margin-top: 6px; }
+  .difficulty-label { font-size: 9px; color: var(--text-muted); }
+  .difficulty-label.active { font-weight: 600; }
+  .difficulty-indicator {
+    position: absolute; top: -4px; width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid var(--bg-primary);
+  }
+
+  /* Skill focus toggles */
+  .skill-toggles { display: flex; flex-direction: column; gap: 6px; }
+  .skill-toggle {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+    cursor: pointer;
+  }
+  .skill-toggle.on { border-color: var(--border-active); }
+  .toggle-switch {
+    width: 30px; height: 16px; border-radius: 8px; background: rgba(255,255,255,0.1);
+    position: relative; flex-shrink: 0; transition: background 0.15s;
+  }
+  .toggle-switch::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%; background: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .skill-toggle.on .toggle-switch { background: var(--coral-dim); }
+  .skill-toggle.on .toggle-switch::after { left: 16px; background: var(--coral); }
+  .toggle-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); flex: 1; }
+  .skill-toggle.on .toggle-label { color: var(--text-primary); }
+  .toggle-score { font-size: 10px; font-weight: 600; }
+
+  /* Right panel: Preview card */
+  .preview-panel { position: sticky; top: 68px; display: flex; flex-direction: column; gap: 14px; }
+  .preview-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; position: relative; overflow: hidden;
+  }
+  .preview-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--coral), var(--purple));
+  }
+  .preview-title {
+    font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;
+    color: var(--text-muted);
+  }
+  .preview-persona { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .preview-persona-avatar {
+    width: 52px; height: 52px; border-radius: 12px; display: flex;
+    align-items: center; justify-content: center; font-family: 'Oswald', sans-serif;
+    font-size: 20px; font-weight: 700;
+  }
+  .preview-persona-name { font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 600; }
+  .preview-persona-role { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+  .preview-detail { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .preview-detail:last-of-type { border-bottom: none; }
+  .preview-detail-label { font-size: 11px; color: var(--text-muted); }
+  .preview-detail-value { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+
+  .preview-brief {
+    margin-top: 14px; padding: 12px; background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border); border-radius: 8px;
+  }
+  .preview-brief-title { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
+  .preview-brief-text { font-size: 11px; color: var(--text-secondary); line-height: 1.6; font-style: italic; }
+
+  /* AI recommendation card */
+  .ai-rec {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; position: relative; overflow: hidden;
+  }
+  .ai-rec::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--green), var(--blue));
+  }
+  .ai-rec-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .ai-rec-icon {
+    width: 24px; height: 24px; border-radius: 6px; background: var(--green-dim);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ai-rec-icon svg { width: 12px; height: 12px; }
+  .ai-rec-title { font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--green); }
+  .ai-rec-text { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+  .ai-rec-tag { font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px; margin-top: 8px; display: inline-block; }
+
+  /* Launch button */
+  .launch-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 10px;
+    background: var(--coral); color: #fff; font-family: 'Oswald', sans-serif;
+    font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.15s;
+  }
+  .launch-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .launch-btn svg { width: 18px; height: 18px; }
+
+  /* Recent sessions */
+  .recent-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px;
+  }
+  .recent-title { font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 10px; }
+  .recent-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .recent-item:last-child { border-bottom: none; }
+  .recent-score {
+    width: 32px; height: 32px; border-radius: 8px; display: flex;
+    align-items: center; justify-content: center; font-family: 'Oswald', sans-serif;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .recent-info { flex: 1; }
+  .recent-scenario { font-size: 11px; font-weight: 600; }
+  .recent-meta { font-size: 9px; color: var(--text-muted); margin-top: 1px; }
+  .recent-replay { font-size: 10px; color: var(--coral); font-weight: 600; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">OAST.<span>v1.2</span></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+  <div class="sidebar-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06"/></svg>Practice</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Journey</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Drills</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Analytics</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Library</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Team</div>
+  <div class="sidebar-section">Coaching</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Leaderboard</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Goals</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>Recordings</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Meetings</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedule</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 9 8 12 2 12"/></svg>Inbox</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>Notifications<span class="badge"></span></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Settings</div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Objections</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Win / Loss</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2"/></svg>Pre-Call Prep</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Coaching</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Accounts</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Audit Log</div>
+  <div class="sidebar-section">Intelligence</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Revenue Intel</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/></svg>Live Scores</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Insights</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="3"/><circle cx="15" cy="15" r="3"/></svg>Transfer Gap</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Billing</div>
+  <div class="sidebar-bottom"><div class="sidebar-collapse">‹</div><div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</div></div>
+</nav>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="search-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>Search...</div>
+  <div class="topbar-right"><div class="notif-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><span class="notif-dot"></span></div><div class="avatar">JW</div><div class="user-info">J. Walker<small>BDR</small></div><div class="signout-link">Sign Out</div></div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="page-header">
+    <div class="page-kicker">Practice</div>
+    <div class="page-title">Pre-Call Setup</div>
+    <div class="page-desc">Configure your AI training call. Select a buyer persona, set the scenario, and launch.</div>
+  </div>
+
+  <div class="setup-grid">
+    <!-- LEFT: Configuration -->
+    <div>
+
+      <!-- Step 1: Voice Persona -->
+      <div class="setup-section">
+        <div class="section-label"><span class="step-num">1</span> AI Buyer Persona</div>
+        <div class="voice-grid">
+          <div class="voice-card selected">
+            <div class="voice-avatar" style="background:var(--coral-dim);color:var(--coral);">D</div>
+            <div class="voice-name" style="color:var(--coral);">Draco</div>
+            <div class="voice-archetype">The Skeptical CTO</div>
+            <div class="voice-traits">
+              <span class="voice-trait" style="background:var(--coral-dim);color:var(--coral);">Pushback</span>
+              <span class="voice-trait" style="background:var(--amber-dim);color:var(--amber);">Data-driven</span>
+              <span class="voice-trait" style="background:var(--blue-dim);color:var(--blue);">Technical</span>
+            </div>
+            <div class="voice-preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Preview voice</div>
+          </div>
+          <div class="voice-card">
+            <div class="voice-avatar" style="background:var(--purple-dim);color:var(--purple);">P</div>
+            <div class="voice-name">Pandora</div>
+            <div class="voice-archetype">The Busy VP Sales</div>
+            <div class="voice-traits">
+              <span class="voice-trait" style="background:var(--purple-dim);color:var(--purple);">Time-poor</span>
+              <span class="voice-trait" style="background:var(--amber-dim);color:var(--amber);">ROI-focused</span>
+              <span class="voice-trait" style="background:var(--green-dim);color:var(--green);">Warm</span>
+            </div>
+            <div class="voice-preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Preview voice</div>
+          </div>
+          <div class="voice-card">
+            <div class="voice-avatar" style="background:var(--blue-dim);color:var(--blue);">A</div>
+            <div class="voice-name">Atlas</div>
+            <div class="voice-archetype">The Enterprise Gatekeeper</div>
+            <div class="voice-traits">
+              <span class="voice-trait" style="background:var(--blue-dim);color:var(--blue);">Process</span>
+              <span class="voice-trait" style="background:var(--coral-dim);color:var(--coral);">Risk-averse</span>
+              <span class="voice-trait" style="background:var(--amber-dim);color:var(--amber);">Formal</span>
+            </div>
+            <div class="voice-preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Preview voice</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Scenario Type -->
+      <div class="setup-section">
+        <div class="section-label"><span class="step-num">2</span> Scenario Type</div>
+        <div class="chip-grid">
+          <div class="chip selected"><span class="chip-icon">📞</span> Cold Call</div>
+          <div class="chip"><span class="chip-icon">🔄</span> Follow-Up</div>
+          <div class="chip"><span class="chip-icon">🎯</span> Discovery Call</div>
+          <div class="chip"><span class="chip-icon">📊</span> Demo / Pitch</div>
+          <div class="chip"><span class="chip-icon">🤝</span> Negotiation</div>
+          <div class="chip"><span class="chip-icon">💰</span> Closing Call</div>
+        </div>
+      </div>
+
+      <!-- Step 3: Industry + Company -->
+      <div class="setup-section">
+        <div class="section-label"><span class="step-num">3</span> Target Context</div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">Industry</div>
+            <div class="field-value">B2B SaaS <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+          <div class="field">
+            <div class="field-label">Company Size</div>
+            <div class="field-value">Mid-Market (50-500) <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">Buyer Role</div>
+            <div class="field-value">CTO / Head of Engineering <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+          <div class="field">
+            <div class="field-label">Company Name (Optional)</div>
+            <div class="field-value" style="color:var(--text-muted);">TechVault Ltd <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Difficulty -->
+      <div class="setup-section">
+        <div class="section-label"><span class="step-num">4</span> Objection Difficulty</div>
+        <div class="field" style="padding: 14px 16px;">
+          <div class="difficulty-track">
+            <div class="difficulty-seg" style="background:var(--green);opacity:0.8;"></div>
+            <div class="difficulty-seg" style="background:var(--green);opacity:0.6;"></div>
+            <div class="difficulty-seg" style="background:var(--amber);opacity:0.7;"></div>
+            <div class="difficulty-seg" style="background:var(--amber);opacity:0.8;"></div>
+            <div class="difficulty-seg" style="background:var(--amber);opacity:0.9;"></div>
+            <div class="difficulty-seg" style="background:var(--coral);opacity:0.7;position:relative;"><div class="difficulty-indicator" style="background:var(--coral);right:-3px;"></div></div>
+            <div class="difficulty-seg" style="background:var(--coral);opacity:0.6;"></div>
+            <div class="difficulty-seg" style="background:var(--coral);opacity:0.5;"></div>
+            <div class="difficulty-seg" style="background:var(--coral);opacity:0.4;"></div>
+            <div class="difficulty-seg" style="background:var(--coral);opacity:0.3;"></div>
+          </div>
+          <div class="difficulty-labels">
+            <div class="difficulty-label">Friendly</div>
+            <div class="difficulty-label">Moderate</div>
+            <div class="difficulty-label active" style="color:var(--coral);font-weight:600;">Tough (6/10)</div>
+            <div class="difficulty-label">Hostile</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Skill Focus -->
+      <div class="setup-section">
+        <div class="section-label"><span class="step-num">5</span> Skill Focus Areas</div>
+        <div class="skill-toggles">
+          <div class="skill-toggle on">
+            <div class="toggle-switch"></div>
+            <div class="toggle-label">Objection Handling</div>
+            <div class="toggle-score" style="color:var(--coral);">48% live</div>
+          </div>
+          <div class="skill-toggle on">
+            <div class="toggle-switch"></div>
+            <div class="toggle-label">Closing Technique</div>
+            <div class="toggle-score" style="color:var(--coral);">52% live</div>
+          </div>
+          <div class="skill-toggle">
+            <div class="toggle-switch"></div>
+            <div class="toggle-label">Discovery Questions</div>
+            <div class="toggle-score" style="color:var(--amber);">65% live</div>
+          </div>
+          <div class="skill-toggle">
+            <div class="toggle-switch"></div>
+            <div class="toggle-label">Opening / Permission</div>
+            <div class="toggle-score" style="color:var(--green);">72% live</div>
+          </div>
+          <div class="skill-toggle">
+            <div class="toggle-switch"></div>
+            <div class="toggle-label">Rapport Building</div>
+            <div class="toggle-score" style="color:var(--green);">74% live</div>
+          </div>
+          <div class="skill-toggle">
+            <div class="toggle-switch"></div>
+            <div class="toggle-label">Pitch Delivery</div>
+            <div class="toggle-score" style="color:var(--amber);">68% live</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Preview + Launch -->
+    <div class="preview-panel">
+
+      <!-- Session preview -->
+      <div class="preview-card">
+        <div class="preview-title">Session Preview</div>
+        <div class="preview-persona">
+          <div class="preview-persona-avatar" style="background:var(--coral-dim);color:var(--coral);">D</div>
+          <div>
+            <div class="preview-persona-name">Draco</div>
+            <div class="preview-persona-role">CTO at TechVault Ltd · Mid-Market SaaS</div>
+          </div>
+        </div>
+        <div class="preview-detail"><span class="preview-detail-label">Scenario</span><span class="preview-detail-value">Cold Call</span></div>
+        <div class="preview-detail"><span class="preview-detail-label">Industry</span><span class="preview-detail-value">B2B SaaS</span></div>
+        <div class="preview-detail"><span class="preview-detail-label">Difficulty</span><span class="preview-detail-value" style="color:var(--coral);">6/10 (Tough)</span></div>
+        <div class="preview-detail"><span class="preview-detail-label">Skill Focus</span><span class="preview-detail-value">Objection, Closing</span></div>
+        <div class="preview-detail"><span class="preview-detail-label">Est. Duration</span><span class="preview-detail-value">5-8 mins</span></div>
+
+        <div class="preview-brief">
+          <div class="preview-brief-title">Scenario Brief</div>
+          <div class="preview-brief-text">"You're calling James, CTO at TechVault. They have 15 reps and no structured way to measure training impact. James is skeptical of sales tools after a failed Gong rollout. He's time-poor and will push hard on pricing. Your goal: secure a pilot commitment."</div>
+        </div>
+      </div>
+
+      <!-- AI Recommendation -->
+      <div class="ai-rec">
+        <div class="ai-rec-header">
+          <div class="ai-rec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547"/></svg></div>
+          <div class="ai-rec-title">Training Agent Recommendation</div>
+        </div>
+        <div class="ai-rec-text">Based on your last 5 sessions, objection handling is your biggest Transfer Gap at 32%. This scenario is calibrated to drill price and competitor objections specifically. Focus on reframing rather than defending.</div>
+        <div class="ai-rec-tag" style="background:var(--coral-dim);color:var(--coral);">Transfer Gap: 32% on Objection Handling</div>
+      </div>
+
+      <!-- Launch button -->
+      <button class="launch-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72"/></svg>
+        Start Call
+      </button>
+
+      <!-- Recent sessions -->
+      <div class="recent-card">
+        <div class="recent-title">Recent Sessions</div>
+        <div class="recent-item">
+          <div class="recent-score" style="background:var(--green-dim);color:var(--green);">82</div>
+          <div class="recent-info"><div class="recent-scenario">Cold Call · Pandora · FinTech</div><div class="recent-meta">Yesterday · 6m 14s</div></div>
+          <div class="recent-replay">Replay</div>
+        </div>
+        <div class="recent-item">
+          <div class="recent-score" style="background:var(--amber-dim);color:var(--amber);">68</div>
+          <div class="recent-info"><div class="recent-scenario">Discovery · Draco · Healthcare SaaS</div><div class="recent-meta">2 days ago · 8m 02s</div></div>
+          <div class="recent-replay">Replay</div>
+        </div>
+        <div class="recent-item">
+          <div class="recent-score" style="background:var(--coral-dim);color:var(--coral);">54</div>
+          <div class="recent-info"><div class="recent-scenario">Negotiation · Atlas · Enterprise</div><div class="recent-meta">3 days ago · 4m 48s</div></div>
+          <div class="recent-replay">Replay</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>OAST - Leaderboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg-primary: #0d1117; --bg-secondary: #111820; --bg-card: #151c25;
+    --border: #1e2a38; --border-light: #253345;
+    --text-primary: #c9d1d9; --text-secondary: #7d8a98; --text-muted: #4a5567;
+    --coral: #FF6B6B; --coral-dim: rgba(255,107,107,0.12);
+    --green: #4ADE80; --green-dim: rgba(74,222,128,0.12);
+    --amber: #FBBF24; --amber-dim: rgba(251,191,36,0.12);
+    --blue: #60A5FA; --blue-dim: rgba(96,165,250,0.12);
+    --purple: #A78BFA; --purple-dim: rgba(167,139,250,0.12);
+    --gold: #F59E0B; --silver: #94A3B8; --bronze: #D97706;
+    --sidebar-w: 200px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 14px 0; z-index: 10; overflow-y: auto; scrollbar-width: none; }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .sidebar-logo { padding: 0 16px 16px; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 22px; color: var(--text-primary); }
+  .sidebar-logo span { font-size: 9px; font-weight: 400; color: var(--text-muted); margin-left: 3px; vertical-align: super; font-family: 'DM Sans'; }
+  .sidebar-section { padding: 14px 16px 6px; font-size: 9px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 7px 16px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-left: 3px solid transparent; position: relative; }
+  .sidebar-item.active { color: var(--coral); border-left-color: var(--coral); background: rgba(255,107,107,0.06); }
+  .sidebar-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .sidebar-item .badge { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: var(--coral); width: 8px; height: 8px; border-radius: 50%; }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 8px 16px; }
+  .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--border); padding-top: 8px; }
+  .sidebar-collapse { padding: 8px 16px; color: var(--text-muted); cursor: pointer; font-size: 14px; text-align: center; }
+  .topbar { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 48px; background: var(--bg-primary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 10; }
+  .search-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; color: var(--text-muted); font-size: 12px; width: 200px; display: flex; align-items: center; gap: 6px; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .notif-badge { position: relative; } .notif-badge .notif-dot { position: absolute; top: -2px; right: -4px; background: var(--coral); width: 8px; height: 8px; border-radius: 50%; }
+  .avatar { width: 28px; height: 28px; border-radius: 6px; background: var(--coral); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; color: #fff; }
+  .user-info { font-size: 12px; font-weight: 600; } .user-info small { display: block; font-size: 10px; color: var(--text-muted); font-weight: 400; }
+  .signout-link { font-size: 11px; color: var(--text-muted); }
+
+  .main { margin-left: var(--sidebar-w); padding: 68px 28px 28px; }
+  .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .page-kicker { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; }
+  .page-title { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 600; text-transform: uppercase; }
+  .page-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+  .filter-pill { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 500; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; }
+  .filter-pill.active { background: var(--coral-dim); border-color: var(--coral); color: var(--coral); }
+
+  /* Podium */
+  .podium-section { display: flex; align-items: flex-end; justify-content: center; gap: 16px; margin-bottom: 28px; padding: 20px 0; }
+  .podium-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; text-align: center; position: relative; width: 220px;
+  }
+  .podium-card.first { padding-bottom: 28px; }
+  .podium-card.first::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--gold), #FCD34D);
+    border-radius: 12px 12px 0 0;
+  }
+  .podium-card.second::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--silver); border-radius: 12px 12px 0 0;
+  }
+  .podium-card.third::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--bronze); border-radius: 12px 12px 0 0;
+  }
+  .podium-rank {
+    font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700;
+    margin-bottom: 8px; line-height: 1;
+  }
+  .podium-avatar {
+    width: 48px; height: 48px; border-radius: 12px; margin: 0 auto 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 700;
+  }
+  .podium-card.first .podium-avatar { width: 56px; height: 56px; font-size: 18px; }
+  .podium-name { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; }
+  .podium-card.first .podium-name { font-size: 18px; }
+  .podium-role { font-size: 10px; color: var(--text-muted); margin-bottom: 10px; }
+  .podium-score { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 700; }
+  .podium-card.first .podium-score { font-size: 34px; }
+  .podium-score-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .podium-stats { display: flex; justify-content: center; gap: 16px; margin-top: 12px; }
+  .podium-stat { text-align: center; }
+  .podium-stat-val { font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; }
+  .podium-stat-label { font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Main table */
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 20px; }
+  .card-title { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .card-subtitle { font-size: 10px; color: var(--text-muted); margin-bottom: 14px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 10px; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+
+  .rank-cell { font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 700; width: 40px; }
+  .rep-cell { display: flex; align-items: center; gap: 10px; }
+  .rep-avatar {
+    width: 32px; height: 32px; border-radius: 8px; display: flex;
+    align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .rep-name { font-weight: 600; }
+  .rep-role { font-size: 10px; color: var(--text-muted); }
+  .movement { display: flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; }
+  .movement.up { color: var(--green); }
+  .movement.down { color: var(--coral); }
+  .movement.same { color: var(--text-muted); }
+
+  .score-pill { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 3px; }
+  .bar-cell { display: flex; align-items: center; gap: 6px; }
+  .bar-track { flex: 1; height: 5px; background: rgba(255,255,255,0.05); border-radius: 3px; }
+  .bar-fill { height: 100%; border-radius: 3px; }
+  .bar-val { font-size: 11px; font-weight: 600; min-width: 24px; }
+
+  /* Streaks */
+  .streak-flames { display: flex; gap: 2px; }
+  .streak-flame { font-size: 12px; }
+  .streak-count { font-size: 11px; font-weight: 600; margin-left: 4px; }
+
+  /* Badges */
+  .badge-row { display: flex; gap: 4px; }
+  .badge-icon {
+    width: 22px; height: 22px; border-radius: 5px; display: flex;
+    align-items: center; justify-content: center; font-size: 10px;
+  }
+
+  /* Right column */
+  .content-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+
+  /* Activity feed */
+  .activity-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-avatar {
+    width: 26px; height: 26px; border-radius: 6px; display: flex;
+    align-items: center; justify-content: center; font-size: 9px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .activity-text { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+  .activity-text strong { color: var(--text-primary); font-weight: 600; }
+  .activity-time { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Weekly challenge */
+  .challenge-card {
+    background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px; margin-bottom: 10px;
+  }
+  .challenge-card:last-child { margin-bottom: 0; }
+  .challenge-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .challenge-icon { font-size: 16px; }
+  .challenge-title { font-size: 12px; font-weight: 600; flex: 1; }
+  .challenge-status { font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .challenge-progress-bg { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; margin-bottom: 4px; }
+  .challenge-progress { height: 100%; border-radius: 3px; }
+  .challenge-meta { font-size: 10px; color: var(--text-muted); display: flex; justify-content: space-between; }
+
+  /* Category winners */
+  .cat-winner { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .cat-winner:last-child { border-bottom: none; }
+  .cat-label { font-size: 10px; color: var(--text-muted); width: 90px; }
+  .cat-name { font-size: 11px; font-weight: 600; flex: 1; }
+  .cat-value { font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">OAST.<span>v1.2</span></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Practice</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Journey</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Drills</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Analytics</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>Library</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Team</div>
+  <div class="sidebar-section">Coaching</div>
+  <div class="sidebar-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Leaderboard</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Goals</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>Recordings</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Meetings</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>Schedule</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 9 8 12 2 12"/></svg>Inbox</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>Notifications<span class="badge"></span></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Settings</div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Objections</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Win / Loss</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2"/></svg>Pre-Call Prep</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Coaching</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Accounts</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Audit Log</div>
+  <div class="sidebar-section">Intelligence</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Revenue Intel</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/></svg>Live Scores</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Insights</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="3"/><circle cx="15" cy="15" r="3"/></svg>Transfer Gap</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Billing</div>
+  <div class="sidebar-bottom"><div class="sidebar-collapse">‹</div><div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</div></div>
+</nav>
+
+<header class="topbar">
+  <div class="search-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>Search...</div>
+  <div class="topbar-right"><div class="notif-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><span class="notif-dot"></span></div><div class="avatar">OA</div><div class="user-info">OAST Admin<small>Admin</small></div><div class="signout-link">Sign Out</div></div>
+</header>
+
+<main class="main">
+  <div class="page-header"><div><div class="page-kicker">Coaching</div><div class="page-title">Leaderboard</div><div class="page-desc">Team rankings by composite score: training performance, Transfer Gap, session volume, and win rate.</div></div></div>
+
+  <div class="filter-bar">
+    <div class="filter-pill active">This Month</div><div class="filter-pill">This Week</div><div class="filter-pill">All Time</div>
+    <div style="flex:1;"></div>
+    <div class="filter-pill">Composite Score</div><div class="filter-pill">Win Rate</div><div class="filter-pill">Transfer Gap</div><div class="filter-pill">Sessions</div>
+  </div>
+
+  <!-- PODIUM -->
+  <div class="podium-section">
+    <!-- 2nd -->
+    <div class="podium-card second">
+      <div class="podium-rank" style="color:var(--silver);">2</div>
+      <div class="podium-avatar" style="background:var(--blue-dim);color:var(--blue);">JW</div>
+      <div class="podium-name">J. Walker</div>
+      <div class="podium-role">BDR</div>
+      <div class="podium-score" style="color:var(--blue);">847</div>
+      <div class="podium-score-label">Points</div>
+      <div class="podium-stats">
+        <div class="podium-stat"><div class="podium-stat-val" style="color:var(--green);">89%</div><div class="podium-stat-label">Training</div></div>
+        <div class="podium-stat"><div class="podium-stat-val" style="color:var(--green);">13%</div><div class="podium-stat-label">Gap</div></div>
+        <div class="podium-stat"><div class="podium-stat-val" style="color:var(--green);">45%</div><div class="podium-stat-label">Win Rate</div></div>
+      </div>
+    </div>
+
+    <!-- 1st -->
+    <div class="podium-card first">
+      <div class="podium-rank" style="color:var(--gold);">1</div>
+      <div class="podium-avatar" style="background:var(--green-dim);color:var(--green);">DO</div>
+      <div class="podium-name">D. Okonkwo</div>
+      <div class="podium-role">Senior BDR</div>
+      <div class="podium-score" style="color:var(--gold);">924</div>
+      <div class="podium-score-label">Points</div>
+      <div class="podium-stats">
+        <div class="podium-stat"><div class="podium-stat-val" style="color:var(--green);">92%</div><div class="podium-stat-label">Training</div></div>
+        <div class="podium-stat"><div class="podium-stat-val" style="color:var(--green);">8%</div><div class="podium-stat-label">Gap</div></div>
+        <div class="podium-stat"><div class="podium-stat-val" style="color:var(--green);">58%</div><div class="podium-stat-label">Win Rate</div></div>
+      </div>
+    </div>
+
+    <!-- 3rd -->
+    <div class="podium-card third">
+      <div class="podium-rank" style="color:var(--bronze);">3</div>
+      <div class="podium-avatar" style="background:var(--purple-dim);color:var(--purple);">SP</div>
+      <div class="podium-name">S. Patel</div>
+      <div class="podium-role">BDR</div>
+      <div class="podium-score" style="color:var(--purple);">762</div>
+      <div class="podium-score-label">Points</div>
+      <div class="podium-stats">
+        <div class="podium-stat"><div class="podium-stat-val" style="color:var(--green);">86%</div><div class="podium-stat-label">Training</div></div>
+        <div class="podium-stat"><div class="podium-stat-val" style="color:var(--amber);">18%</div><div class="podium-stat-label">Gap</div></div>
+        <div class="podium-stat"><div class="podium-stat-val" style="color:var(--amber);">38%</div><div class="podium-stat-label">Win Rate</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rankings table + Side panels -->
+  <div class="content-grid">
+    <div>
+      <!-- Full rankings -->
+      <div class="card">
+        <div class="card-title">Full Rankings</div>
+        <div class="card-subtitle">Composite score = (Training Score x 0.25) + (Transfer Gap inverse x 0.35) + (Win Rate x 0.25) + (Session Volume x 0.15)</div>
+        <table>
+          <thead><tr><th>#</th><th>Rep</th><th>Score</th><th>Training</th><th>Transfer Gap</th><th>Win Rate</th><th>Sessions</th><th>Streak</th><th>Move</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="rank-cell" style="color:var(--gold);">1</td>
+              <td><div class="rep-cell"><div class="rep-avatar" style="background:var(--green-dim);color:var(--green);">DO</div><div><div class="rep-name">D. Okonkwo</div><div class="rep-role">Senior BDR</div></div></div></td>
+              <td><span style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--gold);">924</span></td>
+              <td><span class="score-pill" style="background:var(--green-dim);color:var(--green);">92%</span></td>
+              <td><div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:92%;background:var(--green);"></div></div><span class="bar-val" style="color:var(--green);">8%</span></div></td>
+              <td style="font-weight:600;color:var(--green);">58%</td>
+              <td style="color:var(--text-secondary);">24</td>
+              <td><div class="streak-flames">🔥🔥🔥🔥🔥</div><span class="streak-count" style="color:var(--coral);">12d</span></td>
+              <td><span class="movement same">-</span></td>
+            </tr>
+            <tr>
+              <td class="rank-cell" style="color:var(--silver);">2</td>
+              <td><div class="rep-cell"><div class="rep-avatar" style="background:var(--blue-dim);color:var(--blue);">JW</div><div><div class="rep-name">J. Walker</div><div class="rep-role">BDR</div></div></div></td>
+              <td><span style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--silver);">847</span></td>
+              <td><span class="score-pill" style="background:var(--green-dim);color:var(--green);">89%</span></td>
+              <td><div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:87%;background:var(--green);"></div></div><span class="bar-val" style="color:var(--green);">13%</span></div></td>
+              <td style="font-weight:600;color:var(--green);">45%</td>
+              <td style="color:var(--text-secondary);">18</td>
+              <td><div class="streak-flames">🔥🔥🔥</div><span class="streak-count" style="color:var(--coral);">7d</span></td>
+              <td><span class="movement up">↑ 1</span></td>
+            </tr>
+            <tr>
+              <td class="rank-cell" style="color:var(--bronze);">3</td>
+              <td><div class="rep-cell"><div class="rep-avatar" style="background:var(--purple-dim);color:var(--purple);">SP</div><div><div class="rep-name">S. Patel</div><div class="rep-role">BDR</div></div></div></td>
+              <td><span style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--bronze);">762</span></td>
+              <td><span class="score-pill" style="background:var(--green-dim);color:var(--green);">86%</span></td>
+              <td><div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:82%;background:var(--amber);"></div></div><span class="bar-val" style="color:var(--amber);">18%</span></div></td>
+              <td style="font-weight:600;color:var(--amber);">38%</td>
+              <td style="color:var(--text-secondary);">21</td>
+              <td><div class="streak-flames">🔥🔥</div><span class="streak-count" style="color:var(--coral);">4d</span></td>
+              <td><span class="movement down">↓ 1</span></td>
+            </tr>
+            <tr>
+              <td class="rank-cell" style="color:var(--text-muted);">4</td>
+              <td><div class="rep-cell"><div class="rep-avatar" style="background:var(--amber-dim);color:var(--amber);">AM</div><div><div class="rep-name">A. Martinez</div><div class="rep-role">BDR</div></div></div></td>
+              <td><span style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--text-primary);">681</span></td>
+              <td><span class="score-pill" style="background:var(--green-dim);color:var(--green);">85%</span></td>
+              <td><div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:76%;background:var(--amber);"></div></div><span class="bar-val" style="color:var(--amber);">24%</span></div></td>
+              <td style="font-weight:600;color:var(--amber);">33%</td>
+              <td style="color:var(--text-secondary);">15</td>
+              <td><div class="streak-flames">🔥</div><span class="streak-count" style="color:var(--text-muted);">2d</span></td>
+              <td><span class="movement up">↑ 1</span></td>
+            </tr>
+            <tr>
+              <td class="rank-cell" style="color:var(--text-muted);">5</td>
+              <td><div class="rep-cell"><div class="rep-avatar" style="background:var(--coral-dim);color:var(--coral);">MC</div><div><div class="rep-name">M. Chen</div><div class="rep-role">Junior BDR</div></div></div></td>
+              <td><span style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--text-secondary);">498</span></td>
+              <td><span class="score-pill" style="background:var(--green-dim);color:var(--green);">81%</span></td>
+              <td><div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:67%;background:var(--coral);"></div></div><span class="bar-val" style="color:var(--coral);">33%</span></div></td>
+              <td style="font-weight:600;color:var(--coral);">22%</td>
+              <td style="color:var(--text-secondary);">12</td>
+              <td><span class="streak-count" style="color:var(--text-muted);">0d</span></td>
+              <td><span class="movement down">↓ 1</span></td>
+            </tr>
+            <tr>
+              <td class="rank-cell" style="color:var(--text-muted);">6</td>
+              <td><div class="rep-cell"><div class="rep-avatar" style="background:rgba(255,255,255,0.06);color:var(--text-muted);">RT</div><div><div class="rep-name">R. Thompson</div><div class="rep-role">Junior BDR</div></div></div></td>
+              <td><span style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--text-muted);">382</span></td>
+              <td><span class="score-pill" style="background:var(--amber-dim);color:var(--amber);">78%</span></td>
+              <td><div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:64%;background:var(--coral);"></div></div><span class="bar-val" style="color:var(--coral);">36%</span></div></td>
+              <td style="font-weight:600;color:var(--coral);">14%</td>
+              <td style="color:var(--text-secondary);">10</td>
+              <td><span class="streak-count" style="color:var(--text-muted);">0d</span></td>
+              <td><span class="movement same">-</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div>
+      <!-- Category Winners -->
+      <div class="card">
+        <div class="card-title">Category Leaders</div>
+        <div class="card-subtitle">Top performers by individual metric this month.</div>
+        <div class="cat-winner"><div class="cat-label">Highest Training</div><div class="cat-name">D. Okonkwo</div><div class="cat-value" style="color:var(--green);">92%</div></div>
+        <div class="cat-winner"><div class="cat-label">Smallest Gap</div><div class="cat-name">D. Okonkwo</div><div class="cat-value" style="color:var(--green);">8%</div></div>
+        <div class="cat-winner"><div class="cat-label">Best Win Rate</div><div class="cat-name">D. Okonkwo</div><div class="cat-value" style="color:var(--green);">58%</div></div>
+        <div class="cat-winner"><div class="cat-label">Most Sessions</div><div class="cat-name">D. Okonkwo</div><div class="cat-value" style="color:var(--text-primary);">24</div></div>
+        <div class="cat-winner"><div class="cat-label">Most Improved</div><div class="cat-name" style="color:var(--coral);">A. Martinez</div><div class="cat-value" style="color:var(--green);">+8pp</div></div>
+        <div class="cat-winner"><div class="cat-label">Longest Streak</div><div class="cat-name">D. Okonkwo</div><div class="cat-value" style="color:var(--coral);">🔥 12d</div></div>
+      </div>
+
+      <!-- Weekly Challenges -->
+      <div class="card">
+        <div class="card-title">Weekly Challenges</div>
+        <div class="card-subtitle">Team-wide challenges, resets every Monday.</div>
+
+        <div class="challenge-card">
+          <div class="challenge-header"><div class="challenge-icon">🎯</div><div class="challenge-title">50 Team Sessions</div><div class="challenge-status" style="background:var(--amber-dim);color:var(--amber);">In Progress</div></div>
+          <div class="challenge-progress-bg"><div class="challenge-progress" style="width:76%;background:var(--amber);"></div></div>
+          <div class="challenge-meta"><span>38 / 50 completed</span><span>3 days left</span></div>
+        </div>
+        <div class="challenge-card">
+          <div class="challenge-header"><div class="challenge-icon">🏆</div><div class="challenge-title">3 Reps Hit 80+ Score</div><div class="challenge-status" style="background:var(--green-dim);color:var(--green);">Complete</div></div>
+          <div class="challenge-progress-bg"><div class="challenge-progress" style="width:100%;background:var(--green);"></div></div>
+          <div class="challenge-meta"><span>3 / 3 reps qualified</span><span>Achieved Tuesday</span></div>
+        </div>
+        <div class="challenge-card">
+          <div class="challenge-header"><div class="challenge-icon">🔥</div><div class="challenge-title">Everyone Trains Today</div><div class="challenge-status" style="background:var(--coral-dim);color:var(--coral);">4 / 6</div></div>
+          <div class="challenge-progress-bg"><div class="challenge-progress" style="width:66%;background:var(--coral);"></div></div>
+          <div class="challenge-meta"><span>M. Chen, R. Thompson outstanding</span><span>Resets midnight</span></div>
+        </div>
+      </div>
+
+      <!-- Activity Feed -->
+      <div class="card">
+        <div class="card-title">Activity Feed</div>
+        <div class="card-subtitle">Latest achievements and milestones.</div>
+
+        <div class="activity-item"><div class="activity-avatar" style="background:var(--green-dim);color:var(--green);">DO</div><div><div class="activity-text"><strong>D. Okonkwo</strong> extended training streak to <strong style="color:var(--coral);">12 days</strong></div><div class="activity-time">14 minutes ago</div></div></div>
+        <div class="activity-item"><div class="activity-avatar" style="background:var(--blue-dim);color:var(--blue);">JW</div><div><div class="activity-text"><strong>J. Walker</strong> moved up to <strong style="color:var(--silver);">#2</strong> after hitting 89% training score</div><div class="activity-time">1 hour ago</div></div></div>
+        <div class="activity-item"><div class="activity-avatar" style="background:var(--amber-dim);color:var(--amber);">AM</div><div><div class="activity-text"><strong>A. Martinez</strong> earned <strong>Most Improved</strong> badge (+8pp this month)</div><div class="activity-time">3 hours ago</div></div></div>
+        <div class="activity-item"><div class="activity-avatar" style="background:var(--green-dim);color:var(--green);">DO</div><div><div class="activity-text"><strong>D. Okonkwo</strong> scored <strong style="color:var(--green);">94%</strong> on a Negotiation drill, new personal best</div><div class="activity-time">Yesterday</div></div></div>
+        <div class="activity-item"><div class="activity-avatar" style="background:var(--purple-dim);color:var(--purple);">SP</div><div><div class="activity-text"><strong>S. Patel</strong> completed <strong>21 sessions</strong> this month, above team average</div><div class="activity-time">Yesterday</div></div></div>
+      </div>
+    </div>
+  </div>
+</main>
+</body>
+</html>

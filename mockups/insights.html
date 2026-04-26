@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>OAST - Insights</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg-primary: #0d1117; --bg-secondary: #111820; --bg-card: #151c25; --border: #1e2a38;
+    --text-primary: #c9d1d9; --text-secondary: #7d8a98; --text-muted: #4a5567;
+    --coral: #FF6B6B; --coral-dim: rgba(255,107,107,0.12);
+    --green: #4ADE80; --green-dim: rgba(74,222,128,0.12);
+    --amber: #FBBF24; --amber-dim: rgba(251,191,36,0.12);
+    --blue: #60A5FA; --blue-dim: rgba(96,165,250,0.12);
+    --purple: #A78BFA; --red: #F87171; --sidebar-w: 200px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 14px 0; z-index: 10; overflow-y: auto; scrollbar-width: none; }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .sidebar-logo { padding: 0 16px 16px; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 22px; color: var(--text-primary); }
+  .sidebar-logo span { font-size: 9px; font-weight: 400; color: var(--text-muted); margin-left: 3px; vertical-align: super; font-family: 'DM Sans'; }
+  .sidebar-section { padding: 14px 16px 6px; font-size: 9px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 7px 16px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-left: 3px solid transparent; position: relative; }
+  .sidebar-item.active { color: var(--coral); border-left-color: var(--coral); background: rgba(255,107,107,0.06); }
+  .sidebar-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .sidebar-item .badge { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: var(--coral); width: 8px; height: 8px; border-radius: 50%; }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 8px 16px; }
+  .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--border); padding-top: 8px; }
+  .sidebar-collapse { padding: 8px 16px; color: var(--text-muted); cursor: pointer; font-size: 14px; text-align: center; }
+  .topbar { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 48px; background: var(--bg-primary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 10; }
+  .search-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; color: var(--text-muted); font-size: 12px; width: 200px; display: flex; align-items: center; gap: 6px; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .notif-badge { position: relative; } .notif-badge .notif-dot { position: absolute; top: -2px; right: -4px; background: var(--coral); width: 8px; height: 8px; border-radius: 50%; }
+  .avatar { width: 28px; height: 28px; border-radius: 6px; background: var(--coral); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; color: #fff; }
+  .user-info { font-size: 12px; font-weight: 600; } .user-info small { display: block; font-size: 10px; color: var(--text-muted); font-weight: 400; }
+  .signout-link { font-size: 11px; color: var(--text-muted); }
+  .main { margin-left: var(--sidebar-w); padding: 68px 28px 28px; }
+  .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+  .page-kicker { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; }
+  .page-title { font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 600; text-transform: uppercase; }
+  .page-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+  .filter-pill { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 500; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; }
+  .filter-pill.active { background: var(--coral-dim); border-color: var(--coral); color: var(--coral); }
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 6px; }
+  .stat-value { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 600; }
+  .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .stat-change { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-top: 5px; }
+  .stat-change.up { color: var(--green); background: var(--green-dim); }
+  .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card-title { font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .card-subtitle { font-size: 11px; color: var(--text-muted); margin-bottom: 16px; }
+  .skill-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .skill-label { width: 80px; font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+  .skill-bar-bg { flex: 1; height: 7px; background: rgba(255,255,255,0.04); border-radius: 4px; position: relative; }
+  .skill-bar { height: 100%; border-radius: 4px; } .skill-bar-ghost { position: absolute; top: 0; height: 100%; border-radius: 4px; opacity: 0.2; }
+  .skill-val { font-size: 11px; font-weight: 600; min-width: 32px; text-align: right; }
+  .engagement-row { display: flex; align-items: center; margin-bottom: 8px; }
+  .engagement-day { width: 32px; font-size: 10px; color: var(--text-muted); font-weight: 500; }
+  .engagement-blocks { display: flex; gap: 2px; flex: 1; } .engagement-block { height: 18px; border-radius: 2px; flex: 1; }
+  .engagement-count { width: 28px; text-align: right; font-size: 10px; color: var(--text-secondary); font-weight: 600; }
+  .insight-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+  .insight-type { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 5px; }
+  .insight-text { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+  .insight-rep { font-size: 10px; color: var(--text-muted); margin-top: 5px; }
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <div class="sidebar-logo">OAST.<span>v1.2</span></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Practice</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Journey</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Drills</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Analytics</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Library</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Team</div>
+  <div class="sidebar-section">Coaching</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Leaderboard</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Goals</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>Recordings</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Meetings</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedule</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 9 8 12 2 12"/></svg>Inbox</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>Notifications<span class="badge"></span></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Settings</div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Objections</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Win / Loss</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2"/></svg>Pre-Call Prep</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Coaching</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Accounts</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Audit Log</div>
+  <div class="sidebar-section">Intelligence</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Revenue Intel</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/></svg>Live Scores</div>
+  <div class="sidebar-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Insights</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="3"/><circle cx="15" cy="15" r="3"/></svg>Transfer Gap</div>
+  <div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Billing</div>
+  <div class="sidebar-bottom"><div class="sidebar-collapse">‹</div><div class="sidebar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</div></div>
+</nav>
+<header class="topbar">
+  <div class="search-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>Search...</div>
+  <div class="topbar-right"><div class="notif-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><span class="notif-dot"></span></div><div class="avatar">OA</div><div class="user-info">OAST Admin<small>Admin</small></div><div class="signout-link">Sign Out</div></div>
+</header>
+<main class="main">
+  <div class="page-header"><div><div class="page-kicker">Intelligence</div><div class="page-title">Insights</div><div class="page-desc">Training engagement, skill progression, and AI coaching recommendations across your team.</div></div></div>
+  <div class="filter-bar"><div class="filter-pill active">All Reps</div><div class="filter-pill">BDRs</div><div class="filter-pill">Senior BDRs</div><div class="filter-pill">Junior BDRs</div></div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Sessions This Month</div><div class="stat-value" style="color:var(--text-primary);">186</div><div class="stat-sub">Avg 15.5 per rep</div><div class="stat-change up">↑ 22% vs last month</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Session Score</div><div class="stat-value" style="color:var(--green);">76%</div><div class="stat-sub">Up from 71%</div><div class="stat-change up">↑ 5pp improvement</div></div>
+    <div class="stat-card"><div class="stat-label">Coaching Hours Saved</div><div class="stat-value" style="color:var(--blue);">42h</div><div class="stat-sub">vs manual 1:1 coaching</div><div class="stat-change up">↑ £3,150 value</div></div>
+    <div class="stat-card"><div class="stat-label">Weakest Skill (Team)</div><div class="stat-value" style="color:var(--coral);font-size:24px;">Objection<br>Handling</div><div class="stat-sub">Avg score: 58%</div></div>
+  </div>
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-title">Team Skill Breakdown</div><div class="card-subtitle">Average scores by dimension. Ghost bar = training, solid = live calls.</div>
+      <div class="skill-row"><div class="skill-label">Opening</div><div class="skill-bar-bg"><div class="skill-bar-ghost" style="width:86%;background:var(--green);"></div><div class="skill-bar" style="width:72%;background:var(--green);"></div></div><div class="skill-val" style="color:var(--green);">72%</div></div>
+      <div class="skill-row"><div class="skill-label">Discovery</div><div class="skill-bar-bg"><div class="skill-bar-ghost" style="width:82%;background:var(--green);"></div><div class="skill-bar" style="width:65%;background:var(--amber);"></div></div><div class="skill-val" style="color:var(--amber);">65%</div></div>
+      <div class="skill-row"><div class="skill-label">Pitch Delivery</div><div class="skill-bar-bg"><div class="skill-bar-ghost" style="width:88%;background:var(--green);"></div><div class="skill-bar" style="width:68%;background:var(--amber);"></div></div><div class="skill-val" style="color:var(--amber);">68%</div></div>
+      <div class="skill-row"><div class="skill-label">Objection</div><div class="skill-bar-bg"><div class="skill-bar-ghost" style="width:80%;background:var(--green);"></div><div class="skill-bar" style="width:48%;background:var(--coral);"></div></div><div class="skill-val" style="color:var(--coral);">48%</div></div>
+      <div class="skill-row"><div class="skill-label">Closing</div><div class="skill-bar-bg"><div class="skill-bar-ghost" style="width:78%;background:var(--green);"></div><div class="skill-bar" style="width:52%;background:var(--coral);"></div></div><div class="skill-val" style="color:var(--coral);">52%</div></div>
+      <div class="skill-row"><div class="skill-label">Rapport</div><div class="skill-bar-bg"><div class="skill-bar-ghost" style="width:84%;background:var(--green);"></div><div class="skill-bar" style="width:74%;background:var(--green);"></div></div><div class="skill-val" style="color:var(--green);">74%</div></div>
+      <div style="display:flex;gap:14px;margin-top:16px;font-size:10px;color:var(--text-muted);"><span style="display:flex;align-items:center;gap:3px;"><span style="width:16px;height:5px;border-radius:3px;background:rgba(74,222,128,0.2);display:inline-block;"></span>Training</span><span style="display:flex;align-items:center;gap:3px;"><span style="width:16px;height:5px;border-radius:3px;background:rgba(74,222,128,0.8);display:inline-block;"></span>Live Calls</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Weekly Engagement</div><div class="card-subtitle">Training sessions per day over the last 4 weeks.</div>
+      <div class="engagement-row"><div class="engagement-day">Mon</div><div class="engagement-blocks"><div class="engagement-block" style="background:rgba(255,107,107,0.6);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.8);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.4);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.9);"></div></div><div class="engagement-count">34</div></div>
+      <div class="engagement-row"><div class="engagement-day">Tue</div><div class="engagement-blocks"><div class="engagement-block" style="background:rgba(255,107,107,0.9);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.7);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.85);"></div><div class="engagement-block" style="background:rgba(255,107,107,1);"></div></div><div class="engagement-count">41</div></div>
+      <div class="engagement-row"><div class="engagement-day">Wed</div><div class="engagement-blocks"><div class="engagement-block" style="background:rgba(255,107,107,0.5);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.6);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.7);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.65);"></div></div><div class="engagement-count">28</div></div>
+      <div class="engagement-row"><div class="engagement-day">Thu</div><div class="engagement-blocks"><div class="engagement-block" style="background:rgba(255,107,107,0.7);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.8);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.9);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.75);"></div></div><div class="engagement-count">38</div></div>
+      <div class="engagement-row"><div class="engagement-day">Fri</div><div class="engagement-blocks"><div class="engagement-block" style="background:rgba(255,107,107,0.3);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.45);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.5);"></div><div class="engagement-block" style="background:rgba(255,107,107,0.55);"></div></div><div class="engagement-count">22</div></div>
+      <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);"><div style="display:flex;justify-content:space-between;"><div><div class="stat-label">Peak Training Time</div><div style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:600;">10:00 - 11:30</div></div><div style="text-align:right;"><div class="stat-label">Avg Session Length</div><div style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:600;">8m 42s</div></div></div></div>
+    </div>
+  </div>
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-title">AI Coaching Insights</div><div class="card-subtitle">Automatically generated recommendations from the coaching engine.</div>
+      <div class="insight-card" style="border-left:3px solid var(--coral);"><div class="insight-type" style="color:var(--coral);">Priority Intervention</div><div class="insight-text">Objection handling scores have dropped 12% over the last two weeks. Recommend targeted drill sequences focusing on price and competitor objections.</div><div class="insight-rep">Affects: R. Thompson, M. Chen, A. Martinez</div></div>
+      <div class="insight-card" style="border-left:3px solid var(--green);"><div class="insight-type" style="color:var(--green);">Positive Pattern</div><div class="insight-text">D. Okonkwo's discovery technique has been adopted by J. Walker, who improved live discovery scores by 18% after observing peer call recordings.</div><div class="insight-rep">Recommendation: Share D. Okonkwo's approach as team template</div></div>
+      <div class="insight-card" style="border-left:3px solid var(--amber);"><div class="insight-type" style="color:var(--amber);">Engagement Alert</div><div class="insight-text">R. Thompson has completed only 3 training sessions in the last 14 days, down from an average of 12. Possible disengagement risk.</div><div class="insight-rep">Suggested action: Manager check-in within 48 hours</div></div>
+      <div class="insight-card" style="border-left:3px solid var(--blue);"><div class="insight-type" style="color:var(--blue);">Skill Correlation</div><div class="insight-text">Reps who score above 75% on opening drills convert 2.3x more discovery meetings. Opening quality is the strongest predictor of pipeline progression.</div><div class="insight-rep">Based on: 186 sessions, 142 live calls scored</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Score Progression</div><div class="card-subtitle">4-week rolling average by rep.</div>
+      <svg viewBox="0 0 480 280" style="width:100%;">
+        <line x1="50" y1="20" x2="460" y2="20" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
+        <line x1="50" y1="72" x2="460" y2="72" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
+        <line x1="50" y1="124" x2="460" y2="124" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
+        <line x1="50" y1="176" x2="460" y2="176" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
+        <line x1="50" y1="228" x2="460" y2="228" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+        <text x="42" y="24" fill="var(--text-muted)" font-size="8" text-anchor="end" font-family="DM Sans">100%</text>
+        <text x="42" y="76" fill="var(--text-muted)" font-size="8" text-anchor="end" font-family="DM Sans">80%</text>
+        <text x="42" y="128" fill="var(--text-muted)" font-size="8" text-anchor="end" font-family="DM Sans">60%</text>
+        <text x="42" y="180" fill="var(--text-muted)" font-size="8" text-anchor="end" font-family="DM Sans">40%</text>
+        <text x="42" y="232" fill="var(--text-muted)" font-size="8" text-anchor="end" font-family="DM Sans">20%</text>
+        <text x="118" y="252" fill="var(--text-muted)" font-size="9" text-anchor="middle" font-family="DM Sans">Wk 1</text>
+        <text x="232" y="252" fill="var(--text-muted)" font-size="9" text-anchor="middle" font-family="DM Sans">Wk 2</text>
+        <text x="346" y="252" fill="var(--text-muted)" font-size="9" text-anchor="middle" font-family="DM Sans">Wk 3</text>
+        <text x="460" y="252" fill="var(--text-muted)" font-size="9" text-anchor="middle" font-family="DM Sans">Wk 4</text>
+        <polyline points="118,72 232,62 346,52 460,42" fill="none" stroke="var(--green)" stroke-width="2" stroke-linejoin="round"/><circle cx="460" cy="42" r="3" fill="var(--green)"/>
+        <polyline points="118,112 232,102 346,92 460,82" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/><circle cx="460" cy="82" r="3" fill="var(--blue)"/>
+        <polyline points="118,134 232,130 346,128 460,124" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linejoin="round"/><circle cx="460" cy="124" r="3" fill="var(--amber)"/>
+        <polyline points="118,166 232,156 346,146 460,134" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linejoin="round"/><circle cx="460" cy="134" r="3" fill="var(--purple)"/>
+        <polyline points="118,144 232,152 346,162 460,170" fill="none" stroke="var(--coral)" stroke-width="2" stroke-linejoin="round"/><circle cx="460" cy="170" r="3" fill="var(--coral)"/>
+        <polyline points="118,182 232,186 346,190 460,194" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linejoin="round"/><circle cx="460" cy="194" r="3" fill="var(--text-muted)"/>
+        <circle cx="55" cy="16" r="3" fill="var(--green)"/><text x="63" y="19" fill="var(--text-muted)" font-size="8" font-family="DM Sans">Okonkwo</text>
+        <circle cx="120" cy="16" r="3" fill="var(--blue)"/><text x="128" y="19" fill="var(--text-muted)" font-size="8" font-family="DM Sans">Walker</text>
+        <circle cx="178" cy="16" r="3" fill="var(--amber)"/><text x="186" y="19" fill="var(--text-muted)" font-size="8" font-family="DM Sans">Patel</text>
+        <circle cx="225" cy="16" r="3" fill="var(--purple)"/><text x="233" y="19" fill="var(--text-muted)" font-size="8" font-family="DM Sans">Martinez</text>
+        <circle cx="290" cy="16" r="3" fill="var(--coral)"/><text x="298" y="19" fill="var(--text-muted)" font-size="8" font-family="DM Sans">Chen</text>
+        <circle cx="340" cy="16" r="3" fill="var(--text-muted)"/><text x="348" y="19" fill="var(--text-muted)" font-size="8" font-family="DM Sans">Thompson</text>
+      </svg>
+    </div>
+  </div>
+</main>
+</body>
+</html>
