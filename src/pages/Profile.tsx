@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../utils/supabase';
-import { User, Shield, Briefcase, Key, Save, Camera, Clock, ExternalLink } from 'lucide-react';
+import { Key, Save, Camera, ExternalLink } from 'lucide-react';
 import Notification from '../components/Notification';
 import VoiceSelector from '../components/training/VoiceSelector';
 
@@ -184,8 +184,15 @@ export default function Profile() {
     }
 
     return (
-        <div className="layout-shell p-6 md:p-8">
-            <h1 className="text-3xl font-display font-bold text-[rgb(var(--text-primary))] mb-8">Account Settings</h1>
+        <div className="layout-shell p-6 md:p-8 max-w-5xl">
+            {/* Page Header */}
+            <div className="flex justify-between items-start mb-5">
+                <div>
+                    <div className="page-kicker">Coaching</div>
+                    <div className="page-title">Settings</div>
+                    <div className="page-desc">Profile, preferences, and system configuration.</div>
+                </div>
+            </div>
 
             {message && (
                 <Notification
@@ -195,270 +202,266 @@ export default function Profile() {
                 />
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column: Profile & Stats */}
-                <div className="space-y-8 lg:col-span-2">
-                    {/* User Stats Card */}
-                    <div className="card-hero p-8 relative overflow-hidden">
-                        <div className="relative z-10 flex items-center space-x-6 mb-8">
+            <div className="space-y-4">
+                {/* Section 1: Profile */}
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                    <div className="card-title">Profile</div>
+                    <div className="grid grid-cols-[200px_1fr] gap-4 items-center">
+                        <label className="text-xs font-medium text-[rgb(var(--text-secondary))]">Full Name</label>
+                        <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="input-os"
+                            placeholder="Your Name"
+                        />
+
+                        <label className="text-xs font-medium text-[rgb(var(--text-secondary))]">Email</label>
+                        <input
+                            type="text"
+                            value={user?.email || ''}
+                            readOnly
+                            className="input-os opacity-50 cursor-not-allowed"
+                        />
+
+                        <label className="text-xs font-medium text-[rgb(var(--text-secondary))]">Role</label>
+                        <input
+                            type="text"
+                            value={user?.role === 'admin' ? 'Administrator' : user?.role === 'team_lead' ? 'Team Lead' : 'User'}
+                            readOnly
+                            className="input-os opacity-50 cursor-not-allowed"
+                        />
+
+                        <label className="text-xs font-medium text-[rgb(var(--text-secondary))]">Avatar</label>
+                        <div className="flex items-center gap-3">
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={isUploadingAvatar}
-                                className="relative h-20 w-20 flex-shrink-0 group"
+                                className="relative w-8 h-8 flex-shrink-0 group"
                                 title="Change avatar"
                             >
                                 {avatarUrl ? (
-                                    <img src={avatarUrl} alt="Avatar" className="h-20 w-20 rounded-full object-cover shadow-[0_0_20px_rgb(var(--accent-glow)/0.5)]" />
+                                    <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-md object-cover" />
                                 ) : (
-                                    <div className="h-20 w-20 rounded-full bg-[rgb(var(--accent-primary))] flex items-center justify-center text-3xl font-bold text-white shadow-[0_0_20px_rgb(var(--accent-glow)/0.5)]">
+                                    <div className="w-8 h-8 rounded-md flex items-center justify-center text-[11px] font-bold"
+                                         style={{ background: 'var(--color-coral-dim)', color: 'var(--color-coral)', fontFamily: 'Oswald, sans-serif' }}>
                                         {user?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
                                     </div>
                                 )}
-                                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="absolute inset-0 rounded-md bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                     {isUploadingAvatar ? (
-                                        <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                     ) : (
-                                        <Camera className="h-6 w-6 text-white" />
+                                        <Camera className="h-4 w-4 text-white" />
                                     )}
                                 </div>
                             </button>
                             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-                            <div>
-                                <h2 className="text-2xl font-display font-bold text-[rgb(var(--text-primary))]">{user?.name}</h2>
-                                <p className="text-[rgb(var(--text-secondary))]">{user?.email}</p>
-                                <div className="flex items-center mt-3 space-x-2">
-                                    <span className="px-2.5 py-1 rounded-full bg-[rgb(var(--bg-canvas))] text-[rgb(var(--text-muted))] text-xs font-semibold border border-[rgb(var(--border-subtle))] uppercase tracking-wide">
-                                        {user?.role === 'admin' ? 'Administrator' : user?.role === 'team_lead' ? 'Team Lead' : 'User'}
-                                    </span>
-                                    {stats && (
-                                        <span className="px-2.5 py-1 rounded-full bg-[rgb(var(--accent-primary)/0.1)] text-[rgb(var(--accent-primary))] text-xs font-semibold border border-[rgb(var(--accent-primary)/0.2)]">
-                                            Lvl {Math.floor(stats.totalXP / 1000) + 1}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="text-xs font-medium cursor-pointer"
+                                style={{ color: 'var(--color-coral)' }}
+                            >
+                                Change
+                            </button>
                         </div>
 
-                        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-6 pt-8 border-t border-[rgb(var(--border-subtle))]">
-                            <div className="text-center">
-                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Total XP</p>
-                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">{stats?.totalXP || 0}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Avg Score</p>
-                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">{stats?.averageScore || 0}%</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Sessions</p>
-                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">{stats?.completedSessions || 0}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-[rgb(var(--text-muted))] text-xs uppercase tracking-wider mb-1">Level</p>
-                                <p className="text-2xl font-bold text-[rgb(var(--text-primary))] capitalize">{stats?.experienceLevel}</p>
-                            </div>
-                        </div>
+                        <label className="text-xs font-medium text-[rgb(var(--text-secondary))]">Industry</label>
+                        <input
+                            type="text"
+                            value={formData.industry}
+                            onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                            className="input-os"
+                            placeholder="e.g. SaaS, Real Estate"
+                        />
 
-                        {/* Background Accent */}
-                        <div className="absolute -top-24 -right-24 w-64 h-64 bg-[rgb(var(--accent-primary)/0.1)] rounded-full blur-3xl pointer-events-none"></div>
+                        <label className="text-xs font-medium text-[rgb(var(--text-secondary))]">Experience Level</label>
+                        <select
+                            value={formData.experienceLevel}
+                            onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value })}
+                            className="input-os"
+                            style={{ appearance: 'none', WebkitAppearance: 'none', backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234a5567' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+                        >
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
                     </div>
-
-                    {/* Edit Profile Form */}
-                    <div className="card-os p-8">
-                        <div className="flex items-center mb-6">
-                            <User className="h-5 w-5 text-[rgb(var(--accent-primary))] mr-2" />
-                            <h3 className="text-lg font-bold text-[rgb(var(--text-primary))]">Edit Profile</h3>
-                        </div>
-                        <form onSubmit={handleProfileUpdate} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Full Name</label>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="input-os"
-                                        placeholder="Your Name"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Industry</label>
-                                    <input
-                                        type="text"
-                                        value={formData.industry}
-                                        onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                                        className="input-os"
-                                        placeholder="e.g. SaaS, Real Estate"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Experience Level</label>
-                                <select
-                                    value={formData.experienceLevel}
-                                    onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value })}
-                                    className="input-os"
-                                >
-                                    <option value="beginner">Beginner</option>
-                                    <option value="intermediate">Intermediate</option>
-                                    <option value="advanced">Advanced</option>
-                                </select>
-                            </div>
-                            <div className="pt-4 border-t border-[rgb(var(--border-subtle))]">
-                                <VoiceSelector
-                                    label="Simulation Voice"
-                                    value={formData.preferred_voice_id}
-                                    onChange={(id) => setFormData(prev => ({ ...prev, preferred_voice_id: id }))}
-                                />
-                            </div>
-                            <div className="flex justify-end">
-                                <button
-                                    type="submit"
-                                    disabled={isSaving}
-                                    className="btn-primary flex items-center px-6 py-2.5 text-sm"
-                                >
-                                    <Save className="h-4 w-4 mr-2" />
-                                    {isSaving ? 'Saving...' : 'Save Changes'}
-                                </button>
-                            </div>
+                    <div className="mt-4 pt-4 border-t border-[rgb(var(--border-default))]">
+                        <VoiceSelector
+                            label="Simulation Voice"
+                            value={formData.preferred_voice_id}
+                            onChange={(id) => setFormData(prev => ({ ...prev, preferred_voice_id: id }))}
+                        />
+                    </div>
+                    <div className="flex justify-end mt-4">
+                        <form onSubmit={handleProfileUpdate}>
+                            <button
+                                type="submit"
+                                disabled={isSaving}
+                                className="btn-primary flex items-center"
+                            >
+                                <Save className="h-4 w-4 mr-2" />
+                                {isSaving ? 'Saving...' : 'Save Changes'}
+                            </button>
                         </form>
                     </div>
-                    {/* Recent Sessions */}
-                    {recentPitches.length > 0 && (
-                        <div className="card-os p-8">
-                            <div className="flex items-center mb-6">
-                                <Clock className="h-5 w-5 text-[rgb(var(--accent-primary))] mr-2" />
-                                <h3 className="text-lg font-bold text-[rgb(var(--text-primary))]">Recent Sessions</h3>
-                            </div>
-                            <div className="space-y-3">
+                </div>
+
+                {/* Section 2: Stats */}
+                {stats && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                            <div className="stat-label">Total XP</div>
+                            <div className="stat-value text-[rgb(var(--text-primary))]">{stats.totalXP || 0}</div>
+                        </div>
+                        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                            <div className="stat-label">Avg Score</div>
+                            <div className="stat-value text-[rgb(var(--text-primary))]">{stats.averageScore || 0}%</div>
+                        </div>
+                        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                            <div className="stat-label">Sessions</div>
+                            <div className="stat-value text-[rgb(var(--text-primary))]">{stats.completedSessions || 0}</div>
+                        </div>
+                        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                            <div className="stat-label">Level</div>
+                            <div className="stat-value text-[rgb(var(--text-primary))] capitalize">{stats.experienceLevel}</div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Section 3: Security */}
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                    <div className="card-title">Security</div>
+                    <form onSubmit={handlePasswordChange}>
+                        <div className="grid grid-cols-[200px_1fr] gap-4 items-center">
+                            <label className="text-xs font-medium text-[rgb(var(--text-secondary))]">New Password</label>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={passwordData.newPassword}
+                                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                className="input-os"
+                                placeholder="Min 8 chars"
+                            />
+
+                            <label className="text-xs font-medium text-[rgb(var(--text-secondary))]">Confirm Password</label>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={passwordData.confirmPassword}
+                                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                className="input-os"
+                                placeholder="Min 8 chars"
+                            />
+                        </div>
+                        <div className="flex justify-end mt-4">
+                            <button
+                                type="submit"
+                                disabled={isSaving}
+                                className="px-4 py-2 rounded-lg bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-canvas))] hover:text-[rgb(var(--text-primary))] text-[11px] font-semibold transition-colors flex items-center"
+                            >
+                                <Key className="h-4 w-4 mr-2" />
+                                Update Password
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {/* Section 4: Recent Sessions */}
+                {recentPitches.length > 0 && (
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                        <div className="card-title">Recent Sessions</div>
+                        <table className="table-os">
+                            <thead>
+                                <tr>
+                                    <th>Scenario</th>
+                                    <th>Date</th>
+                                    <th>Score</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 {recentPitches.map((pitch) => (
-                                    <button
-                                        key={pitch.id}
-                                        onClick={() => navigate(`/pitch/${pitch.id}`)}
-                                        className="w-full flex items-center justify-between p-3 bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-subtle))] hover:border-[rgb(var(--accent-primary))] transition-colors text-left"
-                                    >
-                                        <div>
-                                            <p className="text-sm font-semibold text-[rgb(var(--text-primary))] capitalize">
-                                                {pitch.training_sessions?.scenario?.replace(/_/g, ' ') || 'Sales Call'}
-                                            </p>
-                                            <p className="text-xs text-[rgb(var(--text-muted))] mt-0.5">
-                                                {new Date(pitch.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className={`text-lg font-bold ${pitch.score >= 70 ? 'text-[rgb(var(--accent-primary))]' : 'text-[rgb(var(--text-muted))]'}`}>
+                                    <tr key={pitch.id} className="cursor-pointer" onClick={() => navigate(`/pitch/${pitch.id}`)}>
+                                        <td className="text-[rgb(var(--text-primary))] capitalize font-medium">
+                                            {pitch.training_sessions?.scenario?.replace(/_/g, ' ') || 'Sales Call'}
+                                        </td>
+                                        <td style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                            {new Date(pitch.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </td>
+                                        <td>
+                                            <span className={`pill ${pitch.score >= 70 ? 'pill-green' : pitch.score >= 40 ? 'pill-amber' : 'pill-coral'}`}>
                                                 {pitch.score}%
                                             </span>
-                                            <ExternalLink className="h-4 w-4 text-[rgb(var(--text-muted))]" />
-                                        </div>
-                                    </button>
+                                        </td>
+                                        <td>
+                                            <ExternalLink className="h-3.5 w-3.5 text-[rgb(var(--text-muted))]" />
+                                        </td>
+                                    </tr>
                                 ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Right Column: Security & Admin Ops */}
-                <div className="space-y-8">
-                    {/* Security Settings */}
-                    <div className="card-os p-8">
-                        <div className="flex items-center mb-6">
-                            <Shield className="h-5 w-5 text-[rgb(var(--accent-primary))] mr-2" />
-                            <h3 className="text-lg font-bold text-[rgb(var(--text-primary))]">Security</h3>
-                        </div>
-                        <form onSubmit={handlePasswordChange} className="space-y-5">
-                            <div>
-                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">New Password</label>
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    value={passwordData.newPassword}
-                                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                    className="input-os"
-                                    placeholder="Min 8 chars"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">Confirm New Password</label>
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    value={passwordData.confirmPassword}
-                                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                    className="input-os"
-                                    placeholder="Min 8 chars"
-                                />
-                            </div>
-                            <div className="flex justify-end">
-                                <button
-                                    type="submit"
-                                    disabled={isSaving}
-                                    className="px-4 py-2 rounded-[var(--radius-md)] bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] text-[rgb(var(--text-primary))] hover:bg-[rgb(var(--bg-canvas))] text-sm font-semibold transition-colors flex items-center"
-                                >
-                                    <Key className="h-4 w-4 mr-2" />
-                                    Update Password
-                                </button>
-                            </div>
-                        </form>
+                            </tbody>
+                        </table>
                     </div>
+                )}
 
-                    {/* Admin Role Switcher - Only visible to actual admins */}
-                    {user?.role === 'admin' && (
-                        <div className="card-os p-6 border-status-warning/30 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
-                            <div className="flex items-center mb-4 text-status-warning">
-                                <Briefcase className="h-5 w-5 mr-2" />
-                                <h3 className="text-lg font-bold">Admin Tools</h3>
-                            </div>
-                            <p className="text-sm text-[rgb(var(--text-muted))] mb-4">
-                                Temporarily view the platform as a different role to test permissions and layout.
-                            </p>
-                            <div className="space-y-2">
-                                <button
-                                    onClick={() => simulateRole(null)}
-                                    className={`w-full text-left px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors ${!user.simulatedRole ? 'bg-[rgb(var(--accent-primary))] text-white' : 'bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--bg-canvas))]'}`}
-                                >
-                                    Admin (Default)
-                                </button>
-                                <button
-                                    onClick={() => simulateRole('team_lead')}
-                                    className={`w-full text-left px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors ${user.simulatedRole === 'team_lead' ? 'bg-[rgb(var(--accent-primary))] text-white' : 'bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--bg-canvas))]'}`}
-                                >
-                                    View as Team Lead
-                                </button>
-                                <button
-                                    onClick={() => simulateRole('user')}
-                                    className={`w-full text-left px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors ${user.simulatedRole === 'user' ? 'bg-[rgb(var(--accent-primary))] text-white' : 'bg-[rgb(var(--bg-surface-raised))] text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--bg-canvas))]'}`}
-                                >
-                                    View as User
-                                </button>
-                            </div>
+                {/* Section 5: Admin Role Switcher - Only visible to actual admins */}
+                {user?.role === 'admin' && (
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                        <div className="card-title">Admin Tools</div>
+                        <p className="text-xs text-[rgb(var(--text-muted))] mb-4">
+                            Temporarily view the platform as a different role to test permissions and layout.
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => simulateRole(null)}
+                                className={`px-4 py-1.5 rounded-lg border text-xs font-medium transition-colors ${!user.simulatedRole ? 'bg-[rgb(var(--accent-primary))] text-white border-[rgb(var(--accent-primary))]' : 'bg-[rgb(var(--bg-deep))] border-[rgb(var(--border-default))] text-[rgb(var(--text-secondary))] hover:border-[rgb(var(--border-subtle))] hover:text-[rgb(var(--text-primary))]'}`}
+                            >
+                                Admin (Default)
+                            </button>
+                            <button
+                                onClick={() => simulateRole('team_lead')}
+                                className={`px-4 py-1.5 rounded-lg border text-xs font-medium transition-colors ${user.simulatedRole === 'team_lead' ? 'bg-[rgb(var(--accent-primary))] text-white border-[rgb(var(--accent-primary))]' : 'bg-[rgb(var(--bg-deep))] border-[rgb(var(--border-default))] text-[rgb(var(--text-secondary))] hover:border-[rgb(var(--border-subtle))] hover:text-[rgb(var(--text-primary))]'}`}
+                            >
+                                View as Team Lead
+                            </button>
+                            <button
+                                onClick={() => simulateRole('user')}
+                                className={`px-4 py-1.5 rounded-lg border text-xs font-medium transition-colors ${user.simulatedRole === 'user' ? 'bg-[rgb(var(--accent-primary))] text-white border-[rgb(var(--accent-primary))]' : 'bg-[rgb(var(--bg-deep))] border-[rgb(var(--border-default))] text-[rgb(var(--text-secondary))] hover:border-[rgb(var(--border-subtle))] hover:text-[rgb(var(--text-primary))]'}`}
+                            >
+                                View as User
+                            </button>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
 
-                {/* ── Danger Zone ─────────────────────────────────────────────
+                {/* ── Data & Privacy ─────────────────────────────────────────────
                     TODO: GDPR Art. 17 — right to erasure.
                     Self-service account deletion requires a user-scoped Supabase
                     edge function (the existing admin-delete-user function is
                     admin-only). Do NOT implement without user confirmation.
                     Once the edge function is ready, wire it up here.
                 ────────────────────────────────────────────────────────────── */}
-                <div className="lg:col-span-3 mt-8 pt-6 border-t border-red-900/30">
-                    <h3 className="text-sm uppercase tracking-widest text-red-400 mb-3"
-                        style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 600 }}>
-                        Danger Zone
-                    </h3>
-                    <p className="text-xs text-text-muted mb-4"
-                       style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                        Permanently delete your account and all associated data. This action cannot be undone.
-                    </p>
-                    <button
-                        onClick={() => navigate('/account/delete')}
-                        className="border border-red-900/50 text-red-400 px-5 py-2 text-xs tracking-widest hover:bg-red-900/20 transition-colors"
-                        style={{ borderRadius: 0, fontFamily: 'Oswald, sans-serif', fontWeight: 600 }}
-                    >
-                        DELETE ACCOUNT
-                    </button>
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                    <div className="card-title">Data & Privacy</div>
+                    <div className="flex items-center gap-5">
+                        <button
+                            className="px-4 py-2 rounded-lg bg-transparent border border-[rgb(var(--border-subtle))] text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))] text-[11px] font-semibold transition-colors"
+                        >
+                            Export Data
+                        </button>
+                        <div>
+                            <button
+                                onClick={() => navigate('/account/delete')}
+                                className="text-[11px] underline cursor-pointer transition-opacity hover:opacity-80"
+                                style={{ color: 'var(--color-coral)' }}
+                            >
+                                Delete Account
+                            </button>
+                            <div className="text-[10px] text-[rgb(var(--text-muted))] mt-1">This action cannot be undone</div>
+                        </div>
+                    </div>
                 </div>
-
             </div>
         </div>
     );

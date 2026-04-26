@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CreditCard, Users, TrendingUp, Clock, CheckCircle, AlertCircle, ExternalLink, Loader2, Activity } from 'lucide-react';
+import { CreditCard, Clock, CheckCircle, AlertCircle, ExternalLink, Loader2, Activity } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useTier } from '../../context/TierContext';
@@ -179,16 +179,16 @@ export default function BillingPage() {
         iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
     const StatusChip = ({ status }: { status?: string }) => {
-        const map: Record<string, { label: string; cls: string }> = {
-            active: { label: 'Active', cls: 'text-status-success border-status-success/30 bg-status-success/10' },
-            trialing: { label: 'Trial', cls: 'text-status-warning border-status-warning/30 bg-status-warning/10' },
-            past_due: { label: 'Past Due', cls: 'text-status-danger border-status-danger/30 bg-status-danger/10' },
-            cancelled: { label: 'Cancelled', cls: 'text-text-muted border-border bg-bg-raised' },
-            inactive: { label: 'Inactive', cls: 'text-text-muted border-border bg-bg-raised' },
+        const map: Record<string, { label: string; pillClass: string }> = {
+            active: { label: 'Active', pillClass: 'pill pill-green' },
+            trialing: { label: 'Trial', pillClass: 'pill pill-amber' },
+            past_due: { label: 'Past Due', pillClass: 'pill pill-coral' },
+            cancelled: { label: 'Cancelled', pillClass: 'pill' },
+            inactive: { label: 'Inactive', pillClass: 'pill' },
         };
         const s = map[status ?? 'inactive'] ?? map.inactive;
         return (
-            <span className={`text-[10px] uppercase tracking-widest border px-2 py-0.5 ${s.cls}`}>
+            <span className={s.pillClass} style={!s.pillClass.includes('pill-') ? { background: 'rgba(74,85,103,0.15)', color: 'rgb(var(--text-muted))' } : undefined}>
                 {s.label}
             </span>
         );
@@ -205,17 +205,21 @@ export default function BillingPage() {
     const monthlyTotal = PRICING.monthlyTotal(org.tier, org.seatsLicensed);
 
     return (
-        <div className="p-6 space-y-6 max-w-4xl">
-            <div>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-1">Settings</p>
-                <h1 className="text-2xl text-text-primary">Billing</h1>
+        <div className="p-6 space-y-5 max-w-5xl">
+            {/* Page Header */}
+            <div className="flex justify-between items-start mb-5">
+                <div>
+                    <div className="page-kicker">Intelligence</div>
+                    <div className="page-title">Billing</div>
+                    <div className="page-desc">Plan details, usage, invoices, and payment management.</div>
+                </div>
             </div>
 
             {/* Activated banner */}
             {activated && (
-                <div className="card-os p-4 border border-status-success/40 bg-status-success/5 flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-status-success flex-shrink-0" />
-                    <p className="text-sm text-text-primary">
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4 flex items-center gap-3" style={{ borderColor: 'rgba(74,222,128,0.4)', background: 'rgba(74,222,128,0.05)' }}>
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-green)' }} />
+                    <p className="text-xs text-[rgb(var(--text-primary))]">
                         Subscription activated — your Revenue Intelligence access is now live.
                     </p>
                 </div>
@@ -223,135 +227,71 @@ export default function BillingPage() {
 
             {/* Stripe error */}
             {stripeError && (
-                <div className="card-os p-4 border border-status-danger/40 bg-status-danger/5 flex items-center gap-3">
-                    <AlertCircle className="w-5 h-5 text-status-danger flex-shrink-0" />
-                    <p className="text-sm text-text-secondary">{stripeError}</p>
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4 flex items-center gap-3" style={{ borderColor: 'rgba(248,113,113,0.4)', background: 'rgba(248,113,113,0.05)' }}>
+                    <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-red)' }} />
+                    <p className="text-xs text-[rgb(var(--text-secondary))]">{stripeError}</p>
                 </div>
             )}
 
-            {/* Current Plan */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="card-os p-5 border border-border space-y-2">
-                    <div className="flex items-center gap-2 text-text-muted text-xs uppercase tracking-widest">
-                        <CreditCard className="w-4 h-4" /> Current Tier
-                    </div>
-                    <p className="text-xl text-text-primary">
-                        {org.tier === 'revenue_intelligence' ? 'Revenue Intelligence' : 'Core Platform'}
-                    </p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-accent text-sm">
-                            {PRICING.format(org.pricePerSeatGbp)}/user/mo
-                        </p>
-                        <StatusChip status={orgExt?.subscription_status} />
-                    </div>
-                    {isTrialActive && (
-                        <div className="flex items-center gap-1 text-status-warning text-xs">
-                            <Clock className="w-3 h-3" />
-                            Trial: {trialDaysRemaining} days remaining
+            {/* Current Plan Card */}
+            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                        <div style={{ fontFamily: 'Oswald, sans-serif', fontSize: '18px', fontWeight: 600 }} className="text-[rgb(var(--text-primary))] mb-1">
+                            {org.tier === 'revenue_intelligence' ? 'Revenue Intelligence' : 'Core Platform'}
                         </div>
-                    )}
-                    {orgExt?.current_period_end && (
-                        <p className="text-text-muted text-xs">
-                            Renews {formatDate(orgExt.current_period_end)}
-                        </p>
-                    )}
-                </div>
-
-                <div className="card-os p-5 border border-border space-y-2">
-                    <div className="flex items-center gap-2 text-text-muted text-xs uppercase tracking-widest">
-                        <Users className="w-4 h-4" /> Licensed Seats
-                    </div>
-                    <p className="text-xl text-text-primary">{org.seatsLicensed}</p>
-                    <p className="text-text-secondary text-sm">
-                        Monthly total: <span className="text-accent">{PRICING.format(monthlyTotal)}</span>
-                    </p>
-                </div>
-
-                <div className="card-os p-5 border border-border space-y-2">
-                    <div className="flex items-center gap-2 text-text-muted text-xs uppercase tracking-widest">
-                        <CheckCircle className="w-4 h-4" /> Onboarding Fee
-                    </div>
-                    <p className="text-xl text-text-primary">
-                        {PRICING.format(PRICING.ONBOARDING_FEE)}
-                    </p>
-                    <div className="flex items-center gap-1 text-xs">
-                        {org.onboardingFeePaid ? (
-                            <><CheckCircle className="w-3 h-3 text-status-success" />
-                                <span className="text-status-success">Paid</span></>
-                        ) : (
-                            <><AlertCircle className="w-3 h-3 text-status-warning" />
-                                <span className="text-status-warning">Pending</span></>
+                        <div style={{ fontFamily: 'Oswald, sans-serif', fontSize: '28px', fontWeight: 600 }} className="mb-2" >
+                            <span style={{ color: 'var(--color-coral)' }}>{PRICING.format(org.pricePerSeatGbp)}/user/month</span>
+                        </div>
+                        <div className="text-xs text-[rgb(var(--text-secondary))] mb-1">
+                            Billing cycle: Monthly
+                            <span className="ml-2"><StatusChip status={orgExt?.subscription_status} /></span>
+                        </div>
+                        {isTrialActive && (
+                            <div className="flex items-center gap-1 text-xs mb-1" style={{ color: 'var(--color-amber)' }}>
+                                <Clock className="w-3 h-3" />
+                                Trial: {trialDaysRemaining} days remaining
+                            </div>
                         )}
+                        {orgExt?.current_period_end && (
+                            <div className="text-xs mb-3" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'rgb(var(--text-muted))' }}>
+                                Next invoice: {formatDate(orgExt.current_period_end)}
+                            </div>
+                        )}
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs text-[rgb(var(--text-secondary))]">Seats</span>
+                            <span className="text-xs font-semibold text-[rgb(var(--text-primary))]" style={{ fontFamily: 'Oswald, sans-serif' }}>{org.seatsLicensed} licensed</span>
+                        </div>
+                        <div className="h-bar" style={{ width: '200px' }}>
+                            <div className="h-bar-fill" style={{ width: '80%', background: 'var(--color-green)' }}></div>
+                        </div>
+                    </div>
+                    <div>
+                        <button
+                            onClick={handleManagePortal}
+                            disabled={togglingPortal}
+                            className="px-4 py-2 rounded-lg bg-transparent border border-[rgb(var(--border-subtle))] text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))] text-[11px] font-semibold transition-colors"
+                        >
+                            {togglingPortal ? 'Opening...' : 'Change Plan'}
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* Upgrade CTA — Core tier */}
-            {!isRevIntel && (
-                <div className="card-os p-6 border border-accent/30 bg-accent/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div>
-                        <p className="text-text-primary mb-1 flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-accent" />
-                            Upgrade to Revenue Intelligence
-                        </p>
-                        <p className="text-text-muted text-sm">
-                            {PRICING.format(PRICING.REVENUE_INTELLIGENCE.pricePerUserMonthly)}/user/mo
-                            · Live Scoring, Pipeline Health, Competitive Intel & more
-                        </p>
-                    </div>
-                    <button
-                        onClick={handleUpgrade}
-                        disabled={upgrading}
-                        className="btn-primary whitespace-nowrap flex-shrink-0 flex items-center gap-2"
-                    >
-                        {upgrading
-                            ? <><Loader2 className="w-4 h-4 animate-spin" /> Starting checkout…</>
-                            : 'Upgrade Now'}
-                    </button>
-                </div>
-            )}
-
-            {/* Manage Subscription — Rev Intel tier */}
-            {isRevIntel && (
-                <div className="card-os p-5 border border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div>
-                        <p className="text-text-primary mb-1">Subscription Management</p>
-                        <p className="text-text-muted text-sm">
-                            Update payment method, view invoices, change seats or cancel via Stripe.
-                        </p>
-                    </div>
-                    <button
-                        onClick={handleManagePortal}
-                        disabled={togglingPortal}
-                        className="btn-ghost whitespace-nowrap flex-shrink-0 flex items-center gap-2 border border-border px-4 py-2"
-                    >
-                        {togglingPortal
-                            ? <><Loader2 className="w-4 h-4 animate-spin" /> Opening portal…</>
-                            : <><ExternalLink className="w-4 h-4" /> Manage Subscription</>}
-                    </button>
-                </div>
-            )}
-
-            {/* This Month's Usage */}
+            {/* Usage This Month */}
             <div>
-                <h2 className="text-sm text-text-muted uppercase tracking-widest mb-3">
-                    Usage — {currentPeriod}
-                </h2>
                 {loadingUsage ? (
-                    <p className="text-text-muted text-sm">Loading…</p>
+                    <p className="text-[rgb(var(--text-muted))] text-xs">Loading usage...</p>
                 ) : usage.length === 0 ? (
-                    <p className="text-text-muted text-sm">No usage recorded this period.</p>
+                    <p className="text-[rgb(var(--text-muted))] text-xs">No usage recorded this period.</p>
                 ) : (
-                    <div className="card-os border border-border divide-y divide-border">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {usage.map(u => (
-                            <div key={u.event_type} className="flex items-center justify-between px-5 py-3 text-sm">
-                                <span className="text-text-secondary capitalize">
-                                    {u.event_type.replace(/_/g, ' ')}
-                                </span>
-                                <span className="text-text-primary font-mono">
-                                    {u.total_units.toLocaleString('en-GB', { maximumFractionDigits: 2 })}{' '}
-                                    <span className="text-text-muted text-xs">{u.unit_type}</span>
-                                </span>
+                            <div key={u.event_type} className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                                <div className="stat-label capitalize">{u.event_type.replace(/_/g, ' ')}</div>
+                                <div className="stat-value text-[rgb(var(--text-primary))]">
+                                    {u.total_units.toLocaleString('en-GB', { maximumFractionDigits: 0 })}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -359,75 +299,139 @@ export default function BillingPage() {
             </div>
 
             {/* Billing History */}
-            <div>
-                <h2 className="text-sm text-text-muted uppercase tracking-widest mb-3">
-                    Recent Usage Events
-                </h2>
-                <div className="card-os border border-border overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-border text-text-muted text-xs uppercase tracking-widest">
-                                <th className="px-5 py-3 text-left">Period</th>
-                                <th className="px-5 py-3 text-left">Event</th>
-                                <th className="px-5 py-3 text-right">Units</th>
-                                <th className="px-5 py-3 text-center">Billed</th>
+            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                <div className="card-title">Recent Usage Events</div>
+                <table className="table-os">
+                    <thead>
+                        <tr>
+                            <th>Period</th>
+                            <th>Event</th>
+                            <th>Units</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {history.slice(0, 20).map(row => (
+                            <tr key={row.id}>
+                                <td style={{ fontFamily: 'JetBrains Mono, monospace' }}>{row.billing_period}</td>
+                                <td className="capitalize">
+                                    {row.event_type.replace(/_/g, ' ')}
+                                </td>
+                                <td style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                    {Number(row.units).toLocaleString('en-GB', { maximumFractionDigits: 4 })}{' '}
+                                    <span className="text-[rgb(var(--text-muted))] text-[10px]">{row.unit_type}</span>
+                                </td>
+                                <td>
+                                    {row.billed
+                                        ? <span className="pill pill-green">Paid</span>
+                                        : <span className="pill pill-amber">Pending</span>}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {history.slice(0, 20).map(row => (
-                                <tr key={row.id} className="hover:bg-bg-raised transition-colors">
-                                    <td className="px-5 py-3 text-text-muted font-mono text-xs">{row.billing_period}</td>
-                                    <td className="px-5 py-3 text-text-secondary capitalize">
-                                        {row.event_type.replace(/_/g, ' ')}
-                                    </td>
-                                    <td className="px-5 py-3 text-right text-text-primary font-mono">
-                                        {Number(row.units).toLocaleString('en-GB', { maximumFractionDigits: 4 })}{' '}
-                                        <span className="text-text-muted text-xs">{row.unit_type}</span>
-                                    </td>
-                                    <td className="px-5 py-3 text-center">
-                                        {row.billed
-                                            ? <CheckCircle className="w-4 h-4 text-status-success mx-auto" />
-                                            : <Clock className="w-4 h-4 text-text-muted mx-auto" />}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {history.length === 0 && (
-                        <p className="px-5 py-4 text-text-muted text-sm">No billing history yet.</p>
-                    )}
+                        ))}
+                    </tbody>
+                </table>
+                {history.length === 0 && (
+                    <p className="py-4 text-[rgb(var(--text-muted))] text-xs">No billing history yet.</p>
+                )}
+            </div>
+
+            {/* Payment Method + Upgrade CTA */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Payment Method — Manage Subscription */}
+                {isRevIntel && (
+                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                        <div className="card-title">Payment Method</div>
+                        <div className="flex items-center gap-3 mb-4">
+                            <CreditCard className="w-6 h-6 text-[rgb(var(--text-secondary))]" />
+                            <div>
+                                <div className="text-[13px] text-[rgb(var(--text-primary))] font-medium">Subscription Management</div>
+                                <div className="text-[11px] text-[rgb(var(--text-muted))]">Update payment method, view invoices, or cancel via Stripe.</div>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleManagePortal}
+                            disabled={togglingPortal}
+                            className="px-4 py-2 rounded-lg bg-transparent border border-[rgb(var(--border-subtle))] text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))] text-[11px] font-semibold transition-colors flex items-center gap-2"
+                        >
+                            {togglingPortal
+                                ? <><Loader2 className="w-4 h-4 animate-spin" /> Opening portal...</>
+                                : <><ExternalLink className="w-4 h-4" /> Manage</>}
+                        </button>
+                    </div>
+                )}
+
+                {/* Onboarding Fee Card */}
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                    <div className="card-title">Onboarding Fee</div>
+                    <div className="stat-value text-[rgb(var(--text-primary))] mb-2">{PRICING.format(PRICING.ONBOARDING_FEE)}</div>
+                    <div className="flex items-center gap-1 text-xs">
+                        {org.onboardingFeePaid ? (
+                            <span className="pill pill-green">Paid</span>
+                        ) : (
+                            <span className="pill pill-amber">Pending</span>
+                        )}
+                    </div>
                 </div>
+
+                {/* Upgrade CTA — Core tier */}
+                {!isRevIntel && (
+                    <div className="bg-[rgb(var(--bg-surface-raised))] rounded-lg p-5" style={{ border: '2px solid var(--color-coral)' }}>
+                        <div style={{ fontFamily: 'Oswald, sans-serif', fontSize: '16px', fontWeight: 600, color: 'var(--color-coral)' }} className="mb-1">
+                            Revenue Intelligence Layer
+                        </div>
+                        <div style={{ fontFamily: 'Oswald, sans-serif', fontSize: '24px', fontWeight: 600 }} className="text-[rgb(var(--text-primary))] mb-3">
+                            {PRICING.format(PRICING.REVENUE_INTELLIGENCE.pricePerUserMonthly)}/user/month
+                        </div>
+                        <div className="flex flex-col gap-2 mb-4">
+                            {['Live call scoring & analysis', 'Transfer gap intelligence', 'Revenue correlation insights', 'AI coaching recommendations', 'Advanced pipeline analytics'].map((feature) => (
+                                <div key={feature} className="flex items-center gap-2 text-xs text-[rgb(var(--text-secondary))]">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-green)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    {feature}
+                                </div>
+                            ))}
+                        </div>
+                        <button
+                            onClick={handleUpgrade}
+                            disabled={upgrading}
+                            className="btn-primary w-full flex items-center justify-center gap-2"
+                        >
+                            {upgrading
+                                ? <><Loader2 className="w-4 h-4 animate-spin" /> Starting checkout...</>
+                                : 'Upgrade'}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* AI Token Usage (admin only) */}
             {isAdmin && isRevIntel && (
                 <div>
-                    <h2 className="text-sm text-text-muted uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <div className="card-title flex items-center gap-2">
                         <Activity className="w-4 h-4" /> AI Token Usage
-                    </h2>
+                    </div>
                     {loadingTokens ? (
-                        <p className="text-text-muted text-sm">Loading token usage...</p>
+                        <p className="text-[rgb(var(--text-muted))] text-xs">Loading token usage...</p>
                     ) : !tokenUsage ? (
-                        <p className="text-text-muted text-sm">No token usage data available.</p>
+                        <p className="text-[rgb(var(--text-muted))] text-xs">No token usage data available.</p>
                     ) : (
                         <div className="space-y-4">
                             {/* Allowance and progress bar */}
                             {(() => {
                                 const allowance = org!.tokenAllowanceOverride ?? org!.monthlyTokenAllowance * org!.seatsLicensed;
                                 const pct = allowance > 0 ? Math.min(100, (tokenUsage.total / allowance) * 100) : 0;
-                                const barColor = pct >= 90 ? 'bg-status-danger' : pct >= 75 ? 'bg-status-warning' : 'bg-accent';
+                                const barBg = pct >= 90 ? 'var(--color-red)' : pct >= 75 ? 'var(--color-amber)' : 'var(--color-green)';
                                 return (
-                                    <div className="card-os border border-border p-5 space-y-3">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-text-secondary">Current month</span>
-                                            <span className="text-text-primary font-mono">
+                                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 space-y-3">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-[rgb(var(--text-secondary))]">Current month</span>
+                                            <span className="text-[rgb(var(--text-primary))]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                                                 {(tokenUsage.total).toLocaleString('en-GB')} / {allowance.toLocaleString('en-GB')} tokens
                                             </span>
                                         </div>
-                                        <div className="w-full bg-bg-raised h-3 border border-border">
-                                            <div className={`${barColor} h-full transition-all`} style={{ width: `${pct}%` }} />
+                                        <div className="h-bar">
+                                            <div className="h-bar-fill" style={{ width: `${pct}%`, background: barBg }} />
                                         </div>
-                                        <p className="text-[10px] text-text-muted uppercase tracking-widest">
+                                        <p className="stat-label">
                                             {pct.toFixed(1)}% of monthly allowance
                                         </p>
                                     </div>
@@ -436,21 +440,21 @@ export default function BillingPage() {
 
                             {/* Breakdown by function */}
                             {tokenUsage.byFunction.length > 0 && (
-                                <div className="card-os border border-border overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                                    <table className="table-os">
                                         <thead>
-                                            <tr className="border-b border-border text-text-muted text-xs uppercase tracking-widest">
-                                                <th className="px-5 py-3 text-left">Function</th>
-                                                <th className="px-5 py-3 text-right">Tokens</th>
+                                            <tr>
+                                                <th>Function</th>
+                                                <th className="text-right">Tokens</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-border">
+                                        <tbody>
                                             {tokenUsage.byFunction.map(fn => (
-                                                <tr key={fn.function_name} className="hover:bg-bg-raised transition-colors">
-                                                    <td className="px-5 py-3 text-text-secondary capitalize">
+                                                <tr key={fn.function_name}>
+                                                    <td className="capitalize">
                                                         {fn.function_name.replace(/[-_]/g, ' ')}
                                                     </td>
-                                                    <td className="px-5 py-3 text-right text-text-primary font-mono">
+                                                    <td className="text-right" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'rgb(var(--text-primary))' }}>
                                                         {fn.total_tokens.toLocaleString('en-GB')}
                                                     </td>
                                                 </tr>
@@ -462,21 +466,21 @@ export default function BillingPage() {
 
                             {/* Last 3 months history */}
                             {tokenUsage.history.length > 0 && (
-                                <div className="card-os border border-border p-5 space-y-3">
-                                    <p className="text-[10px] uppercase tracking-widest text-text-muted">Monthly History</p>
+                                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 space-y-3">
+                                    <div className="stat-label">Monthly History</div>
                                     <div className="space-y-2">
                                         {(() => {
                                             const maxTokens = Math.max(...tokenUsage.history.map(m => m.total_tokens), 1);
                                             return tokenUsage.history.map(m => (
                                                 <div key={m.month} className="flex items-center gap-3">
-                                                    <span className="text-xs text-text-muted font-mono w-16">{m.month}</span>
-                                                    <div className="flex-1 bg-bg-raised h-4 border border-border">
+                                                    <span className="text-[10px] w-16" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'rgb(var(--text-muted))' }}>{m.month}</span>
+                                                    <div className="flex-1 h-bar">
                                                         <div
-                                                            className="bg-accent h-full transition-all"
-                                                            style={{ width: `${(m.total_tokens / maxTokens) * 100}%` }}
+                                                            className="h-bar-fill"
+                                                            style={{ width: `${(m.total_tokens / maxTokens) * 100}%`, background: 'var(--color-coral)' }}
                                                         />
                                                     </div>
-                                                    <span className="text-xs text-text-primary font-mono w-24 text-right">
+                                                    <span className="text-[10px] w-24 text-right" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'rgb(var(--text-primary))' }}>
                                                         {m.total_tokens.toLocaleString('en-GB')}
                                                     </span>
                                                 </div>

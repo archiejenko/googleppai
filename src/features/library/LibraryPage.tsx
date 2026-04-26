@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Star, BookOpen, Clock, ChevronRight, Folder } from 'lucide-react';
+import { X, Star, BookOpen, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FilterBar from '../../components/shared/FilterBar';
 import { supabase } from '../../utils/supabase';
@@ -56,7 +56,7 @@ function ArticlePane({ article, onClose }: { article: Article; onClose: () => vo
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="fixed right-0 top-0 h-screen w-[540px] bg-[rgb(var(--bg-surface))] border-l-2 border-[rgb(var(--border-default))] z-50 flex flex-col"
+      className="fixed right-0 top-0 h-screen w-[540px] bg-[rgb(var(--bg-surface-raised))] border-l border-[rgb(var(--border-default))] z-50 flex flex-col"
     >
       {/* Header */}
       <div className="flex items-start justify-between p-6 border-b border-[rgb(var(--border-default))]">
@@ -192,144 +192,151 @@ export default function LibraryPage() {
     return matchSearch && matchCat && matchBM;
   });
 
+  /* Map category to tag colour class */
+  const tagColorMap: Record<string, string> = {
+    Playbook: 'resource-tag-coral',
+    Script: 'resource-tag-blue',
+    Template: 'resource-tag-purple',
+    Guide: 'resource-tag-green',
+  };
+
+  const getTagClass = (cat: string) => {
+    for (const [key, cls] of Object.entries(tagColorMap)) {
+      if (cat.toLowerCase().includes(key.toLowerCase())) return cls;
+    }
+    return 'resource-tag-coral';
+  };
+
   return (
     <div className="pb-12">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Page Header */}
+      <div className="flex justify-between items-start mb-5">
         <div>
-          <h1 className="text-2xl font-black text-[rgb(var(--text-primary))] uppercase tracking-tight">Library</h1>
-          <p className="text-sm text-[rgb(var(--text-muted))] mt-0.5">Scripts, playbooks, and resources</p>
+          <div className="page-kicker">Core</div>
+          <h1 className="page-title">Library</h1>
+          <p className="page-desc">Playbooks, scripts, templates, and training resources.</p>
         </div>
       </div>
 
-      {/* Search + Bookmarks toggle */}
-      <div className="flex items-center gap-4 mb-6">
+      {/* Filter Pills */}
+      <div className="flex gap-2 mb-5">
+        <button
+          onClick={() => { setActiveCategory(null); setBookmarksOnly(false); }}
+          className={`font-sans text-[11px] font-semibold py-[5px] px-[14px] rounded-[6px] border cursor-pointer transition-all
+            ${!activeCategory && !bookmarksOnly
+              ? 'bg-[rgb(var(--accent-primary))] text-white border-[rgb(var(--accent-primary))]'
+              : 'bg-transparent text-[rgb(var(--text-secondary))] border-[rgb(var(--border-default))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))]'
+            }`}
+        >
+          All
+        </button>
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => { setActiveCategory(cat === activeCategory ? null : cat); setBookmarksOnly(false); }}
+            className={`font-sans text-[11px] font-semibold py-[5px] px-[14px] rounded-[6px] border cursor-pointer transition-all
+              ${activeCategory === cat
+                ? 'bg-[rgb(var(--accent-primary))] text-white border-[rgb(var(--accent-primary))]'
+                : 'bg-transparent text-[rgb(var(--text-secondary))] border-[rgb(var(--border-default))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))]'
+              }`}
+          >
+            {cat}
+          </button>
+        ))}
+        <button
+          onClick={() => setBookmarksOnly(b => !b)}
+          className={`font-sans text-[11px] font-semibold py-[5px] px-[14px] rounded-[6px] border cursor-pointer transition-all flex items-center gap-1.5
+            ${bookmarksOnly
+              ? 'bg-[rgb(var(--accent-primary))] text-white border-[rgb(var(--accent-primary))]'
+              : 'bg-transparent text-[rgb(var(--text-secondary))] border-[rgb(var(--border-default))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))]'
+            }`}
+        >
+          <Star className="w-3 h-3" /> Bookmarks
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="mb-5">
         <FilterBar
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Search articles, tags..."
-          className="flex-1"
+          className="max-w-sm"
         />
-        <button
-          onClick={() => setBookmarksOnly(b => !b)}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest border transition-colors
-            ${bookmarksOnly
-              ? 'bg-[rgb(var(--accent-primary)/0.15)] border-[rgb(var(--accent-primary))] text-[rgb(var(--accent-primary))]'
-              : 'border-[rgb(var(--border-default))] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))]'
-            }`}
-        >
-          <Star className="w-3.5 h-3.5" /> Bookmarks
-        </button>
       </div>
 
       {/* Loading skeleton */}
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="h-48 bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] animate-pulse" />
+            <div key={i} className="h-48 bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg animate-pulse" />
           ))}
         </div>
       )}
 
       {!loading && (
-        <div className="flex gap-6">
-          {/* Left: Category tree */}
-          <div className="w-52 flex-shrink-0">
-            <p className="text-xs font-black uppercase tracking-widest text-[rgb(var(--text-muted))] mb-3">Categories</p>
-            <div className="space-y-0.5">
-              <button
-                onClick={() => setActiveCategory(null)}
-                className={`w-full text-left px-3 py-2 text-sm font-bold flex items-center gap-2 transition-colors
-                  ${!activeCategory ? 'bg-[rgb(var(--accent-primary)/0.1)] text-[rgb(var(--accent-primary))] border-l-2 border-[rgb(var(--accent-primary))]' : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] hover:bg-[rgb(var(--bg-raised))]'}`}
-              >
-                <Folder className="w-3.5 h-3.5" /> All
-                <span className="ml-auto text-xs opacity-60">{articles.length}</span>
-              </button>
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
-                  className={`w-full text-left px-3 py-2 text-sm font-bold flex items-center gap-2 transition-colors
-                    ${activeCategory === cat ? 'bg-[rgb(var(--accent-primary)/0.1)] text-[rgb(var(--accent-primary))] border-l-2 border-[rgb(var(--accent-primary))]' : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] hover:bg-[rgb(var(--bg-raised))]'}`}
+        <>
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <BookOpen className="w-10 h-10 text-[rgb(var(--text-muted))] mb-4" />
+              <p className="text-[rgb(var(--text-muted))]">
+                {articles.length === 0 ? 'No articles published yet' : 'No articles found'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filtered.map((article, i) => (
+                <motion.div
+                  key={article.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  onClick={() => setSelectedArticle(article)}
+                  className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 cursor-pointer
+                    hover:border-[rgb(var(--border-subtle))] transition-colors group relative flex flex-col"
                 >
-                  <Folder className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">{cat}</span>
-                  <span className="ml-auto text-xs opacity-60 flex-shrink-0">
-                    {articles.filter(a => a.category === cat).length}
+                  {/* Bookmark star */}
+                  <button
+                    onClick={e => { e.stopPropagation(); toggleBookmark(article.id); }}
+                    className="absolute top-4 right-4 p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--accent-primary))] transition-colors"
+                  >
+                    <Star
+                      className="w-4 h-4"
+                      fill={bookmarked.has(article.id) ? 'currentColor' : 'none'}
+                      color={bookmarked.has(article.id) ? '#ff6b6b' : undefined}
+                    />
+                  </button>
+
+                  {/* Title */}
+                  <h3 className="font-display text-[14px] font-semibold text-[rgb(var(--text-primary))] mb-2 pr-6 leading-tight">
+                    {article.title}
+                  </h3>
+
+                  {/* Category tag */}
+                  <span className={`resource-tag ${getTagClass(article.category)} mb-2`}>
+                    {article.category}
                   </span>
-                </button>
+
+                  {/* Description / content preview */}
+                  <p className="text-[11px] text-[rgb(var(--text-secondary))] leading-[1.4] mb-3 line-clamp-2 flex-1">
+                    {article.content
+                      ? article.content.split('\n\n').find(p => !p.startsWith('#')) || ''
+                      : ''}
+                  </p>
+
+                  {/* Meta row */}
+                  <div className="flex items-center justify-between text-[10px] text-[rgb(var(--text-muted))] mt-auto">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {article.readTime} min &middot; {article.difficulty}
+                    </span>
+                    <span className="font-mono text-[10px]">{article.lastUpdated}</span>
+                  </div>
+                </motion.div>
               ))}
             </div>
-          </div>
-
-          {/* Right: Articles grid */}
-          <div className="flex-1 min-w-0">
-            {filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <BookOpen className="w-10 h-10 text-[rgb(var(--text-muted))] mb-4" />
-                <p className="text-[rgb(var(--text-muted))]">
-                  {articles.length === 0 ? 'No articles published yet' : 'No articles found'}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filtered.map((article, i) => (
-                  <motion.div
-                    key={article.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    onClick={() => setSelectedArticle(article)}
-                    className="bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border-default))] p-4 cursor-pointer
-                      hover:border-[rgb(var(--accent-primary)/0.4)] transition-colors group relative"
-                  >
-                    {/* Bookmark star */}
-                    <button
-                      onClick={e => { e.stopPropagation(); toggleBookmark(article.id); }}
-                      className="absolute top-3 right-3 p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--accent-primary))] transition-colors"
-                    >
-                      <Star
-                        className="w-4 h-4"
-                        fill={bookmarked.has(article.id) ? 'currentColor' : 'none'}
-                        color={bookmarked.has(article.id) ? '#ff6b6b' : undefined}
-                      />
-                    </button>
-
-                    <span className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--accent-primary))] block mb-2 pr-6">
-                      {article.category}
-                    </span>
-
-                    <h3 className="text-sm font-black text-[rgb(var(--text-primary))] group-hover:text-[rgb(var(--accent-primary))] transition-colors mb-3 leading-tight">
-                      {article.title}
-                    </h3>
-
-                    <div className="flex items-center gap-2 mb-3">
-                      <span
-                        className="text-xs px-1.5 py-0.5 border font-bold"
-                        style={{
-                          color: DIFFICULTY_COLORS[article.difficulty] || '#94a3b8',
-                          borderColor: DIFFICULTY_COLORS[article.difficulty] || '#94a3b8',
-                          background: `${DIFFICULTY_COLORS[article.difficulty] || '#94a3b8'}18`,
-                        }}
-                      >
-                        {article.difficulty}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-[rgb(var(--text-muted))]">
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{article.readTime} min</span>
-                      <span>{article.lastUpdated}</span>
-                    </div>
-
-                    <div className="flex items-center gap-1 mt-3 pt-3 border-t border-[rgb(var(--border-default))] text-[rgb(var(--text-muted))] group-hover:text-[rgb(var(--accent-primary))] transition-colors text-xs">
-                      Read article <ChevronRight className="w-3 h-3" />
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+          )}
+        </>
       )}
 
       {/* Reading Pane */}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../utils/supabase';
-import { Shield, ChevronDown, ChevronRight, ChevronLeft, Download, Filter } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Download, Filter } from 'lucide-react';
 
 const PAGE_SIZE = 50;
 
@@ -185,40 +185,34 @@ export default function AuditLog() {
       + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
+  const activeFilters = [actionFilter, userFilter, resourceTypeFilter, dateFrom, dateTo].filter(Boolean).length;
+
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: 'rgb(var(--bg-canvas))' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Shield className="w-6 h-6" style={{ color: 'rgb(var(--accent-primary))' }} />
-          <h1 className="text-2xl font-bold font-display" style={{ color: 'rgb(var(--text-primary))' }}>
-            Audit Log
-          </h1>
+    <div className="pb-12">
+      {/* Page Header */}
+      <div className="flex justify-between items-start mb-5">
+        <div>
+          <h1 className="page-title">Audit Log</h1>
+          <p className="page-desc">System event history, user actions, and security trail.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors"
-            style={{
-              backgroundColor: showFilters ? 'rgb(var(--accent-primary))' : 'rgb(var(--bg-surface))',
-              color: showFilters ? 'rgb(var(--bg-canvas))' : 'rgb(var(--text-primary))',
-              border: '1px solid rgb(var(--border-default))',
-            }}
+            className={`flex items-center gap-2 px-[14px] py-[7px] text-[11px] font-semibold rounded-lg border transition-all
+              ${showFilters
+                ? 'bg-[rgb(var(--accent-primary))] text-white border-[rgb(var(--accent-primary))]'
+                : 'bg-transparent text-[rgb(var(--text-secondary))] border-[rgb(var(--border-subtle))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))]'
+              }`}
           >
-            <Filter className="w-4 h-4" />
-            Filters
+            <Filter className="w-3.5 h-3.5" />
+            Filters{activeFilters > 0 ? ` (${activeFilters})` : ''}
           </button>
           <button
             onClick={handleExportCsv}
             disabled={rows.length === 0}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
-            style={{
-              backgroundColor: 'rgb(var(--bg-surface))',
-              color: 'rgb(var(--text-primary))',
-              border: '1px solid rgb(var(--border-default))',
-            }}
+            className="flex items-center gap-2 px-[14px] py-[7px] text-[11px] font-semibold rounded-lg border border-[rgb(var(--border-subtle))] bg-transparent text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))] transition-all disabled:opacity-50"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5" />
             Export CSV
           </button>
         </div>
@@ -226,120 +220,71 @@ export default function AuditLog() {
 
       {/* Export error */}
       {exportError && (
-        <div
-          className="mb-4 px-4 py-3 text-sm"
-          style={{
-            backgroundColor: 'rgba(220, 38, 38, 0.08)',
-            color: 'rgb(220, 38, 38)',
-            border: '1px solid rgba(220, 38, 38, 0.2)',
-          }}
-        >
+        <div className="mb-4 px-4 py-3 text-[12px] rounded-lg" style={{ background: 'rgba(248,113,113,0.08)', color: '#F87171', border: '1px solid rgba(248,113,113,0.2)' }}>
           {exportError}
         </div>
       )}
 
-      {/* Immutability notice */}
-      <div
-        className="mb-4 px-4 py-3 text-sm"
-        style={{
-          backgroundColor: 'rgba(var(--accent-primary), 0.08)',
-          color: 'rgb(var(--text-secondary))',
-          border: '1px solid rgba(var(--accent-primary), 0.2)',
-        }}
-      >
-        Audit logs cannot be modified or deleted. They are an immutable record of all system activity.
-      </div>
-
-      {/* Filters */}
+      {/* Filters panel */}
       {showFilters && (
-        <div
-          className="mb-4 p-4 grid grid-cols-2 md:grid-cols-5 gap-4"
-          style={{
-            backgroundColor: 'rgb(var(--bg-surface))',
-            border: '1px solid rgb(var(--border-default))',
-          }}
-        >
-          <div>
-            <label className="block text-xs mb-1" style={{ color: 'rgb(var(--text-tertiary))' }}>Action</label>
-            <select
-              value={actionFilter}
-              onChange={e => { setActionFilter(e.target.value); setPage(0); }}
-              className="w-full px-3 py-2 text-sm"
-              style={{
-                backgroundColor: 'rgb(var(--bg-canvas))',
-                color: 'rgb(var(--text-primary))',
-                border: '1px solid rgb(var(--border-default))',
-              }}
-            >
-              <option value="">All actions</option>
-              {ACTION_OPTIONS.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
+        <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 mb-5">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div>
+              <label className="stat-label block">Action</label>
+              <select
+                value={actionFilter}
+                onChange={e => { setActionFilter(e.target.value); setPage(0); }}
+                className="input-os !py-2 !text-[11px]"
+              >
+                <option value="">All actions</option>
+                {ACTION_OPTIONS.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="stat-label block">User</label>
+              <select
+                value={userFilter}
+                onChange={e => { setUserFilter(e.target.value); setPage(0); }}
+                className="input-os !py-2 !text-[11px]"
+              >
+                <option value="">All users</option>
+                {orgUsers.map(u => <option key={u.id} value={u.id}>{u.email}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="stat-label block">Resource Type</label>
+              <select
+                value={resourceTypeFilter}
+                onChange={e => { setResourceTypeFilter(e.target.value); setPage(0); }}
+                className="input-os !py-2 !text-[11px]"
+              >
+                <option value="">All types</option>
+                {RESOURCE_TYPE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="stat-label block">From</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={e => { setDateFrom(e.target.value); setPage(0); }}
+                className="input-os !py-2 !text-[11px]"
+              />
+            </div>
+            <div>
+              <label className="stat-label block">To</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={e => { setDateTo(e.target.value); setPage(0); }}
+                className="input-os !py-2 !text-[11px]"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-xs mb-1" style={{ color: 'rgb(var(--text-tertiary))' }}>User</label>
-            <select
-              value={userFilter}
-              onChange={e => { setUserFilter(e.target.value); setPage(0); }}
-              className="w-full px-3 py-2 text-sm"
-              style={{
-                backgroundColor: 'rgb(var(--bg-canvas))',
-                color: 'rgb(var(--text-primary))',
-                border: '1px solid rgb(var(--border-default))',
-              }}
-            >
-              <option value="">All users</option>
-              {orgUsers.map(u => <option key={u.id} value={u.id}>{u.email}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs mb-1" style={{ color: 'rgb(var(--text-tertiary))' }}>Resource Type</label>
-            <select
-              value={resourceTypeFilter}
-              onChange={e => { setResourceTypeFilter(e.target.value); setPage(0); }}
-              className="w-full px-3 py-2 text-sm"
-              style={{
-                backgroundColor: 'rgb(var(--bg-canvas))',
-                color: 'rgb(var(--text-primary))',
-                border: '1px solid rgb(var(--border-default))',
-              }}
-            >
-              <option value="">All types</option>
-              {RESOURCE_TYPE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs mb-1" style={{ color: 'rgb(var(--text-tertiary))' }}>From</label>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={e => { setDateFrom(e.target.value); setPage(0); }}
-              className="w-full px-3 py-2 text-sm"
-              style={{
-                backgroundColor: 'rgb(var(--bg-canvas))',
-                color: 'rgb(var(--text-primary))',
-                border: '1px solid rgb(var(--border-default))',
-              }}
-            />
-          </div>
-          <div>
-            <label className="block text-xs mb-1" style={{ color: 'rgb(var(--text-tertiary))' }}>To</label>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={e => { setDateTo(e.target.value); setPage(0); }}
-              className="w-full px-3 py-2 text-sm"
-              style={{
-                backgroundColor: 'rgb(var(--bg-canvas))',
-                color: 'rgb(var(--text-primary))',
-                border: '1px solid rgb(var(--border-default))',
-              }}
-            />
-          </div>
-          <div className="col-span-2 md:col-span-5 flex justify-end">
+          <div className="flex justify-end mt-3">
             <button
               onClick={resetFilters}
-              className="px-3 py-1 text-sm"
-              style={{ color: 'rgb(var(--text-secondary))' }}
+              className="text-[11px] text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] transition-colors"
             >
               Clear filters
             </button>
@@ -347,169 +292,120 @@ export default function AuditLog() {
         </div>
       )}
 
-      {/* Results count */}
-      <div className="mb-3 text-sm" style={{ color: 'rgb(var(--text-tertiary))' }}>
-        {totalCount !== null ? `${totalCount} entries` : 'Loading...'}
-        {totalCount !== null && totalCount > 0 && ` — showing ${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalCount)}`}
-      </div>
+      {/* Event Log Card */}
+      <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+        <div className="card-title">Event Log</div>
 
-      {/* Table */}
-      <div
-        className="overflow-x-auto"
-        style={{ border: '1px solid rgb(var(--border-default))' }}
-      >
-        <table className="w-full text-sm" style={{ color: 'rgb(var(--text-primary))' }}>
+        <table className="table-os">
           <thead>
-            <tr style={{ backgroundColor: 'rgb(var(--bg-surface))' }}>
-              <th className="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider" style={{ color: 'rgb(var(--text-tertiary))' }}>
-                Timestamp
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider" style={{ color: 'rgb(var(--text-tertiary))' }}>
-                Actor
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider" style={{ color: 'rgb(var(--text-tertiary))' }}>
-                Action
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider" style={{ color: 'rgb(var(--text-tertiary))' }}>
-                Resource
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider" style={{ color: 'rgb(var(--text-tertiary))' }}>
-                IP
-              </th>
-              <th className="w-10" />
+            <tr>
+              <th>Timestamp</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Resource</th>
+              <th>Details</th>
+              <th>IP Address</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center" style={{ color: 'rgb(var(--text-tertiary))' }}>
+                <td colSpan={6} className="text-center py-8 text-[rgb(var(--text-muted))]">
                   Loading...
                 </td>
               </tr>
             )}
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center" style={{ color: 'rgb(var(--text-tertiary))' }}>
+                <td colSpan={6} className="text-center py-8 text-[rgb(var(--text-muted))]">
                   No audit log entries found.
                 </td>
               </tr>
             )}
             {!loading && rows.map(row => (
-              <tr key={row.id}>
-                <td colSpan={6} className="p-0">
-                  <div
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => setExpandedId(expandedId === row.id ? null : row.id)}
-                  >
-                    <div className="grid grid-cols-[180px_1fr_1fr_1fr_140px_32px] items-center px-4 py-3"
-                      style={{ borderBottom: '1px solid rgb(var(--border-subtle))' }}
-                    >
-                      <span className="text-xs font-mono" style={{ color: 'rgb(var(--text-secondary))' }}>
-                        {formatTimestamp(row.created_at)}
-                      </span>
-                      <span className="truncate">
-                        {row.actor_email ?? (
-                          <span className="font-mono text-xs" style={{ color: 'rgb(var(--text-tertiary))' }}>System</span>
-                        )}
-                      </span>
-                      <span>
-                        <span
-                          className="inline-block px-2 py-0.5 text-xs font-mono"
-                          style={{
-                            backgroundColor: 'rgba(var(--accent-primary), 0.1)',
-                            color: 'rgb(var(--accent-primary))',
-                          }}
-                        >
-                          {row.action}
-                        </span>
-                      </span>
-                      <span className="truncate text-xs font-mono" style={{ color: 'rgb(var(--text-secondary))' }}>
-                        {row.resource_type ? `${row.resource_type}` : '—'}
-                        {row.resource_id ? ` / ${row.resource_id.slice(0, 8)}…` : ''}
-                      </span>
-                      <span className="text-xs font-mono" style={{ color: 'rgb(var(--text-tertiary))' }}>
-                        {row.ip_address ?? '—'}
-                      </span>
-                      <span>
-                        {expandedId === row.id
-                          ? <ChevronDown className="w-4 h-4" style={{ color: 'rgb(var(--text-tertiary))' }} />
-                          : <ChevronRight className="w-4 h-4" style={{ color: 'rgb(var(--text-tertiary))' }} />
-                        }
-                      </span>
-                    </div>
-                  </div>
-                  {expandedId === row.id && (
-                    <div
-                      className="px-6 py-4"
-                      style={{
-                        backgroundColor: 'rgb(var(--bg-surface))',
-                        borderBottom: '1px solid rgb(var(--border-default))',
-                      }}
-                    >
-                      <div className="grid grid-cols-2 gap-4 text-xs mb-3">
-                        <div>
-                          <span style={{ color: 'rgb(var(--text-tertiary))' }}>Resource ID: </span>
-                          <span className="font-mono">{row.resource_id ?? '—'}</span>
-                        </div>
-                        <div>
-                          <span style={{ color: 'rgb(var(--text-tertiary))' }}>User Agent: </span>
-                          <span className="font-mono truncate">{row.user_agent ?? '—'}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-xs" style={{ color: 'rgb(var(--text-tertiary))' }}>Metadata:</span>
-                        <pre
-                          className="mt-1 p-3 text-xs font-mono overflow-x-auto"
-                          style={{
-                            backgroundColor: 'rgb(var(--bg-canvas))',
-                            color: 'rgb(var(--text-secondary))',
-                            border: '1px solid rgb(var(--border-subtle))',
-                            maxHeight: '200px',
-                          }}
-                        >
-                          {JSON.stringify(row.metadata, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
+              <tr
+                key={row.id}
+                className="cursor-pointer"
+                onClick={() => setExpandedId(expandedId === row.id ? null : row.id)}
+              >
+                <td className="mono-cell">{formatTimestamp(row.created_at)}</td>
+                <td className="!text-[rgb(var(--text-primary))] !font-medium">
+                  {row.actor_email ?? 'System'}
                 </td>
+                <td>{row.action}</td>
+                <td>
+                  {row.resource_type ?? ''}
+                  {row.resource_id ? ` / ${row.resource_id.slice(0, 8)}` : ''}
+                </td>
+                <td>
+                  {row.metadata && typeof row.metadata === 'object' && Object.keys(row.metadata).length > 0
+                    ? Object.entries(row.metadata).slice(0, 1).map(([k, v]) => `${k}: ${v}`).join('')
+                    : ''}
+                </td>
+                <td className="mono-cell">{row.ip_address ?? ''}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between mt-4">
-        <button
-          onClick={() => setPage(p => Math.max(0, p - 1))}
-          disabled={page === 0}
-          className="flex items-center gap-1 px-3 py-2 text-sm disabled:opacity-30 transition-opacity"
-          style={{
-            color: 'rgb(var(--text-primary))',
-            border: '1px solid rgb(var(--border-default))',
-            backgroundColor: 'rgb(var(--bg-surface))',
-          }}
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Previous
-        </button>
-        <span className="text-sm" style={{ color: 'rgb(var(--text-tertiary))' }}>
-          Page {page + 1}
-        </span>
-        <button
-          onClick={() => setPage(p => p + 1)}
-          disabled={!hasMore}
-          className="flex items-center gap-1 px-3 py-2 text-sm disabled:opacity-30 transition-opacity"
-          style={{
-            color: 'rgb(var(--text-primary))',
-            border: '1px solid rgb(var(--border-default))',
-            backgroundColor: 'rgb(var(--bg-surface))',
-          }}
-        >
-          Next
-          <ChevronRight className="w-4 h-4" />
-        </button>
+        {/* Expanded detail (shown below table for selected row) */}
+        {expandedId && (() => {
+          const row = rows.find(r => r.id === expandedId);
+          if (!row) return null;
+          return (
+            <div className="mt-3 p-4 rounded-lg" style={{ background: 'rgb(var(--bg-deep))', border: '1px solid rgb(var(--border-default))' }}>
+              <div className="grid grid-cols-2 gap-4 text-xs mb-3">
+                <div>
+                  <span className="text-[rgb(var(--text-muted))]">Resource ID: </span>
+                  <span className="font-mono text-[rgb(var(--text-secondary))]">{row.resource_id ?? '--'}</span>
+                </div>
+                <div>
+                  <span className="text-[rgb(var(--text-muted))]">User Agent: </span>
+                  <span className="font-mono text-[rgb(var(--text-secondary))] truncate">{row.user_agent ?? '--'}</span>
+                </div>
+              </div>
+              <div>
+                <span className="text-xs text-[rgb(var(--text-muted))]">Metadata:</span>
+                <pre className="mt-1 p-3 text-xs font-mono overflow-x-auto rounded-lg" style={{ background: 'rgb(var(--bg-canvas))', color: 'rgb(var(--text-secondary))', border: '1px solid rgb(var(--border-default))', maxHeight: '200px' }}>
+                  {JSON.stringify(row.metadata, null, 2)}
+                </pre>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Pagination */}
+        <div className="pagination-row">
+          <div className="pagination-info">
+            {totalCount !== null
+              ? `Showing ${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalCount)} of ${totalCount.toLocaleString()} events`
+              : 'Loading...'}
+          </div>
+          <div className="pagination-controls">
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="page-nav"
+            >
+              <ChevronLeft className="w-3.5 h-3.5 inline mr-1" />
+              Previous
+            </button>
+            <span className="page-num current">{page + 1}</span>
+            {hasMore && (
+              <button onClick={() => setPage(p => p + 1)} className="page-num">
+                {page + 2}
+              </button>
+            )}
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!hasMore}
+              className="page-nav"
+            >
+              Next
+              <ChevronRight className="w-3.5 h-3.5 inline ml-1" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
