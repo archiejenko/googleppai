@@ -61,6 +61,94 @@ function formatTime(iso: string): string {
     return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
 
+/* ── Active Rep Card ─────────────────────────────────────────── */
+
+function ActiveRepCard({ score }: { score: LiveScore }) {
+    const initials = (score.prospect_name || '?')
+        .split(' ')
+        .map(w => w[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+
+    const overall = displayScore(score);
+    const elapsed = formatDuration(score.duration_secs);
+
+    const skillBars: { label: string; value: number | null }[] = [
+        { label: 'Talk Ratio', value: score.talk_ratio_score },
+        { label: 'Discovery', value: score.discovery_score },
+        { label: 'Objection', value: score.objection_handling_score },
+        { label: 'Engagement', value: score.engagement_score },
+    ];
+
+    const topSignal = Object.entries(score.signals_detected || {}).find(([, v]) => v)?.[0];
+
+    return (
+        <div className="bg-[rgb(var(--bg-deep,10_14_20))] border border-[rgb(var(--border-default))] rounded-[12px] p-5 mb-3 last:mb-0">
+            {/* Rep header */}
+            <div className="flex items-center gap-2.5 mb-3">
+                <span className="w-7 h-7 rounded-[6px] inline-flex items-center justify-center font-display text-[10px] font-bold bg-[rgba(96,165,250,0.12)] text-[#60A5FA] flex-shrink-0">
+                    {initials}
+                </span>
+                <span className="font-display text-[14px] font-semibold text-[rgb(var(--text-primary))]">
+                    {score.prospect_name || 'Unknown'}
+                </span>
+                {score.company_name && (
+                    <span className="text-[11px] text-[rgb(var(--text-muted))] ml-1">{score.company_name}</span>
+                )}
+            </div>
+
+            {/* Meta */}
+            <div className="flex items-center gap-1.5 mb-3.5 text-[11px] text-[rgb(var(--text-secondary))]">
+                {topSignal && (
+                    <>
+                        <span className="capitalize">{topSignal}</span>
+                        <span className="text-[rgb(var(--text-muted))]">|</span>
+                    </>
+                )}
+                <span>Session</span>
+            </div>
+
+            {/* Timer */}
+            <div className="mb-3.5">
+                <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-[rgb(var(--text-muted))] mr-2">Elapsed</span>
+                <span className="font-mono text-[18px] font-medium text-[rgb(var(--text-primary))] tracking-[0.05em]">{elapsed}</span>
+            </div>
+
+            {/* Skill bars */}
+            <div className="mb-1">
+                {skillBars.map(({ label, value }) => {
+                    const v = value !== null ? Math.round(value) : null;
+                    const color = v !== null ? scoreColor(v) : 'rgb(var(--text-muted))';
+                    return (
+                        <div key={label} className="flex items-center gap-2.5 mb-2">
+                            <span className="text-[11px] text-[rgb(var(--text-secondary))] w-[72px] flex-shrink-0">{label}</span>
+                            <div className="h-bar flex-1">
+                                {v !== null && (
+                                    <div
+                                        className="h-bar-fill"
+                                        style={{ width: `${v}%`, background: color }}
+                                    />
+                                )}
+                            </div>
+                            <span className="font-display text-[12px] font-semibold w-9 text-right flex-shrink-0" style={{ color }}>
+                                {v !== null ? `${v}%` : '—'}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between mt-3.5 pt-3 border-t border-[rgb(var(--border-default))]">
+                <span className="text-[12px] text-[rgb(var(--text-secondary))]">
+                    Overall: {overall !== null ? <ScoreChip value={overall} /> : <span className="text-[rgb(var(--text-muted))]">&mdash;</span>}
+                </span>
+            </div>
+        </div>
+    );
+}
+
 /* ── Expanded Row ──────────────────────────────────────────────── */
 
 function ExpandedRow({ score }: { score: LiveScore }) {
@@ -69,7 +157,7 @@ function ExpandedRow({ score }: { score: LiveScore }) {
 
     return (
         <tr>
-            <td colSpan={7} className="bg-[#0a0e14] px-5 py-4">
+            <td colSpan={6} className="bg-[rgb(var(--bg-deep,10_14_20))] px-5 py-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Score breakdown */}
                     <div className="space-y-2">
@@ -84,10 +172,10 @@ function ExpandedRow({ score }: { score: LiveScore }) {
                             return (
                                 <div key={label as string} className="flex items-center gap-2.5 mb-2">
                                     <span className="text-[11px] text-[rgb(var(--text-secondary))] w-[72px] flex-shrink-0">{label as string}</span>
-                                    <div className="flex-1 h-1.5 rounded-[3px] bg-[rgb(var(--border-default))]">
+                                    <div className="h-bar flex-1">
                                         {v !== null && (
                                             <div
-                                                className="h-full rounded-[3px]"
+                                                className="h-bar-fill"
                                                 style={{ width: `${v}%`, background: scoreColor(v) }}
                                             />
                                         )}
@@ -107,7 +195,7 @@ function ExpandedRow({ score }: { score: LiveScore }) {
                         </p>
                         <div className="space-y-1 max-h-32 overflow-y-auto">
                             {(score.coaching_events || []).slice(0, 5).map((ev, i) => (
-                                <p key={i} className="text-[11px] text-[rgb(var(--text-secondary))] border-l-[3px] border-[#FF6B6B] pl-2 leading-relaxed bg-[#0a0e14] rounded-r-lg py-1">
+                                <p key={i} className="text-[11px] text-[rgb(var(--text-secondary))] border-l-[3px] border-[#FF6B6B] pl-2 leading-relaxed bg-[rgb(var(--bg-deep,10_14_20))] rounded-r-lg py-1">
                                     {ev.nudge}
                                 </p>
                             ))}
@@ -249,6 +337,20 @@ function LiveScoresTable() {
     const highCount = filtered.filter(s => (displayScore(s) ?? 0) >= 80).length;
     const lowCount = filtered.filter(s => (displayScore(s) ?? 0) < 60).length;
 
+    const todaySessions = filtered.filter(s => {
+        const d = new Date(s.call_started_at);
+        const now = new Date();
+        return d.toDateString() === now.toDateString();
+    });
+
+    /* "Active Now" = most recent sessions from today (up to 3) that serve as active rep cards */
+    const activeNow = todaySessions.slice(0, 3);
+
+    /* Today's leaderboard: rank today's sessions by score descending, deduplicate by prospect */
+    const leaderboardRows = [...todaySessions]
+        .sort((a, b) => (displayScore(b) ?? 0) - (displayScore(a) ?? 0))
+        .slice(0, 6);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-32">
@@ -268,47 +370,34 @@ function LiveScoresTable() {
                 </div>
                 <button
                     onClick={exportCsv}
-                    className="inline-flex items-center gap-2 text-[11px] font-semibold py-[7px] px-3.5 rounded-lg border border-[rgb(var(--border-subtle))] bg-transparent text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))] transition-colors"
+                    className="btn-ghost inline-flex items-center gap-2 text-[11px] font-semibold py-[7px] px-3.5 rounded-lg border border-[rgb(var(--border-subtle))] bg-transparent text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))] transition-colors"
                 >
                     <Download className="w-3.5 h-3.5" /> Export CSV
                 </button>
             </div>
 
-            {/* Stat Cards - 5 columns like mockup */}
-            <div className="grid grid-cols-5 gap-3 mb-5">
-                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
-                    <div className="stat-label">Total Calls</div>
-                    <div className="stat-value text-[rgb(var(--text-primary))]">{totalCalls}</div>
-                </div>
-                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
-                    <div className="stat-label">Avg Score</div>
-                    <div className="stat-value" style={{ color: totalCalls > 0 ? scoreColor(avgScore) : undefined }}>{totalCalls > 0 ? `${avgScore}%` : '—'}</div>
-                </div>
-                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
-                    <div className="stat-label">High Scores</div>
-                    <div className="stat-value text-[#4ADE80]">{highCount}</div>
-                </div>
-                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
-                    <div className="stat-label">Low Scores</div>
-                    <div className="stat-value text-[#FF6B6B]">{lowCount}</div>
-                </div>
-                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
-                    <div className="stat-label">Sessions Today</div>
-                    <div className="stat-value text-[rgb(var(--text-primary))]">
-                        {filtered.filter(s => {
-                            const d = new Date(s.call_started_at);
-                            const now = new Date();
-                            return d.toDateString() === now.toDateString();
-                        }).length}
-                    </div>
-                </div>
-            </div>
-
-            {/* Two-column layout: left (table), right (stats sidebar) */}
-            <div className="grid grid-cols-[2fr_1fr] gap-4 mb-4">
-                {/* Left Column - Recent Scores Table */}
+            {/* 2fr / 1fr layout -- no top stat cards */}
+            <div className="grid grid-cols-[2fr_1fr] gap-4">
+                {/* ── Left Column ─────────────────────────────────── */}
                 <div className="flex flex-col gap-4">
-                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+
+                    {/* Active Now */}
+                    <div className="card-os bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-[12px] p-5">
+                        <div className="card-title">Active Now</div>
+
+                        {activeNow.length > 0 ? (
+                            activeNow.map(score => (
+                                <ActiveRepCard key={score.id} score={score} />
+                            ))
+                        ) : (
+                            <div className="py-8 text-center text-[12px] text-[rgb(var(--text-muted))]">
+                                No active sessions right now
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Recent Scores Table */}
+                    <div className="card-os bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-[12px] p-5">
                         <div className="card-title">Recent Scores</div>
 
                         {/* Filters */}
@@ -317,7 +406,7 @@ function LiveScoresTable() {
                             <select
                                 value={filterScore}
                                 onChange={e => setFilterScore(e.target.value)}
-                                className="text-[12px] py-1.5 px-3 bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded-lg text-[rgb(var(--text-primary))] focus:outline-none focus:border-[#FF6B6B]"
+                                className="filter-pill text-[12px] py-1.5 px-3 bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded-lg text-[rgb(var(--text-primary))] focus:outline-none focus:border-[#FF6B6B]"
                             >
                                 <option value="all">All scores</option>
                                 <option value="high">High (75+)</option>
@@ -327,7 +416,7 @@ function LiveScoresTable() {
                             <select
                                 value={filterSignal}
                                 onChange={e => setFilterSignal(e.target.value)}
-                                className="text-[12px] py-1.5 px-3 bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded-lg text-[rgb(var(--text-primary))] focus:outline-none focus:border-[#FF6B6B]"
+                                className="filter-pill text-[12px] py-1.5 px-3 bg-[rgb(var(--bg-canvas))] border border-[rgb(var(--border-default))] rounded-lg text-[rgb(var(--text-primary))] focus:outline-none focus:border-[#FF6B6B]"
                             >
                                 <option value="all">All signals</option>
                                 <option value="budget">Budget</option>
@@ -344,16 +433,14 @@ function LiveScoresTable() {
                                 <tr>
                                     <th className="w-8" />
                                     <th>Prospect</th>
-                                    <th>Company</th>
+                                    <th>Scenario</th>
                                     <th>Score</th>
                                     <th>Duration</th>
-                                    <th>Top Signal</th>
                                     <th>Timestamp</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filtered.map(score => {
-                                    const topSignal = Object.entries(score.signals_detected || {}).find(([, v]) => v)?.[0];
                                     const isExpanded = expandedId === score.id;
                                     return [
                                         <tr
@@ -365,19 +452,12 @@ function LiveScoresTable() {
                                                 {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                             </td>
                                             <td className="text-[rgb(var(--text-primary))] font-medium">{score.prospect_name || '—'}</td>
-                                            <td>{score.company_name || '—'}</td>
+                                            <td className="text-[rgb(var(--text-secondary))]">{score.company_name || '—'}</td>
                                             <td>
                                                 <ScoreChip value={displayScore(score)} />
                                             </td>
                                             <td className="font-mono text-[11px]">
                                                 {formatDuration(score.duration_secs)}
-                                            </td>
-                                            <td>
-                                                {topSignal && (
-                                                    <span className="text-[10px] uppercase tracking-[0.05em] px-2 py-0.5 rounded-md bg-[rgba(255,107,107,0.12)] text-[#FF6B6B] font-semibold">
-                                                        {topSignal}
-                                                    </span>
-                                                )}
                                             </td>
                                             <td className="font-mono text-[10px]">
                                                 {formatTime(score.call_started_at)}
@@ -388,7 +468,7 @@ function LiveScoresTable() {
                                 })}
                                 {filtered.length === 0 && (
                                     <tr>
-                                        <td colSpan={7} className="px-5 py-8 text-center text-[rgb(var(--text-muted))] text-[12px]">
+                                        <td colSpan={6} className="px-5 py-8 text-center text-[rgb(var(--text-muted))] text-[12px]">
                                             No live scores yet
                                         </td>
                                     </tr>
@@ -401,7 +481,7 @@ function LiveScoresTable() {
                                 <button
                                     onClick={handleLoadMore}
                                     disabled={loadingMore}
-                                    className="text-[11px] font-semibold py-[7px] px-5 rounded-lg border border-[rgb(var(--border-subtle))] bg-transparent text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))] transition-colors"
+                                    className="btn-ghost text-[11px] font-semibold py-[7px] px-5 rounded-lg border border-[rgb(var(--border-subtle))] bg-transparent text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-surface-raised))] hover:text-[rgb(var(--text-primary))] transition-colors"
                                 >
                                     {loadingMore ? 'Loading...' : 'Load more'}
                                 </button>
@@ -410,12 +490,14 @@ function LiveScoresTable() {
                     </div>
                 </div>
 
-                {/* Right Column - Team Live Stats */}
+                {/* ── Right Column ────────────────────────────────── */}
                 <div className="flex flex-col gap-4">
-                    <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
-                        <div className="card-title">Session Stats</div>
 
-                        {/* Stat rows */}
+                    {/* Team Live Stats */}
+                    <div className="card-os bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-[12px] p-5">
+                        <div className="card-title">Team Live Stats</div>
+
+                        {/* Stat rows - matching mockup's live-stat-item pattern */}
                         <div className="flex items-center justify-between py-3.5 border-b border-[rgb(var(--border-default))]">
                             <div className="flex items-center gap-2 text-[12px] text-[rgb(var(--text-secondary))]">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] inline-block" />
@@ -426,48 +508,58 @@ function LiveScoresTable() {
                         <div className="flex items-center justify-between py-3.5 border-b border-[rgb(var(--border-default))]">
                             <div className="flex items-center gap-2 text-[12px] text-[rgb(var(--text-secondary))]">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#FBBF24] inline-block" />
-                                <span>Avg Score</span>
+                                <span>Sessions Today</span>
+                            </div>
+                            <div className="font-display text-[22px] font-semibold text-[rgb(var(--text-primary))]">{todaySessions.length}</div>
+                        </div>
+                        <div className="flex items-center justify-between py-3.5">
+                            <div className="flex items-center gap-2 text-[12px] text-[rgb(var(--text-secondary))]">
+                                <span>Avg Score Today</span>
                             </div>
                             <div className="font-display text-[22px] font-semibold" style={{ color: totalCalls > 0 ? scoreColor(avgScore) : 'rgb(var(--text-primary))' }}>
                                 {totalCalls > 0 ? `${avgScore}%` : '—'}
                             </div>
                         </div>
-                        <div className="flex items-center justify-between py-3.5 border-b border-[rgb(var(--border-default))] last:border-b-0">
-                            <div className="flex items-center gap-2 text-[12px] text-[rgb(var(--text-secondary))]">
-                                <span>High Performing</span>
-                            </div>
-                            <div className="font-display text-[22px] font-semibold text-[#4ADE80]">{highCount}</div>
-                        </div>
 
-                        {/* Score Distribution */}
+                        {/* Today's Leaderboard */}
                         <div className="mt-5 pt-4 border-t border-[rgb(var(--border-default))]">
-                            <div className="card-title" style={{ fontSize: 12 }}>Score Distribution</div>
-                            {filtered.length > 0 ? (
-                                <div className="space-y-2">
-                                    {[
-                                        { label: 'High (80%+)', count: highCount, color: '#4ADE80' },
-                                        { label: 'Mid (60-79%)', count: filtered.filter(s => { const v = displayScore(s) ?? 0; return v >= 60 && v < 80; }).length, color: '#FBBF24' },
-                                        { label: 'Low (<60%)', count: lowCount, color: '#FF6B6B' },
-                                    ].map(bucket => (
-                                        <div key={bucket.label} className="flex items-center gap-2">
-                                            <span className="text-[11px] text-[rgb(var(--text-secondary))] w-[80px] flex-shrink-0">{bucket.label}</span>
-                                            <div className="flex-1 h-1.5 rounded-[3px] bg-[rgb(var(--border-default))]">
-                                                <div
-                                                    className="h-full rounded-[3px]"
-                                                    style={{
-                                                        width: `${totalCalls > 0 ? (bucket.count / totalCalls) * 100 : 0}%`,
-                                                        background: bucket.color,
-                                                    }}
-                                                />
-                                            </div>
-                                            <span className="font-display text-[11px] font-semibold w-6 text-right" style={{ color: bucket.color }}>
-                                                {bucket.count}
+                            <div className="font-display text-[12px] font-semibold uppercase tracking-[0.05em] text-[rgb(var(--text-primary))] mb-4">Today's Leaderboard</div>
+
+                            {leaderboardRows.length > 0 ? (
+                                leaderboardRows.map((score, idx) => {
+                                    const v = displayScore(score);
+                                    const rounded = v !== null ? Math.round(v) : null;
+                                    const initials = (score.prospect_name || '?')
+                                        .split(' ')
+                                        .map(w => w[0])
+                                        .join('')
+                                        .toUpperCase()
+                                        .slice(0, 2);
+                                    const avatarColor = rounded !== null
+                                        ? rounded >= 80
+                                            ? 'bg-[rgba(74,222,128,0.12)] text-[#4ADE80]'
+                                            : rounded >= 60
+                                                ? 'bg-[rgba(251,191,36,0.12)] text-[#FBBF24]'
+                                                : 'bg-[rgba(255,107,107,0.12)] text-[#FF6B6B]'
+                                        : 'bg-[rgba(74,85,103,0.15)] text-[rgb(var(--text-muted))]';
+
+                                    return (
+                                        <div key={score.id} className="flex items-center gap-2.5 py-2 border-b border-[rgb(var(--border-default))] last:border-b-0">
+                                            <span className="font-display text-[12px] font-semibold text-[rgb(var(--text-muted))] w-[18px] text-center">{idx + 1}</span>
+                                            <span className={`w-6 h-6 rounded-[6px] inline-flex items-center justify-center font-display text-[9px] font-bold flex-shrink-0 ${avatarColor}`}>
+                                                {initials}
+                                            </span>
+                                            <span className="flex-1 text-[12px] text-[rgb(var(--text-primary))] font-medium truncate">{score.prospect_name || 'Unknown'}</span>
+                                            <span className="font-display text-[13px] font-semibold" style={{ color: rounded !== null ? scoreColor(rounded) : undefined }}>
+                                                {rounded !== null ? `${rounded}%` : '—'}
                                             </span>
                                         </div>
-                                    ))}
-                                </div>
+                                    );
+                                })
                             ) : (
-                                <p className="text-[11px] text-[rgb(var(--text-muted))]">No data yet</p>
+                                <div className="py-6 text-center text-[11px] text-[rgb(var(--text-muted))]">
+                                    No sessions today yet
+                                </div>
                             )}
                         </div>
                     </div>

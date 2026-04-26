@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Zap, RefreshCw, ChevronDown, ChevronUp, Check, Clock,
-  TrendingUp, TrendingDown, MessageSquare, Target, Shield, Star,
-  ArrowLeft, Building2, AlertTriangle,
+  Zap, RefreshCw, ChevronDown, Check, Clock,
+  TrendingUp, TrendingDown, AlertTriangle, Phone,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -53,6 +52,19 @@ const SESSION_TYPE_LABELS: Record<string, string> = {
   'team-training': 'Team Training',
 };
 
+const SESSION_TYPE_ICONS: Record<string, string> = {
+  discovery:       '🎯',
+  demo:            '📊',
+  proposal:        '📝',
+  negotiation:     '🤝',
+  'check-in':      '🔄',
+  'follow-up':     '🔄',
+  closing:         '💰',
+  'team-training': '👥',
+};
+
+// ─── Helper: ScorePill ───────────────────────────────────────────────────────
+
 function ScorePill({ label, value, target, lowerIsBetter }: {
   label: string;
   value: number | null;
@@ -61,74 +73,29 @@ function ScorePill({ label, value, target, lowerIsBetter }: {
 }) {
   if (value === null) return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] uppercase tracking-widest text-[rgb(var(--text-muted))]">{label}</span>
-      <span className="text-sm font-black text-[rgb(var(--text-muted))]">—</span>
+      <span className="stat-label">{label}</span>
+      <span className="text-sm font-semibold text-[rgb(var(--text-muted))]" style={{ fontFamily: "'Oswald', sans-serif" }}>&mdash;</span>
     </div>
   );
 
   const good = lowerIsBetter ? value <= target : value >= target;
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] uppercase tracking-widest text-[rgb(var(--text-muted))]">{label}</span>
+      <span className="stat-label">{label}</span>
       <div className="flex items-center gap-1">
-        <span className={`text-sm font-black ${good ? 'text-green-400' : 'text-[rgb(var(--accent-primary))]'}`}>
+        <span className={`text-sm font-semibold ${good ? 'text-[var(--color-green)]' : 'text-[var(--color-coral)]'}`}
+              style={{ fontFamily: "'Oswald', sans-serif" }}>
           {value}{label.toLowerCase().includes('ratio') ? '%' : ''}
         </span>
         {good
-          ? <TrendingUp className="w-3 h-3 text-green-400" />
-          : <TrendingDown className="w-3 h-3" style={{ color: ACCENT }} />}
+          ? <TrendingUp className="w-3 h-3 text-[var(--color-green)]" />
+          : <TrendingDown className="w-3 h-3 text-[var(--color-coral)]" />}
       </div>
     </div>
   );
 }
 
-// ─── Collapsible section ──────────────────────────────────────────────────────
-
-function Section({ title, icon, count, children }: {
-  title: string;
-  icon: React.ReactNode;
-  count?: number;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(true);
-  return (
-    <div className="border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))] rounded-lg"
-         style={{}}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[rgb(var(--bg-surface-raised))] transition-colors rounded-lg"
-      >
-        <div className="flex items-center gap-2">
-          {icon}
-          <span className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--text-primary))]">{title}</span>
-          {count !== undefined && (
-            <span className="px-1.5 py-0.5 text-[10px] font-bold bg-[rgb(var(--bg-surface))] text-[rgb(var(--text-muted))] rounded">
-              {count}
-            </span>
-          )}
-        </div>
-        {open ? <ChevronUp className="w-4 h-4 text-[rgb(var(--text-muted))]" /> : <ChevronDown className="w-4 h-4 text-[rgb(var(--text-muted))]" />}
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 pt-1 border-t border-[rgb(var(--border-default))]">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// ─── MEDDIC element with toggle ───────────────────────────────────────────────
+// ─── Helper: MeddicRow ───────────────────────────────────────────────────────
 
 function MeddicRow({ item, onToggle }: {
   item: MeddicItem;
@@ -136,24 +103,40 @@ function MeddicRow({ item, onToggle }: {
 }) {
   const confirmed = item.status === 'confirmed';
   return (
-    <div className="flex items-start gap-3 py-2 border-b border-[rgb(var(--border-default)/0.4)] last:border-0">
-      <button
-        onClick={() => onToggle(item.element)}
-        className={`flex-shrink-0 w-5 h-5 border rounded flex items-center justify-center transition-colors mt-0.5
-          ${confirmed
-            ? 'bg-[rgba(74,222,128,0.2)] border-[#4ADE80]'
-            : 'border-[rgb(var(--border-default))] hover:border-[rgb(var(--accent-primary))]'}`}
-      >
-        {confirmed && <Check className="w-3 h-3 text-green-400" />}
-      </button>
-      <div className="flex-1 min-w-0">
-        <span className="text-[10px] font-black uppercase tracking-widest text-[rgb(var(--accent-primary))]">
-          {item.element}
-        </span>
-        <p className={`text-xs mt-0.5 ${confirmed ? 'line-through text-[rgb(var(--text-muted))]' : 'text-[rgb(var(--text-secondary))]'}`}>
-          {item.question}
-        </p>
+    <div
+      className={`flex items-center gap-[10px] px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+        confirmed
+          ? 'border-[rgb(var(--border-subtle))] bg-[rgb(var(--bg-surface-raised))]'
+          : 'border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))]'
+      }`}
+      onClick={() => onToggle(item.element)}
+    >
+      {/* Toggle switch */}
+      <div className="relative flex-shrink-0" style={{ width: 30, height: 16 }}>
+        <div
+          className="w-full h-full rounded-[8px] transition-colors"
+          style={{ background: confirmed ? 'var(--color-coral-dim)' : 'rgba(255,255,255,0.1)' }}
+        />
+        <div
+          className="absolute top-[2px] w-3 h-3 rounded-full transition-all"
+          style={{
+            left: confirmed ? 16 : 2,
+            background: confirmed ? 'var(--color-coral)' : 'rgb(var(--text-muted))',
+          }}
+        />
       </div>
+      <div className="flex-1 min-w-0">
+        <span className="text-xs font-medium" style={{
+          color: confirmed ? 'rgb(var(--text-primary))' : 'rgb(var(--text-secondary))',
+        }}>
+          {item.element}: {item.question}
+        </span>
+      </div>
+      <span className="text-[10px] font-semibold" style={{
+        color: confirmed ? 'var(--color-green)' : 'rgb(var(--text-muted))',
+      }}>
+        {confirmed ? 'Confirmed' : 'Pending'}
+      </span>
     </div>
   );
 }
@@ -238,222 +221,460 @@ export default function CallPrepPage() {
 
   const confirmedCount = meddicState.filter(m => m.status === 'confirmed').length;
 
+  // Determine difficulty based on avg score
+  const difficultyLevel = brief?.avg_score_30d
+    ? brief.avg_score_30d >= 75 ? 7 : brief.avg_score_30d >= 60 ? 5 : 3
+    : 5;
+  const difficultyLabel = difficultyLevel >= 7 ? 'Tough' : difficultyLevel >= 4 ? 'Moderate' : 'Easy';
+
   return (
     <div className="flex flex-col h-full overflow-y-auto bg-[rgb(var(--bg-canvas))]">
 
-      {/* Header */}
-      <div className="border-b border-[rgb(var(--border-default))] px-6 py-4 bg-[rgb(var(--bg-surface))] flex-shrink-0">
-        <div className="flex items-start gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex-shrink-0 mt-0.5 p-1.5 hover:bg-[rgb(var(--bg-raised))] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 text-[rgb(var(--text-muted))]" />
-          </button>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 border"
-                    style={{ borderColor: ACCENT, color: ACCENT }}>
-                {SESSION_TYPE_LABELS[sessionType] ?? sessionType}
-              </span>
-              {brief && (
-                <span className="text-[10px] text-[rgb(var(--text-muted))]">
-                  Generated {new Date(brief.generated_at).toLocaleDateString()}
-                </span>
-              )}
-            </div>
-            <h1 className="text-xl font-black uppercase tracking-tight text-[rgb(var(--text-primary))] truncate">
-              {sessionTitle}
-            </h1>
-            {prospectCompany && (
-              <div className="flex items-center gap-1.5 mt-1 text-xs text-[rgb(var(--text-muted))]">
-                <Building2 className="w-3.5 h-3.5" />
-                {prospectCompany}
-              </div>
-            )}
-          </div>
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="btn-primary flex items-center gap-2 flex-shrink-0"
-          >
-            {generating
-              ? <><RefreshCw className="w-4 h-4 animate-spin" /> Generating…</>
-              : <><Zap className="w-4 h-4" /> {brief ? 'Regenerate' : 'Generate Brief'}</>}
-          </button>
-        </div>
+      {/* Page header */}
+      <div className="px-7 pt-6 pb-5 flex-shrink-0">
+        <p className="page-kicker">Practice</p>
+        <h1 className="page-title">Pre-Call Setup</h1>
+        <p className="page-desc">
+          Configure your AI training call. Select a scenario, review the brief, and launch.
+        </p>
       </div>
 
-      {/* Body */}
-      <div className="flex-1 p-6">
+      {/* Error banner */}
+      {error && (
+        <div className="mx-7 mb-4 flex items-center gap-3 px-4 py-3 border rounded-[var(--radius-md)]"
+             style={{ borderColor: 'rgba(255,107,107,0.3)', background: 'rgba(255,107,107,0.06)' }}>
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: ACCENT }} />
+          <span className="text-xs text-[rgb(var(--text-secondary))]">{error}</span>
+        </div>
+      )}
 
-        {loading && (
-          <div className="flex items-center justify-center py-20">
-            <RefreshCw className="w-6 h-6 animate-spin text-[rgb(var(--accent-primary))]" />
-          </div>
-        )}
+      {/* Loading state */}
+      {loading && (
+        <div className="flex items-center justify-center py-20">
+          <RefreshCw className="w-6 h-6 animate-spin text-[rgb(var(--accent-primary))]" />
+        </div>
+      )}
 
-        {error && (
-          <div className="flex items-center gap-3 p-4 border border-[rgba(255,107,107,0.3)] bg-[rgba(255,107,107,0.06)] rounded-lg mb-6">
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: ACCENT }} />
-            <span className="text-xs text-[rgb(var(--text-secondary))]">{error}</span>
-          </div>
-        )}
+      {/* Main two-column layout */}
+      {!loading && (
+        <div className="flex-1 px-7 pb-7">
+          <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 360px' }}>
 
-        {!loading && !brief && !generating && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-24 text-center gap-4"
-          >
-            <div className="w-16 h-16 border-2 flex items-center justify-center"
-                 style={{ borderColor: ACCENT }}>
-              <Zap className="w-8 h-8" style={{ color: ACCENT }} />
-            </div>
-            <div>
-              <p className="text-sm font-black uppercase tracking-widest text-[rgb(var(--text-primary))]">No brief yet</p>
-              <p className="text-xs text-[rgb(var(--text-muted))] mt-1">
-                Click Generate Brief to create an AI-powered prep for this call.
-              </p>
-            </div>
-          </motion.div>
-        )}
+            {/* ═══ LEFT COLUMN: Setup Sections ═══ */}
+            <div className="flex flex-col gap-5">
 
-        {brief && !loading && (
-          <div className="space-y-4 max-w-3xl">
-
-            {/* Rep perf context strip */}
-            <div className="flex gap-6 px-4 py-3 border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))] rounded-lg">
-              <ScorePill label="Avg Score 30d" value={brief.avg_score_30d} target={75} />
-              <ScorePill label="Talk Ratio 30d" value={brief.avg_talk_ratio_30d} target={50} lowerIsBetter />
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] uppercase tracking-widest text-[rgb(var(--text-muted))]">MEDDIC Progress</span>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-black text-[rgb(var(--text-primary))]">
-                    {confirmedCount}/{meddicState.length}
-                  </span>
-                  <div className="w-20 h-1.5 bg-[rgb(var(--bg-surface))] rounded-full">
+              {/* Step 1: Session Type / Scenario chips */}
+              <div>
+                <div className="flex items-center gap-[6px] mb-[10px]"
+                     style={{ fontFamily: "'Oswald', sans-serif", fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgb(var(--text-muted))' }}>
+                  <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full text-[9px] font-bold"
+                        style={{ background: 'var(--color-coral-dim)', color: 'var(--color-coral)', fontFamily: "'Oswald', sans-serif" }}>1</span>
+                  Scenario Type
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(SESSION_TYPE_LABELS).map(([key, label]) => (
                     <div
-                      className="h-full transition-all"
-                      style={{ width: `${(confirmedCount / Math.max(meddicState.length, 1)) * 100}%`, background: ACCENT }}
-                    />
+                      key={key}
+                      className={`flex items-center gap-[6px] px-[14px] py-2 rounded-lg text-xs font-medium cursor-default border transition-all ${
+                        key === sessionType
+                          ? 'border-[var(--color-coral)] text-[var(--color-coral)]'
+                          : 'border-[rgb(var(--border-default))] text-[rgb(var(--text-secondary))] bg-[rgb(var(--bg-surface-raised))]'
+                      }`}
+                      style={{
+                        background: key === sessionType ? 'var(--color-coral-dim)' : undefined,
+                      }}
+                    >
+                      <span className="text-sm">{SESSION_TYPE_ICONS[key] ?? '⚙️'}</span>
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Step 2: Target Context */}
+              <div>
+                <div className="flex items-center gap-[6px] mb-[10px]"
+                     style={{ fontFamily: "'Oswald', sans-serif", fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgb(var(--text-muted))' }}>
+                  <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full text-[9px] font-bold"
+                        style={{ background: 'var(--color-coral-dim)', color: 'var(--color-coral)', fontFamily: "'Oswald', sans-serif" }}>2</span>
+                  Target Context
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="flex flex-col gap-1 px-[14px] py-[10px] rounded-lg border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))]">
+                    <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgb(var(--text-muted))' }}>Session</span>
+                    <div className="flex items-center justify-between text-[13px] font-medium text-[rgb(var(--text-primary))]">
+                      {sessionTitle}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 px-[14px] py-[10px] rounded-lg border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))]">
+                    <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgb(var(--text-muted))' }}>Type</span>
+                    <div className="flex items-center justify-between text-[13px] font-medium text-[rgb(var(--text-primary))]">
+                      {SESSION_TYPE_LABELS[sessionType] ?? sessionType}
+                      <ChevronDown className="w-3 h-3 text-[rgb(var(--text-muted))]" />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1 px-[14px] py-[10px] rounded-lg border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))]">
+                    <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgb(var(--text-muted))' }}>Company</span>
+                    <div className="flex items-center justify-between text-[13px] font-medium"
+                         style={{ color: prospectCompany ? 'rgb(var(--text-primary))' : 'rgb(var(--text-muted))' }}>
+                      {prospectCompany ?? 'Not specified'}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 px-[14px] py-[10px] rounded-lg border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))]">
+                    <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgb(var(--text-muted))' }}>Session ID</span>
+                    <div className="flex items-center justify-between text-[13px] font-medium text-[rgb(var(--text-muted))]"
+                         style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>
+                      {sessionId ? `${sessionId.slice(0, 8)}...` : 'N/A'}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Summary */}
-            <div className="px-4 py-4 border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))] rounded-lg">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[rgb(var(--accent-primary))] mb-2">
-                Brief Summary
-              </p>
-              <p className="text-sm text-[rgb(var(--text-secondary))] leading-relaxed">
-                {brief.brief_summary}
-              </p>
-            </div>
-
-            {/* Key talking points */}
-            <Section
-              title="Key Talking Points"
-              icon={<MessageSquare className="w-4 h-4" style={{ color: ACCENT }} />}
-              count={brief.key_talking_points.length}
-            >
-              <div className="space-y-3 mt-2">
-                {brief.key_talking_points.map((tp, i) => (
-                  <div key={i} className="flex gap-3">
-                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-[10px] font-bold border rounded"
-                          style={{ borderColor: ACCENT, color: ACCENT }}>{i + 1}</span>
-                    <div>
-                      <p className="text-xs font-black text-[rgb(var(--text-primary))]">{tp.point}</p>
-                      <p className="text-xs text-[rgb(var(--text-muted))] mt-0.5">{tp.rationale}</p>
+              {/* Step 3: Difficulty / Performance Context */}
+              <div>
+                <div className="flex items-center gap-[6px] mb-[10px]"
+                     style={{ fontFamily: "'Oswald', sans-serif", fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgb(var(--text-muted))' }}>
+                  <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full text-[9px] font-bold"
+                        style={{ background: 'var(--color-coral-dim)', color: 'var(--color-coral)', fontFamily: "'Oswald', sans-serif" }}>3</span>
+                  Performance Context
+                </div>
+                <div className="card-os">
+                  {brief ? (
+                    <>
+                      <div className="flex gap-6 mb-4">
+                        <ScorePill label="Avg Score 30d" value={brief.avg_score_30d} target={75} />
+                        <ScorePill label="Talk Ratio 30d" value={brief.avg_talk_ratio_30d} target={50} lowerIsBetter />
+                        <div className="flex flex-col gap-0.5">
+                          <span className="stat-label">MEDDIC Progress</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-[rgb(var(--text-primary))]" style={{ fontFamily: "'Oswald', sans-serif" }}>
+                              {confirmedCount}/{meddicState.length}
+                            </span>
+                            <div className="w-20 h-1.5 rounded-full" style={{ background: 'rgb(var(--border-default))' }}>
+                              <div
+                                className="h-full rounded-full transition-all"
+                                style={{ width: `${(confirmedCount / Math.max(meddicState.length, 1)) * 100}%`, background: ACCENT }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Difficulty track */}
+                      <div className="px-1">
+                        <div className="flex items-center gap-0 mt-1">
+                          {Array.from({ length: 10 }).map((_, i) => {
+                            const color = i < 3 ? 'var(--color-green)' : i < 6 ? 'var(--color-amber)' : 'var(--color-coral)';
+                            const opacity = i <= difficultyLevel ? 0.8 - (Math.abs(i - 3) * 0.05) : 0.2;
+                            return (
+                              <div key={i} className="relative flex-1" style={{
+                                height: 6,
+                                background: color,
+                                opacity: Math.max(opacity, 0.15),
+                                borderRadius: i === 0 ? '3px 0 0 3px' : i === 9 ? '0 3px 3px 0' : 0,
+                              }}>
+                                {i === difficultyLevel - 1 && (
+                                  <div className="absolute -top-1 -right-[3px] w-[14px] h-[14px] rounded-full"
+                                       style={{ background: color, border: '2px solid rgb(var(--bg-canvas))' }} />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between mt-[6px]">
+                          <span className="text-[9px] text-[rgb(var(--text-muted))]">Easy</span>
+                          <span className="text-[9px] text-[rgb(var(--text-muted))]">Moderate</span>
+                          <span className="text-[9px] font-semibold" style={{ color: difficultyLevel >= 7 ? 'var(--color-coral)' : difficultyLevel >= 4 ? 'var(--color-amber)' : 'var(--color-green)' }}>
+                            {difficultyLabel} ({difficultyLevel}/10)
+                          </span>
+                          <span className="text-[9px] text-[rgb(var(--text-muted))]">Hostile</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center py-6 text-xs text-[rgb(var(--text-muted))]">
+                      Generate a brief to see performance context
                     </div>
-                  </div>
-                ))}
+                  )}
+                </div>
               </div>
-            </Section>
 
-            {/* Objection prep */}
-            <Section
-              title="Objection Prep"
-              icon={<Shield className="w-4 h-4" style={{ color: ACCENT }} />}
-              count={brief.objection_prep.length}
-            >
-              <div className="space-y-3 mt-2">
-                {brief.objection_prep.map((op, i) => (
-                  <div key={i} className="border-l-2 pl-3 py-1" style={{ borderColor: ACCENT }}>
-                    <p className="text-[10px] font-black uppercase tracking-wider text-[rgb(var(--accent-primary))]">
-                      Objection
-                    </p>
-                    <p className="text-xs text-[rgb(var(--text-primary))] mt-0.5 mb-2">&ldquo;{op.objection}&rdquo;</p>
-                    <p className="text-[10px] font-black uppercase tracking-wider text-[rgb(var(--text-muted))]">
-                      Response Strategy
-                    </p>
-                    <p className="text-xs text-[rgb(var(--text-secondary))] mt-0.5">{op.suggested_response}</p>
-                  </div>
-                ))}
+              {/* Step 4: Key Talking Points */}
+              <div>
+                <div className="flex items-center gap-[6px] mb-[10px]"
+                     style={{ fontFamily: "'Oswald', sans-serif", fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgb(var(--text-muted))' }}>
+                  <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full text-[9px] font-bold"
+                        style={{ background: 'var(--color-coral-dim)', color: 'var(--color-coral)', fontFamily: "'Oswald', sans-serif" }}>4</span>
+                  Key Talking Points
+                </div>
+                <div className="card-os">
+                  {brief && brief.key_talking_points.length > 0 ? (
+                    <div className="flex flex-col gap-3">
+                      {brief.key_talking_points.map((tp, i) => (
+                        <div key={i} className="flex gap-3">
+                          <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-[10px] font-bold rounded"
+                                style={{ border: `1px solid ${ACCENT}`, color: ACCENT, fontFamily: "'Oswald', sans-serif" }}>{i + 1}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-[rgb(var(--text-primary))]">{tp.point}</p>
+                            <p className="text-[11px] text-[rgb(var(--text-muted))] mt-0.5">{tp.rationale}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-6 text-xs text-[rgb(var(--text-muted))]">
+                      {brief ? 'No talking points available' : 'Generate a brief to see talking points'}
+                    </div>
+                  )}
+                </div>
               </div>
-            </Section>
 
-            {/* MEDDIC checklist */}
-            <Section
-              title="MEDDIC Checklist"
-              icon={<Target className="w-4 h-4" style={{ color: ACCENT }} />}
-              count={meddicState.length}
-            >
-              <div className="mt-2">
-                {meddicState.map(item => (
-                  <MeddicRow key={item.element} item={item} onToggle={toggleMeddic} />
-                ))}
+              {/* Step 5: Objection Prep */}
+              <div>
+                <div className="flex items-center gap-[6px] mb-[10px]"
+                     style={{ fontFamily: "'Oswald', sans-serif", fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgb(var(--text-muted))' }}>
+                  <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full text-[9px] font-bold"
+                        style={{ background: 'var(--color-coral-dim)', color: 'var(--color-coral)', fontFamily: "'Oswald', sans-serif" }}>5</span>
+                  Objection Prep
+                </div>
+                <div className="card-os">
+                  {brief && brief.objection_prep.length > 0 ? (
+                    <div className="flex flex-col gap-4">
+                      {brief.objection_prep.map((op, i) => (
+                        <div key={i} className="py-1 pl-3" style={{ borderLeft: `2px solid ${ACCENT}` }}>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-coral)]">Objection</p>
+                          <p className="text-xs text-[rgb(var(--text-primary))] mt-0.5 mb-2">&ldquo;{op.objection}&rdquo;</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--text-muted))]">Response Strategy</p>
+                          <p className="text-xs text-[rgb(var(--text-secondary))] mt-0.5">{op.suggested_response}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-6 text-xs text-[rgb(var(--text-muted))]">
+                      {brief ? 'No objections prepared' : 'Generate a brief to see objection prep'}
+                    </div>
+                  )}
+                </div>
               </div>
-            </Section>
 
-            {/* Success metrics */}
-            <Section
-              title="Success Looks Like"
-              icon={<Star className="w-4 h-4" style={{ color: ACCENT }} />}
-              count={brief.success_metrics.length}
-            >
-              <ul className="mt-2 space-y-2">
-                {brief.success_metrics.map((m, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-[rgb(var(--text-secondary))]">
-                    <Check className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-green-400" />
-                    {m}
-                  </li>
-                ))}
-              </ul>
-            </Section>
+              {/* Step 6: MEDDIC Checklist (toggle-style) */}
+              <div>
+                <div className="flex items-center gap-[6px] mb-[10px]"
+                     style={{ fontFamily: "'Oswald', sans-serif", fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgb(var(--text-muted))' }}>
+                  <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full text-[9px] font-bold"
+                        style={{ background: 'var(--color-coral-dim)', color: 'var(--color-coral)', fontFamily: "'Oswald', sans-serif" }}>6</span>
+                  MEDDIC Checklist
+                </div>
+                <div className="flex flex-col gap-[6px]">
+                  {meddicState.length > 0 ? (
+                    meddicState.map(item => (
+                      <MeddicRow key={item.element} item={item} onToggle={toggleMeddic} />
+                    ))
+                  ) : (
+                    <div className="card-os flex items-center justify-center py-6 text-xs text-[rgb(var(--text-muted))]">
+                      {brief ? 'No MEDDIC items' : 'Generate a brief to see the MEDDIC checklist'}
+                    </div>
+                  )}
+                </div>
+              </div>
 
-            {/* Competitive notes */}
-            {brief.competitive_notes && (
-              <Section
-                title="Competitive Context"
-                icon={<TrendingUp className="w-4 h-4" style={{ color: ACCENT }} />}
-              >
-                <p className="text-xs text-[rgb(var(--text-secondary))] mt-2 leading-relaxed">
-                  {brief.competitive_notes}
-                </p>
-              </Section>
-            )}
-
-            {/* CTA */}
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                onClick={() => navigate(`/training?scenario=${sessionType}&title=${encodeURIComponent(sessionTitle)}`)}
-                className="btn-primary flex items-center gap-2"
-              >
-                <Zap className="w-4 h-4" /> Start Training Drill
-              </button>
-              <button
-                onClick={() => navigate(-1)}
-                className="btn-ghost flex items-center gap-2"
-              >
-                <Clock className="w-4 h-4" /> Back to Schedule
-              </button>
             </div>
 
+            {/* ═══ RIGHT COLUMN: Sticky Preview Panel ═══ */}
+            <div className="flex flex-col gap-[14px]" style={{ position: 'sticky', top: 68, alignSelf: 'start' }}>
+
+              {/* Session Preview Card */}
+              <div className="relative overflow-hidden rounded-xl border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))] p-5">
+                {/* Top gradient bar */}
+                <div className="absolute top-0 left-0 right-0 h-[3px]"
+                     style={{ background: 'linear-gradient(90deg, var(--color-coral), var(--color-purple))' }} />
+
+                <p className="mb-[14px]"
+                   style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'rgb(var(--text-muted))' }}>
+                  Session Preview
+                </p>
+
+                {/* Persona info */}
+                <div className="flex items-center gap-[14px] mb-4">
+                  <div className="w-[52px] h-[52px] rounded-xl flex items-center justify-center"
+                       style={{ background: 'var(--color-coral-dim)', color: 'var(--color-coral)', fontFamily: "'Oswald', sans-serif", fontSize: 20, fontWeight: 700 }}>
+                    {(sessionTitle[0] ?? 'S').toUpperCase()}
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: "'Oswald', sans-serif", fontSize: 18, fontWeight: 600, color: 'rgb(var(--text-primary))' }}>
+                      {sessionTitle}
+                    </p>
+                    <p className="text-[11px] text-[rgb(var(--text-muted))] mt-[1px]">
+                      {prospectCompany ? `${prospectCompany} · ` : ''}{SESSION_TYPE_LABELS[sessionType] ?? sessionType}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Detail rows */}
+                <div className="flex justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <span className="text-[11px] text-[rgb(var(--text-muted))]">Scenario</span>
+                  <span className="text-[11px] font-semibold text-[rgb(var(--text-primary))]">{SESSION_TYPE_LABELS[sessionType] ?? sessionType}</span>
+                </div>
+                {prospectCompany && (
+                  <div className="flex justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <span className="text-[11px] text-[rgb(var(--text-muted))]">Company</span>
+                    <span className="text-[11px] font-semibold text-[rgb(var(--text-primary))]">{prospectCompany}</span>
+                  </div>
+                )}
+                {brief && (
+                  <div className="flex justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <span className="text-[11px] text-[rgb(var(--text-muted))]">Difficulty</span>
+                    <span className="text-[11px] font-semibold" style={{ color: 'var(--color-coral)' }}>{difficultyLevel}/10 ({difficultyLabel})</span>
+                  </div>
+                )}
+                {brief && (
+                  <div className="flex justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <span className="text-[11px] text-[rgb(var(--text-muted))]">MEDDIC</span>
+                    <span className="text-[11px] font-semibold text-[rgb(var(--text-primary))]">{confirmedCount}/{meddicState.length} confirmed</span>
+                  </div>
+                )}
+                <div className="flex justify-between py-2">
+                  <span className="text-[11px] text-[rgb(var(--text-muted))]">Est. Duration</span>
+                  <span className="text-[11px] font-semibold text-[rgb(var(--text-primary))]">5-8 mins</span>
+                </div>
+
+                {/* Scenario brief */}
+                {brief?.brief_summary && (
+                  <div className="mt-[14px] p-3 rounded-lg border border-[rgb(var(--border-default))]"
+                       style={{ background: 'rgba(255,255,255,0.02)' }}>
+                    <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgb(var(--text-muted))', marginBottom: 6 }}>
+                      Scenario Brief
+                    </p>
+                    <p className="text-[11px] leading-relaxed italic text-[rgb(var(--text-secondary))]">
+                      &ldquo;{brief.brief_summary}&rdquo;
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* AI Recommendation Card */}
+              {brief && (
+                <div className="relative overflow-hidden rounded-xl border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))] p-4">
+                  <div className="absolute top-0 left-0 right-0 h-[3px]"
+                       style={{ background: 'linear-gradient(90deg, var(--color-green), var(--color-blue))' }} />
+                  <div className="flex items-center gap-2 mb-[10px]">
+                    <div className="w-6 h-6 rounded-[6px] flex items-center justify-center"
+                         style={{ background: 'var(--color-green-dim)' }}>
+                      <Zap className="w-3 h-3 text-[var(--color-green)]" />
+                    </div>
+                    <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-green)' }}>
+                      Training Agent Recommendation
+                    </span>
+                  </div>
+                  {brief.competitive_notes ? (
+                    <>
+                      <p className="text-[11px] leading-relaxed text-[rgb(var(--text-secondary))]">
+                        {brief.competitive_notes}
+                      </p>
+                      {brief.avg_score_30d !== null && (
+                        <span className="inline-block mt-2 text-[9px] font-semibold px-[6px] py-[2px] rounded-[3px]"
+                              style={{ background: 'var(--color-coral-dim)', color: 'var(--color-coral)' }}>
+                          Avg Score: {brief.avg_score_30d} (30d)
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-[11px] text-[rgb(var(--text-muted))]">
+                      Recommendation will appear after brief generation.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Launch / Generate Button */}
+              <button
+                onClick={brief ? () => navigate(`/training?scenario=${sessionType}&title=${encodeURIComponent(sessionTitle)}`) : handleGenerate}
+                disabled={generating}
+                className="w-full flex items-center justify-center gap-2 py-[14px] rounded-[10px] border-none cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: 'var(--color-coral)',
+                  color: '#fff',
+                  fontFamily: "'Oswald', sans-serif",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.5px',
+                }}
+              >
+                {generating ? (
+                  <><RefreshCw className="w-[18px] h-[18px] animate-spin" /> Generating...</>
+                ) : brief ? (
+                  <><Phone className="w-[18px] h-[18px]" /> Start Call</>
+                ) : (
+                  <><Zap className="w-[18px] h-[18px]" /> Generate Brief</>
+                )}
+              </button>
+
+              {/* Secondary actions */}
+              {brief && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleGenerate}
+                    disabled={generating}
+                    className="btn-ghost flex-1 flex items-center justify-center gap-2 text-xs"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" /> Regenerate
+                  </button>
+                  <button
+                    onClick={() => navigate(-1)}
+                    className="btn-ghost flex-1 flex items-center justify-center gap-2 text-xs"
+                  >
+                    <Clock className="w-3.5 h-3.5" /> Back
+                  </button>
+                </div>
+              )}
+
+              {/* Success Metrics as mini-card */}
+              {brief && brief.success_metrics.length > 0 && (
+                <div className="rounded-xl border border-[rgb(var(--border-default))] bg-[rgb(var(--bg-surface-raised))] p-4">
+                  <p className="mb-[10px]"
+                     style={{ fontFamily: "'Oswald', sans-serif", fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'rgb(var(--text-muted))' }}>
+                    Success Looks Like
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {brief.success_metrics.map((m, i) => (
+                      <div key={i} className="flex items-start gap-2 text-[11px] text-[rgb(var(--text-secondary))]">
+                        <Check className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-[var(--color-green)]" />
+                        {m}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Empty state when no brief and not generating */}
+          {!brief && !generating && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center justify-center py-16 text-center gap-4 mt-4"
+            >
+              <div className="w-16 h-16 border-2 rounded-xl flex items-center justify-center"
+                   style={{ borderColor: ACCENT }}>
+                <Zap className="w-8 h-8" style={{ color: ACCENT }} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-widest text-[rgb(var(--text-primary))]"
+                   style={{ fontFamily: "'Oswald', sans-serif" }}>
+                  No brief yet
+                </p>
+                <p className="text-xs text-[rgb(var(--text-muted))] mt-1">
+                  Click Generate Brief to create an AI-powered prep for this call.
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
