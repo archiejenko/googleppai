@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>OAST — Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+--bg-primary:#0d1117;--bg-secondary:#111820;--bg-card:#151c25;--bg-deep:#0a0e14;
+--border:#1e2a38;--border-light:#253345;
+--text-primary:#c9d1d9;--text-secondary:#7d8a98;--text-muted:#4a5567;
+--coral:#FF6B6B;--coral-dim:rgba(255,107,107,0.12);
+--green:#4ADE80;--green-dim:rgba(74,222,128,0.12);
+--amber:#FBBF24;--amber-dim:rgba(251,191,36,0.12);
+--blue:#60A5FA;--blue-dim:rgba(96,165,250,0.12);
+--purple:#A78BFA;--purple-dim:rgba(167,139,250,0.12);
+--cyan:#22D3EE;--cyan-dim:rgba(34,211,238,0.12);
+--red:#F87171;
+--sidebar-w:200px;
+}
+body{background:var(--bg-primary);color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.5;overflow-x:hidden;}
+
+/* Sidebar */
+.sidebar{position:fixed;left:0;top:0;width:var(--sidebar-w);height:100vh;background:var(--bg-secondary);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;overflow-y:auto;overflow-x:hidden;}
+.sidebar::-webkit-scrollbar{display:none;}
+.sidebar-logo{height:48px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border);font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;letter-spacing:-0.02em;color:var(--text-primary);}
+.sidebar-logo .dot{color:var(--coral);}
+.sidebar-logo .ver{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);opacity:0.5;margin-left:6px;}
+.sidebar-nav{flex:1;padding:12px 8px;display:flex;flex-direction:column;gap:1px;}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 4px;opacity:0.4;}
+.sidebar-label{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-muted);opacity:0.5;padding:4px 12px;margin-top:2px;}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;color:var(--text-secondary);text-decoration:none;font-size:12px;font-weight:500;position:relative;transition:all 0.2s;}
+.sidebar-item:hover{background:rgba(255,255,255,0.03);color:var(--text-primary);}
+.sidebar-item.active{background:var(--coral-dim);color:var(--coral);font-weight:600;}
+.sidebar-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background:var(--coral);border-radius:0 4px 4px 0;}
+.sidebar-item svg{width:18px;height:18px;flex-shrink:0;}
+.sidebar-badge{margin-left:auto;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:var(--coral);color:#fff;padding:0 4px;border-radius:4px;}
+.sidebar-footer{padding:8px;border-top:1px solid var(--border);}
+.sidebar-footer .sidebar-item{color:var(--text-muted);}
+.sidebar-footer .sidebar-item:hover{background:rgba(248,113,113,0.1);color:var(--red);}
+
+/* Topbar */
+.topbar{position:fixed;top:0;left:var(--sidebar-w);right:0;height:48px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:40;}
+.topbar-search{position:relative;}
+.topbar-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-muted);}
+.topbar-search input{width:220px;padding:6px 12px 6px 32px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;}
+.topbar-search input::placeholder{color:var(--text-muted);}
+.topbar-search input:focus{border-color:var(--coral);}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-bell{position:relative;color:var(--text-muted);cursor:pointer;}
+.topbar-bell svg{width:18px;height:18px;}
+.topbar-bell .dot{position:absolute;top:0;right:0;width:7px;height:7px;background:var(--coral);border-radius:50%;border:1.5px solid var(--bg-secondary);}
+.topbar-user{display:flex;align-items:center;gap:8px;padding-left:12px;border-left:1px solid var(--border);}
+.topbar-avatar{width:28px;height:28px;background:var(--coral-dim);border:1px solid rgba(255,107,107,0.3);display:flex;align-items:center;justify-content:center;border-radius:6px;font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;color:var(--coral);}
+.topbar-info{font-size:11px;}
+.topbar-info .name{color:var(--text-primary);font-weight:600;}
+.topbar-info .role{color:var(--text-muted);font-size:10px;}
+.topbar-signout{font-size:10px;color:var(--text-muted);text-decoration:underline;cursor:pointer;}
+.topbar-signout:hover{color:var(--red);}
+
+/* Main */
+.main{margin-left:var(--sidebar-w);padding:68px 28px 28px;}
+
+/* Page header */
+.page-kicker{font-family:'Oswald',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.2em;color:var(--text-muted);margin-bottom:2px;}
+.page-title{font-family:'Oswald',sans-serif;font-size:24px;font-weight:600;text-transform:uppercase;letter-spacing:-0.01em;color:var(--text-primary);margin-bottom:2px;}
+.page-desc{font-size:12px;color:var(--text-secondary);}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+.page-actions{display:flex;gap:8px;align-items:center;}
+
+/* Buttons */
+.btn{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;padding:7px 14px;border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:all 0.15s;}
+.btn-outline{background:transparent;color:var(--text-secondary);border-color:var(--border-light);}
+.btn-outline:hover{background:var(--bg-card);color:var(--text-primary);}
+.btn-coral{background:var(--coral);color:#fff;border-color:var(--coral);}
+.btn-coral:hover{opacity:0.9;}
+
+/* Cards */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+
+/* Stat cards */
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.stat-label{font-family:'Oswald',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:6px;}
+.stat-value{font-family:'Oswald',sans-serif;font-size:28px;font-weight:600;line-height:1;}
+
+/* Grid layouts */
+.grid-2fr-1fr{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:16px;}
+
+/* Card titles */
+.card-title{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-primary);margin-bottom:16px;}
+
+/* Table */
+.table{width:100%;border-collapse:collapse;}
+.table th{text-align:left;font-family:'Oswald',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-muted);padding:8px 10px;border-bottom:1px solid var(--border);}
+.table td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-secondary);vertical-align:middle;}
+.table tr:hover{background:rgba(255,255,255,0.02);}
+.table tr:last-child td{border-bottom:none;}
+
+/* Rep avatar */
+.avatar{width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;flex-shrink:0;}
+.avatar-green{background:var(--green-dim);color:var(--green);}
+.avatar-blue{background:var(--blue-dim);color:var(--blue);}
+.avatar-purple{background:var(--purple-dim);color:var(--purple);}
+.avatar-amber{background:var(--amber-dim);color:var(--amber);}
+.avatar-coral{background:var(--coral-dim);color:var(--coral);}
+.avatar-muted{background:rgba(74,85,103,0.15);color:var(--text-muted);}
+
+/* Score pill */
+.pill{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;}
+.pill-green{background:var(--green-dim);color:var(--green);}
+.pill-amber{background:var(--amber-dim);color:var(--amber);}
+.pill-coral{background:var(--coral-dim);color:var(--coral);}
+
+/* Status dot */
+.status-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;}
+.dot-online{background:var(--green);}
+.dot-training{background:var(--amber);}
+.dot-offline{background:var(--text-muted);}
+
+/* Horizontal bar */
+.h-bar{height:6px;border-radius:3px;background:var(--border);}
+.h-bar-fill{height:100%;border-radius:3px;}
+
+/* Activity item */
+.activity-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.activity-item:last-child{border-bottom:none;}
+.activity-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.activity-text{font-size:12px;color:var(--text-secondary);}
+.activity-time{font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
+
+/* Quick action */
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.quick-card{background:var(--bg-deep);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;transition:all 0.15s;}
+.quick-card:hover{border-color:var(--coral);background:var(--bg-card);}
+.quick-card-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;}
+.quick-card-label{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-primary);}
+.quick-card-desc{font-size:10px;color:var(--text-muted);margin-top:2px;}
+
+/* Insight card */
+.insight-card{padding:12px;border-left:3px solid var(--coral);background:var(--bg-deep);border-radius:0 8px 8px 0;margin-bottom:8px;}
+.insight-card:last-child{margin-bottom:0;}
+.insight-card-title{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-primary);margin-bottom:4px;}
+.insight-card-text{font-size:11px;color:var(--text-secondary);line-height:1.4;}
+
+/* Challenge card */
+.challenge{padding:12px;background:var(--bg-deep);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;}
+.challenge:last-child{margin-bottom:0;}
+.challenge-title{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-primary);margin-bottom:4px;}
+.challenge-meta{font-size:10px;color:var(--text-muted);margin-bottom:6px;}
+.challenge-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.challenge-bar-fill{height:100%;border-radius:2px;}
+
+/* Analytics-specific: Filter pills */
+.filter-bar{display:flex;gap:8px;margin-bottom:20px;}
+.filter-pill{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text-secondary);cursor:pointer;transition:all 0.15s;}
+.filter-pill:hover{border-color:var(--border-light);color:var(--text-primary);}
+.filter-pill.active{background:var(--coral);color:#fff;border-color:var(--coral);}
+
+/* Analytics-specific: Score distribution bar */
+.dist-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.dist-row:last-child{margin-bottom:0;}
+.dist-label{font-size:11px;color:var(--text-secondary);width:60px;text-align:right;flex-shrink:0;}
+.dist-bar-track{flex:1;height:14px;background:var(--border);border-radius:4px;overflow:hidden;}
+.dist-bar-fill{height:100%;border-radius:4px;}
+.dist-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);width:30px;flex-shrink:0;}
+
+/* Analytics-specific: Scenario bar */
+.scenario-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.scenario-row:last-child{margin-bottom:0;}
+.scenario-name{font-size:11px;color:var(--text-primary);width:80px;flex-shrink:0;font-weight:500;}
+.scenario-bar-track{flex:1;height:10px;background:var(--border);border-radius:4px;overflow:hidden;}
+.scenario-bar-fill{height:100%;border-radius:4px;}
+.scenario-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);width:100px;flex-shrink:0;text-align:right;}
+
+/* Analytics-specific: Range bar inline */
+.range-bar{position:relative;width:80px;height:6px;background:var(--border);border-radius:3px;display:inline-block;vertical-align:middle;}
+.range-bar-fill{position:absolute;height:100%;border-radius:3px;background:var(--coral);opacity:0.6;}
+
+/* Analytics-specific: Trend arrow */
+.trend-up{color:var(--green);font-weight:700;font-size:14px;}
+.trend-down{color:var(--coral);font-weight:700;font-size:14px;}
+.trend-flat{color:var(--amber);font-weight:700;font-size:14px;}
+
+/* Analytics-specific: Stats aside */
+.stats-aside{display:flex;flex-direction:column;gap:10px;padding-left:16px;border-left:1px solid var(--border);}
+.stats-aside-item{display:flex;flex-direction:column;}
+.stats-aside-label{font-family:'Oswald',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);}
+.stats-aside-value{font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;color:var(--text-primary);}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+<div class="sidebar-logo">OAST<span class="dot">.</span><span class="ver">v1.2</span></div>
+<nav class="sidebar-nav">
+<!-- Core (no label) -->
+<a href="dashboard.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+Dashboard
+</a>
+<a href="practice.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+Practice
+</a>
+<a href="journey.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+Journey
+</a>
+<a href="drills.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+Drills
+</a>
+<a href="analytics.html" class="sidebar-item active">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+Analytics
+</a>
+<a href="library.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+Library
+</a>
+<a href="team.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+Team
+</a>
+
+<div class="sidebar-divider"></div>
+<div class="sidebar-label">Coaching</div>
+
+<a href="leaderboard.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+Leaderboard
+</a>
+<a href="goals.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+Goals
+</a>
+<a href="recordings.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+Recordings
+</a>
+<a href="meetings.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+Meetings
+</a>
+<a href="schedule.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Schedule
+</a>
+<a href="inbox.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+Inbox
+</a>
+<a href="notifications.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+Notifications
+<span class="sidebar-badge">3</span>
+</a>
+<a href="settings.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+Settings
+</a>
+
+<div class="sidebar-divider"></div>
+
+<a href="objections.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+Objections
+</a>
+<a href="win-loss.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+Win / Loss
+</a>
+<a href="pre-call-setup.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+Pre-Call Prep
+</a>
+<a href="coaching.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+Coaching
+</a>
+<a href="accounts.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+Accounts
+</a>
+<a href="audit-log.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+Audit Log
+</a>
+
+<div class="sidebar-divider"></div>
+<div class="sidebar-label">Intelligence</div>
+
+<a href="revenue-intel.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+Revenue Intel
+</a>
+<a href="live-scores.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.05 5A5 5 0 0 1 19 8.95M15.05 1A9 9 0 0 1 23 8.94m-1 7.98v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+Live Scores
+</a>
+<a href="insights.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+Insights
+</a>
+<a href="transfer-gap.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/><path d="M18 3v12a9 9 0 0 1-9-9"/></svg>
+Transfer Gap
+</a>
+<a href="billing.html" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+Billing
+</a>
+</nav>
+
+<div class="sidebar-footer">
+<a href="#" class="sidebar-item">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+Sign Out
+</a>
+</div>
+</aside>
+
+<!-- Topbar -->
+<header class="topbar">
+<div class="topbar-search">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+<input type="text" placeholder="Search...">
+</div>
+<div class="topbar-right">
+<div class="topbar-bell">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+<span class="dot"></span>
+</div>
+<div class="topbar-user">
+<div class="topbar-avatar">AJ</div>
+<div class="topbar-info">
+<div class="name">Archie Jenkins</div>
+<div class="role">Manager</div>
+</div>
+<span class="topbar-signout">Sign out</span>
+</div>
+</div>
+</header>
+
+<!-- Main Content -->
+<main class="main">
+<div class="page-header">
+<div>
+<div class="page-kicker">Performance</div>
+<div class="page-title">Analytics</div>
+<div class="page-desc">Session metrics, score trends, and training analysis</div>
+</div>
+<div class="page-actions">
+<button class="btn btn-outline">Export</button>
+</div>
+</div>
+
+<!-- Stat Cards -->
+<div class="stat-cards">
+<div class="stat-card">
+<div class="stat-label">Total Sessions</div>
+<div class="stat-value" style="color:var(--text-primary)">342</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">Avg Session Score</div>
+<div class="stat-value" style="color:var(--green)">76%</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">Total Training Time</div>
+<div class="stat-value" style="color:var(--text-primary)">49.6h</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">Completion Rate</div>
+<div class="stat-value" style="color:var(--amber)">91%</div>
+</div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+<span class="filter-pill active">Last 30 Days</span>
+<span class="filter-pill">7 Days</span>
+<span class="filter-pill">90 Days</span>
+<span class="filter-pill">All Time</span>
+</div>
+
+<!-- Row 1: Score Progression + Session Volume -->
+<div class="grid-2fr-1fr">
+<div class="card">
+<div class="card-title">Score Progression</div>
+<svg viewBox="0 0 600 220" width="100%" style="display:block;">
+<!-- Grid -->
+<line x1="50" y1="10" x2="50" y2="180" stroke="var(--border)" stroke-width="1"/>
+<line x1="50" y1="180" x2="580" y2="180" stroke="var(--border)" stroke-width="1"/>
+<!-- Horizontal grid lines: 40%=180, 50%=150, 60%=120, 70%=90, 80%=60, 90%=30, 100%=0 -->
+<!-- Y mapping: y = 180 - (score-40)/60*180  => 40%=180, 100%=0 -->
+<line x1="50" y1="150" x2="580" y2="150" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4"/>
+<line x1="50" y1="120" x2="580" y2="120" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4"/>
+<line x1="50" y1="90" x2="580" y2="90" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4"/>
+<line x1="50" y1="60" x2="580" y2="60" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4"/>
+<line x1="50" y1="30" x2="580" y2="30" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4"/>
+<!-- Y labels -->
+<text x="44" y="184" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono">40%</text>
+<text x="44" y="154" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono">50%</text>
+<text x="44" y="124" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono">60%</text>
+<text x="44" y="94" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono">70%</text>
+<text x="44" y="64" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono">80%</text>
+<text x="44" y="34" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono">90%</text>
+<text x="44" y="4" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="JetBrains Mono">100%</text>
+<!-- X labels: Week 1-8 -->
+<text x="116" y="198" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Wk 1</text>
+<text x="182" y="198" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Wk 2</text>
+<text x="248" y="198" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Wk 3</text>
+<text x="314" y="198" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Wk 4</text>
+<text x="380" y="198" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Wk 5</text>
+<text x="446" y="198" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Wk 6</text>
+<text x="512" y="198" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Wk 7</text>
+<text x="578" y="198" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Wk 8</text>
+<!-- Y mapping function: y = 180 - (score - 40) * 3  (since 180px / 60 percentage points = 3px per %) -->
+<!-- Okonkwo (green #4ADE80): 75,78,82,85,87,89,90,92 => y: 75,66,54,45,39,33,30,24 -->
+<polyline points="116,75 182,66 248,54 314,45 380,39 446,33 512,30 578,24" fill="none" stroke="#4ADE80" stroke-width="2"/>
+<!-- Walker (blue #60A5FA): 68,72,74,78,80,82,84,85 => y: 96,84,78,66,60,54,48,45 -->
+<polyline points="116,96 182,84 248,78 314,66 380,60 446,54 512,48 578,45" fill="none" stroke="#60A5FA" stroke-width="2"/>
+<!-- Patel (purple #A78BFA): 65,68,72,74,77,79,81,82 => y: 105,96,84,78,69,63,57,54 -->
+<polyline points="116,105 182,96 248,84 314,78 380,69 446,63 512,57 578,54" fill="none" stroke="#A78BFA" stroke-width="2"/>
+<!-- Martinez (amber #FBBF24): 58,62,65,68,70,72,74,76 => y: 126,114,105,96,90,84,78,72 -->
+<polyline points="116,126 182,114 248,105 314,96 380,90 446,84 512,78 578,72" fill="none" stroke="#FBBF24" stroke-width="2"/>
+<!-- Chen (coral #FF6B6B): 48,52,55,58,60,62,64,66 => y: 156,144,135,126,120,114,108,102 -->
+<polyline points="116,156 182,144 248,135 314,126 380,120 446,114 512,108 578,102" fill="none" stroke="#FF6B6B" stroke-width="2"/>
+<!-- Thompson (text-muted #4a5567): 42,44,46,48,49,50,51,52 => y: 174,168,162,156,153,150,147,144 -->
+<polyline points="116,174 182,168 248,162 314,156 380,153 446,150 512,147 578,144" fill="none" stroke="#4a5567" stroke-width="2"/>
+<!-- End labels -->
+<text x="585" y="22" fill="#4ADE80" font-size="8" font-family="Oswald" font-weight="600">Okonkwo</text>
+<text x="585" y="43" fill="#60A5FA" font-size="8" font-family="Oswald" font-weight="600">Walker</text>
+<text x="585" y="52" fill="#A78BFA" font-size="8" font-family="Oswald" font-weight="600">Patel</text>
+<text x="585" y="70" fill="#FBBF24" font-size="8" font-family="Oswald" font-weight="600">Martinez</text>
+<text x="585" y="100" fill="#FF6B6B" font-size="8" font-family="Oswald" font-weight="600">Chen</text>
+<text x="585" y="142" fill="#4a5567" font-size="8" font-family="Oswald" font-weight="600">Thompson</text>
+</svg>
+</div>
+
+<div class="card">
+<div class="card-title">Session Volume</div>
+<svg viewBox="0 0 260 200" width="100%" style="display:block;">
+<!-- Baseline -->
+<line x1="20" y1="170" x2="250" y2="170" stroke="var(--border)" stroke-width="1"/>
+<!-- Max height for bars: 130px. Highest value=41. Scale: height = value/41*130 -->
+<!-- Mon=28: h=88.8 => y=81.2 -->
+<rect x="26" y="81" width="24" height="89" rx="4" fill="var(--coral)" opacity="0.85"/>
+<text x="38" y="77" text-anchor="middle" fill="var(--text-secondary)" font-size="9" font-family="Oswald" font-weight="600">28</text>
+<!-- Tue=41: h=130 => y=40 -->
+<rect x="59" y="40" width="24" height="130" rx="4" fill="var(--coral)"/>
+<text x="71" y="36" text-anchor="middle" fill="var(--coral)" font-size="9" font-family="Oswald" font-weight="600">41</text>
+<!-- Wed=35: h=111 => y=59 -->
+<rect x="92" y="59" width="24" height="111" rx="4" fill="var(--coral)" opacity="0.85"/>
+<text x="104" y="55" text-anchor="middle" fill="var(--text-secondary)" font-size="9" font-family="Oswald" font-weight="600">35</text>
+<!-- Thu=32: h=101.5 => y=68.5 -->
+<rect x="125" y="69" width="24" height="101" rx="4" fill="var(--coral)" opacity="0.85"/>
+<text x="137" y="65" text-anchor="middle" fill="var(--text-secondary)" font-size="9" font-family="Oswald" font-weight="600">32</text>
+<!-- Fri=38: h=120.5 => y=49.5 -->
+<rect x="158" y="50" width="24" height="120" rx="4" fill="var(--coral)" opacity="0.85"/>
+<text x="170" y="46" text-anchor="middle" fill="var(--text-secondary)" font-size="9" font-family="Oswald" font-weight="600">38</text>
+<!-- Sat=12: h=38 => y=132 -->
+<rect x="191" y="132" width="24" height="38" rx="4" fill="var(--coral)" opacity="0.5"/>
+<text x="203" y="128" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="Oswald" font-weight="600">12</text>
+<!-- Sun=8: h=25.4 => y=144.6 -->
+<rect x="224" y="145" width="24" height="25" rx="4" fill="var(--coral)" opacity="0.4"/>
+<text x="236" y="141" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="Oswald" font-weight="600">8</text>
+<!-- Day labels -->
+<text x="38" y="186" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Mon</text>
+<text x="71" y="186" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Tue</text>
+<text x="104" y="186" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Wed</text>
+<text x="137" y="186" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Thu</text>
+<text x="170" y="186" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Fri</text>
+<text x="203" y="186" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Sat</text>
+<text x="236" y="186" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Sun</text>
+</svg>
+</div>
+</div>
+
+<!-- Row 2: Score Distribution + Scenario Breakdown -->
+<div class="grid-2">
+<div class="card">
+<div class="card-title">Score Distribution</div>
+<div style="display:flex;gap:20px;">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;">
+<!-- 90-100%: 48 sessions -->
+<div class="dist-row">
+<span class="dist-label">90-100%</span>
+<div class="dist-bar-track"><div class="dist-bar-fill" style="width:54%;background:var(--green);"></div></div>
+<span class="dist-count">48</span>
+</div>
+<!-- 80-89%: 72 sessions -->
+<div class="dist-row">
+<span class="dist-label">80-89%</span>
+<div class="dist-bar-track"><div class="dist-bar-fill" style="width:80%;background:var(--green);"></div></div>
+<span class="dist-count">72</span>
+</div>
+<!-- 70-79%: 89 sessions (highest) -->
+<div class="dist-row">
+<span class="dist-label">70-79%</span>
+<div class="dist-bar-track"><div class="dist-bar-fill" style="width:100%;background:var(--amber);"></div></div>
+<span class="dist-count">89</span>
+</div>
+<!-- 60-69%: 68 sessions -->
+<div class="dist-row">
+<span class="dist-label">60-69%</span>
+<div class="dist-bar-track"><div class="dist-bar-fill" style="width:76%;background:var(--amber);"></div></div>
+<span class="dist-count">68</span>
+</div>
+<!-- <60%: 65 sessions -->
+<div class="dist-row">
+<span class="dist-label">&lt;60%</span>
+<div class="dist-bar-track"><div class="dist-bar-fill" style="width:73%;background:var(--coral);"></div></div>
+<span class="dist-count">65</span>
+</div>
+</div>
+<div class="stats-aside">
+<div class="stats-aside-item">
+<span class="stats-aside-label">Median</span>
+<span class="stats-aside-value">76%</span>
+</div>
+<div class="stats-aside-item">
+<span class="stats-aside-label">Std Dev</span>
+<span class="stats-aside-value">14.2</span>
+</div>
+<div class="stats-aside-item">
+<span class="stats-aside-label">P90</span>
+<span class="stats-aside-value">91%</span>
+</div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">Scenario Breakdown</div>
+<div style="display:flex;flex-direction:column;gap:14px;">
+<!-- Cold Call: avg 78%, 89 sessions — amber (60-79) -->
+<div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+<span class="scenario-name">Cold Call</span>
+<span class="scenario-meta">78% avg &middot; 89 sessions</span>
+</div>
+<div style="height:10px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="width:78%;height:100%;background:var(--amber);border-radius:4px;"></div></div>
+</div>
+<!-- Discovery: avg 82%, 72 sessions — green (>=80) -->
+<div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+<span class="scenario-name">Discovery</span>
+<span class="scenario-meta">82% avg &middot; 72 sessions</span>
+</div>
+<div style="height:10px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="width:82%;height:100%;background:var(--green);border-radius:4px;"></div></div>
+</div>
+<!-- Negotiation: avg 68%, 54 sessions — amber -->
+<div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+<span class="scenario-name">Negotiation</span>
+<span class="scenario-meta">68% avg &middot; 54 sessions</span>
+</div>
+<div style="height:10px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="width:68%;height:100%;background:var(--amber);border-radius:4px;"></div></div>
+</div>
+<!-- Objection: avg 61%, 67 sessions — amber -->
+<div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+<span class="scenario-name">Objection</span>
+<span class="scenario-meta">61% avg &middot; 67 sessions</span>
+</div>
+<div style="height:10px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="width:61%;height:100%;background:var(--amber);border-radius:4px;"></div></div>
+</div>
+<!-- Closing: avg 72%, 60 sessions — amber -->
+<div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+<span class="scenario-name">Closing</span>
+<span class="scenario-meta">72% avg &middot; 60 sessions</span>
+</div>
+<div style="height:10px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="width:72%;height:100%;background:var(--amber);border-radius:4px;"></div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Row 3: Rep Comparison Table (full width) -->
+<div style="margin-bottom:16px;">
+<div class="card">
+<div class="card-title">Rep Comparison</div>
+<table class="table">
+<thead>
+<tr>
+<th></th>
+<th>Rep</th>
+<th>Sessions</th>
+<th>Avg Score</th>
+<th>Best</th>
+<th>Worst</th>
+<th>Range</th>
+<th>Avg Duration</th>
+<th>Completion%</th>
+<th>Trend</th>
+</tr>
+</thead>
+<tbody>
+<!-- Okonkwo -->
+<tr>
+<td><span class="avatar avatar-green">DO</span></td>
+<td style="color:var(--text-primary);font-weight:500">D. Okonkwo</td>
+<td>68</td>
+<td><span class="pill pill-green">92%</span></td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">98%</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">78%</td>
+<td>
+<div class="range-bar">
+<div class="range-bar-fill" style="left:63%;width:33%;background:var(--green);opacity:0.7;"></div>
+</div>
+</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">8m 42s</td>
+<td>97%</td>
+<td><span class="trend-up">&#9650;</span></td>
+</tr>
+<!-- Walker -->
+<tr>
+<td><span class="avatar avatar-blue">JW</span></td>
+<td style="color:var(--text-primary);font-weight:500">J. Walker</td>
+<td>62</td>
+<td><span class="pill pill-green">85%</span></td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">94%</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">71%</td>
+<td>
+<div class="range-bar">
+<div class="range-bar-fill" style="left:52%;width:38%;background:var(--blue);opacity:0.7;"></div>
+</div>
+</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">9m 15s</td>
+<td>94%</td>
+<td><span class="trend-up">&#9650;</span></td>
+</tr>
+<!-- Patel -->
+<tr>
+<td><span class="avatar avatar-purple">SP</span></td>
+<td style="color:var(--text-primary);font-weight:500">S. Patel</td>
+<td>58</td>
+<td><span class="pill pill-green">81%</span></td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">93%</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">65%</td>
+<td>
+<div class="range-bar">
+<div class="range-bar-fill" style="left:42%;width:47%;background:var(--purple);opacity:0.7;"></div>
+</div>
+</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">10m 04s</td>
+<td>92%</td>
+<td><span class="trend-flat">&#9654;</span></td>
+</tr>
+<!-- Martinez -->
+<tr>
+<td><span class="avatar avatar-amber">AM</span></td>
+<td style="color:var(--text-primary);font-weight:500">A. Martinez</td>
+<td>55</td>
+<td><span class="pill pill-amber">74%</span></td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">88%</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">56%</td>
+<td>
+<div class="range-bar">
+<div class="range-bar-fill" style="left:27%;width:53%;background:var(--amber);opacity:0.7;"></div>
+</div>
+</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">11m 22s</td>
+<td>89%</td>
+<td><span class="trend-up">&#9650;</span></td>
+</tr>
+<!-- Chen -->
+<tr>
+<td><span class="avatar avatar-coral">MC</span></td>
+<td style="color:var(--text-primary);font-weight:500">M. Chen</td>
+<td>52</td>
+<td><span class="pill pill-coral">58%</span></td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">76%</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">38%</td>
+<td>
+<div class="range-bar">
+<div class="range-bar-fill" style="left:0%;width:63%;background:var(--coral);opacity:0.7;"></div>
+</div>
+</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">12m 48s</td>
+<td>85%</td>
+<td><span class="trend-down">&#9660;</span></td>
+</tr>
+<!-- Thompson -->
+<tr>
+<td><span class="avatar avatar-muted">RT</span></td>
+<td style="color:var(--text-primary);font-weight:500">R. Thompson</td>
+<td>47</td>
+<td><span class="pill pill-coral">47%</span></td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">68%</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">28%</td>
+<td>
+<div class="range-bar">
+<div class="range-bar-fill" style="left:0%;width:67%;background:var(--coral);opacity:0.7;"></div>
+</div>
+</td>
+<td style="font-family:'JetBrains Mono';font-size:10px;">14m 05s</td>
+<td>78%</td>
+<td><span class="trend-down">&#9660;</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- Row 4: Training Time Heatmap (full width) -->
+<div style="margin-bottom:16px;">
+<div class="card">
+<div class="card-title">Training Time Heatmap</div>
+<svg viewBox="0 0 500 140" width="100%" style="display:block;">
+<!-- Row labels -->
+<text x="30" y="26" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Mon</text>
+<text x="30" y="50" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Tue</text>
+<text x="30" y="74" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Wed</text>
+<text x="30" y="98" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Thu</text>
+<text x="30" y="122" text-anchor="end" fill="var(--text-muted)" font-size="9" font-family="DM Sans">Fri</text>
+<!-- Column labels: 8am-5pm -->
+<text x="56" y="138" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono">8am</text>
+<text x="100" y="138" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono">9am</text>
+<text x="144" y="138" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono">10am</text>
+<text x="188" y="138" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono">11am</text>
+<text x="232" y="138" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono">12pm</text>
+<text x="276" y="138" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono">1pm</text>
+<text x="320" y="138" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono">2pm</text>
+<text x="364" y="138" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono">3pm</text>
+<text x="408" y="138" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono">4pm</text>
+<text x="452" y="138" text-anchor="middle" fill="var(--text-muted)" font-size="8" font-family="JetBrains Mono">5pm</text>
+<!-- Heatmap cells: x starts at 36, each cell 44x24, gap 0 -->
+<!-- Monday (y=14) -->
+<rect x="36" y="14" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.08"/>
+<rect x="80" y="14" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.15"/>
+<rect x="124" y="14" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.25"/>
+<rect x="168" y="14" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.20"/>
+<rect x="212" y="14" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.10"/>
+<rect x="256" y="14" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.15"/>
+<rect x="300" y="14" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.22"/>
+<rect x="344" y="14" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.18"/>
+<rect x="388" y="14" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.12"/>
+<rect x="432" y="14" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.05"/>
+<!-- Tuesday (y=38) — peak row -->
+<rect x="36" y="38" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.12"/>
+<rect x="80" y="38" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.30"/>
+<rect x="124" y="38" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.50"/>
+<rect x="168" y="38" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.42"/>
+<rect x="212" y="38" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.18"/>
+<rect x="256" y="38" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.25"/>
+<rect x="300" y="38" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.35"/>
+<rect x="344" y="38" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.28"/>
+<rect x="388" y="38" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.15"/>
+<rect x="432" y="38" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.08"/>
+<!-- Wednesday (y=62) -->
+<rect x="36" y="62" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.10"/>
+<rect x="80" y="62" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.20"/>
+<rect x="124" y="62" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.32"/>
+<rect x="168" y="62" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.28"/>
+<rect x="212" y="62" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.12"/>
+<rect x="256" y="62" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.18"/>
+<rect x="300" y="62" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.25"/>
+<rect x="344" y="62" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.20"/>
+<rect x="388" y="62" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.10"/>
+<rect x="432" y="62" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.05"/>
+<!-- Thursday (y=86) -->
+<rect x="36" y="86" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.08"/>
+<rect x="80" y="86" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.18"/>
+<rect x="124" y="86" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.28"/>
+<rect x="168" y="86" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.22"/>
+<rect x="212" y="86" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.10"/>
+<rect x="256" y="86" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.15"/>
+<rect x="300" y="86" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.20"/>
+<rect x="344" y="86" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.15"/>
+<rect x="388" y="86" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.08"/>
+<rect x="432" y="86" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.05"/>
+<!-- Friday (y=110) -->
+<rect x="36" y="110" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.05"/>
+<rect x="80" y="110" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.12"/>
+<rect x="124" y="110" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.20"/>
+<rect x="168" y="110" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.18"/>
+<rect x="212" y="110" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.08"/>
+<rect x="256" y="110" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.10"/>
+<rect x="300" y="110" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.15"/>
+<rect x="344" y="110" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.12"/>
+<rect x="388" y="110" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.08"/>
+<rect x="432" y="110" width="40" height="20" rx="3" fill="var(--coral)" opacity="0.05"/>
+<!-- Peak annotation: highlight the Tue 10am cell -->
+<rect x="122" y="36" width="44" height="24" rx="4" fill="none" stroke="var(--text-primary)" stroke-width="1.5" stroke-dasharray="3"/>
+<text x="144" y="10" text-anchor="middle" fill="var(--text-primary)" font-size="9" font-family="Oswald" font-weight="600">Peak: Tuesdays 10-11am</text>
+</svg>
+</div>
+</div>
+
+</main>
+</body>
+</html>
