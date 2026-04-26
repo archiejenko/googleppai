@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useSpring } from 'framer-motion';
 import { supabase } from '../utils/supabase';
 import { useAuth } from '../context/AuthContext';
-import { Lock, CheckCircle2, PlayCircle, Star, Clock } from 'lucide-react';
-import KineticButton from '../components/kinetic/KineticButton';
-import KineticCard from '../components/kinetic/KineticCard';
-import NyroTextReveal from '../components/kinetic/NyroTextReveal';
 
 interface ActivityItem {
     id: string;
@@ -42,19 +37,43 @@ interface LearningModule {
     }>;
 }
 
+/* ── Helpers ─────────────────────────────────────────────────────────── */
+
+/** Score colour: green >= 80, amber 60-79, coral < 60 */
+function scoreColor(pct: number): string {
+    if (pct >= 80) return '#4ADE80';
+    if (pct >= 60) return '#FBBF24';
+    return '#FF6B6B';
+}
+
+function scorePillClass(pct: number): string {
+    if (pct >= 80) return 'pill pill-green';
+    if (pct >= 60) return 'pill pill-amber';
+    return 'pill pill-coral';
+}
+
+/** Map a difficulty or level index to a roadmap level colour */
+function levelBorderColor(idx: number): string {
+    if (idx <= 0) return '#4a5567'; // muted
+    if (idx <= 2) return '#FBBF24'; // amber
+    return '#4ADE80'; // green
+}
+
+/* ── Roadmap levels (static structure matching mockup) ───────────── */
+const roadmapLevels = [
+    { num: 1, name: 'Onboarding', desc: 'Introduction to core sales methodology, product knowledge, and platform familiarisation.', criteria: 'Unlock: Complete 5 sessions' },
+    { num: 2, name: 'Foundation', desc: 'Build foundational skills in discovery, opening, and basic objection handling.', criteria: 'Unlock: Score 70%+ on all scenarios' },
+    { num: 3, name: 'Competent', desc: 'Demonstrate consistent performance across multiple scenario types and handle complex objections.', criteria: 'Unlock: Pass 3 assessed drills with 80%+ avg' },
+    { num: 4, name: 'Advanced', desc: 'Advanced negotiation, closing techniques, and ability to coach peers on fundamentals.', criteria: 'Unlock: Master 12 skills & maintain 85%+ for 2 weeks' },
+    { num: 5, name: 'Elite', desc: 'Top-tier performer with mastery across all skill areas and minimal transfer gap.', criteria: 'Unlock: 90%+ avg score, <10% transfer gap, 15+ skills mastered' },
+];
+
 export default function LearningPath() {
     const navigate = useNavigate();
     const [modules, setModules] = useState<LearningModule[]>([]);
     const [loading, setLoading] = useState(true);
     const [activity, setActivity] = useState<ActivityItem[]>([]);
     const { user } = useAuth();
-
-    const { scrollYProgress } = useScroll();
-    const scaleY = useSpring(scrollYProgress, {
-        stiffness: 100,
-        damping: 30,
-        restDelta: 0.001
-    });
 
     useEffect(() => {
         const fetchModules = async () => {
@@ -111,148 +130,196 @@ export default function LearningPath() {
         navigate(`/training?moduleId=${moduleId}`);
     };
 
+    /* ── Derived stats ────────────────────────────────────────────── */
+    const completedCount = modules.filter(m => m.userProgress[0]?.status === 'completed').length;
+    const totalCount = modules.length;
+    const avgProgress = totalCount > 0
+        ? Math.round(modules.reduce((sum, m) => sum + (m.userProgress[0]?.progress ?? 0), 0) / totalCount)
+        : 0;
+
     if (loading) {
         return (
-            <div className="min-h-screen flex justify-center items-center bg-bg-canvas">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-border-default border-t-accent"></div>
+            <div className="min-h-screen flex justify-center items-center bg-[rgb(var(--bg-canvas))]">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[rgb(var(--border-default))] border-t-[#FF6B6B]"></div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col items-center py-32 px-6 bg-bg-canvas min-h-screen relative overflow-hidden text-text-primary">
-            {/* Animated SVG Path Line */}
-            <div className="absolute top-[300px] left-1/2 -translate-x-1/2 w-1 bottom-40 pointer-events-none z-0">
-                <div className="w-full h-full bg-border-default/20 rounded-full" />
-                <motion.div
-                    className="absolute top-0 w-full bg-gradient-to-b from-accent to-accent-secondary rounded-full shadow-[0_0_20px_rgba(59,130,246,0.5)]"
-                    style={{ height: '100%', scaleY, originY: 0 }}
-                />
+        <div className="space-y-5">
+            {/* Page Header */}
+            <div className="flex justify-between items-start mb-5">
+                <div>
+                    <div className="page-kicker">Core</div>
+                    <div className="page-title">Journey</div>
+                    <div className="page-desc">Rep progression, milestones, and level advancement</div>
+                </div>
             </div>
 
-            <div className="text-center mb-32 relative z-10 max-w-2xl">
-                <NyroTextReveal
-                    text="Your Sales Journey"
-                    className="text-4xl md:text-5xl font-bold mb-6 justify-center"
-                />
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.8 }}
-                    className="text-text-secondary text-lg font-light leading-relaxed"
-                >
-                    Master each level to unlock higher XP and Elite scenarios. Follow the roadmap to become an OAST Elite Closer.
-                </motion.p>
+            {/* Stat Cards */}
+            <div className="grid grid-cols-4 gap-3 mb-5">
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                    <div className="stat-label">Modules Complete</div>
+                    <div className="stat-value text-[rgb(var(--text-primary))]">{completedCount}/{totalCount}</div>
+                </div>
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                    <div className="stat-label">Avg Progress</div>
+                    <div className="stat-value text-[rgb(var(--text-primary))]">{avgProgress}%</div>
+                </div>
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                    <div className="stat-label">Milestones Hit</div>
+                    <div className="stat-value text-[rgb(var(--text-primary))]">{completedCount}</div>
+                </div>
+                <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-4">
+                    <div className="stat-label">Activity Events</div>
+                    <div className="stat-value text-[rgb(var(--text-primary))]">{activity.length}</div>
+                </div>
             </div>
 
-            <div className="flex flex-col items-center w-full max-w-4xl space-y-32 relative z-10 pb-40">
-                {modules.map((module, index) => {
-                    const progress = module.userProgress[0];
-                    const isCompleted = progress?.status === 'completed';
-                    const isCurrent = !isCompleted && (index === 0 || (index > 0 && modules[index - 1].userProgress[0]?.status === 'completed'));
-                    const isLocked = !isCompleted && !isCurrent;
+            {/* Journey Roadmap */}
+            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 mb-4">
+                <div className="card-title">Journey Roadmap</div>
 
-                    return (
-                        <div key={module.id} className="relative flex flex-col items-center w-full">
-                            <motion.div
-                                initial={{ opacity: 0, y: 40 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ margin: "-100px" }}
-                                transition={{ type: "spring", stiffness: 100, damping: 20 }}
-                                className="w-full flex flex-col items-center"
-                            >
-                                <KineticCard
-                                    className={`
-                                        p-10 w-72 md:w-96 text-center
-                                        ${isCurrent ? 'ring-2 ring-accent border-accent/20' : ''}
-                                        ${isLocked ? 'opacity-50 grayscale' : ''}
-                                    `}
-                                >
-                                    <div className="mb-6 flex justify-center">
-                                        {isCompleted ? (
-                                            <div className="w-14 h-14 bg-status-success/10 rounded-2xl flex items-center justify-center">
-                                                <CheckCircle2 className="text-status-success w-8 h-8" />
+                {roadmapLevels.map((level, idx) => (
+                    <div key={level.num}>
+                        <div
+                            className="flex items-stretch gap-3.5 p-3.5 bg-[#0a0e14] border border-[rgb(var(--border-default))] rounded-lg"
+                            style={{ borderLeft: `3px solid ${levelBorderColor(idx)}` }}
+                        >
+                            <div className="font-display text-[22px] font-bold text-[rgb(var(--text-primary))] min-w-[28px] flex items-center justify-center">
+                                {level.num}
+                            </div>
+                            <div className="flex-1">
+                                <div className="font-display text-[13px] font-semibold uppercase tracking-[0.05em] text-[rgb(var(--text-primary))] mb-0.5">
+                                    {level.name}
+                                </div>
+                                <div className="text-[11px] text-[rgb(var(--text-secondary))] mb-1 leading-[1.4]">
+                                    {level.desc}
+                                </div>
+                                <div className="text-[10px] text-[rgb(var(--text-muted))] font-mono">
+                                    {level.criteria}
+                                </div>
+                            </div>
+                        </div>
+                        {idx < roadmapLevels.length - 1 && (
+                            <div className="flex justify-center h-5">
+                                <div className="w-px h-full bg-[rgb(var(--border-default))]" />
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Module Progress Table */}
+            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5 mb-4">
+                <div className="card-title">Module Progress</div>
+                {modules.length === 0 ? (
+                    <p className="text-[12px] text-[rgb(var(--text-muted))]">No modules yet</p>
+                ) : (
+                    <table className="table-os">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Module</th>
+                                <th>Difficulty</th>
+                                <th>Progress</th>
+                                <th>Score</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {modules.map((mod, idx) => {
+                                const prog = mod.userProgress[0];
+                                const isCompleted = prog?.status === 'completed';
+                                const isCurrent = !isCompleted && (idx === 0 || modules[idx - 1].userProgress[0]?.status === 'completed');
+                                const isLocked = !isCompleted && !isCurrent;
+                                const pct = prog?.progress ?? 0;
+                                const score = prog?.score ?? null;
+
+                                return (
+                                    <tr key={mod.id} className={isLocked ? 'opacity-50' : ''}>
+                                        <td className="font-display text-[12px] font-semibold text-[rgb(var(--text-secondary))]">
+                                            {idx + 1}
+                                        </td>
+                                        <td>
+                                            <div className="text-[rgb(var(--text-primary))] font-medium">{mod.title}</div>
+                                            <div className="text-[10px] text-[rgb(var(--text-muted))]">{mod.scenarioType}</div>
+                                        </td>
+                                        <td className="font-display text-[12px] font-semibold text-[rgb(var(--text-secondary))]">
+                                            {mod.difficulty}
+                                        </td>
+                                        <td style={{ minWidth: 120 }}>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="h-1.5 rounded-[3px] bg-[rgb(var(--border-default))] flex-1 min-w-[80px]">
+                                                    <div
+                                                        className="h-full rounded-[3px]"
+                                                        style={{ width: `${pct}%`, background: scoreColor(pct) }}
+                                                    />
+                                                </div>
+                                                <span className="font-mono text-[10px] text-[rgb(var(--text-muted))] min-w-[28px]">{pct}%</span>
                                             </div>
-                                        ) : isCurrent ? (
-                                            <div className="w-14 h-14 bg-accent/20 rounded-2xl flex items-center justify-center">
-                                                <PlayCircle className="text-accent w-8 h-8 animate-pulse" />
-                                            </div>
-                                        ) : (
-                                            <div className="w-14 h-14 bg-bg-canvas/50 rounded-2xl flex items-center justify-center">
-                                                <Lock className="text-text-muted w-6 h-6" />
-                                            </div>
+                                        </td>
+                                        <td>
+                                            {score !== null ? (
+                                                <span className={scorePillClass(score)}>{score}%</span>
+                                            ) : (
+                                                <span className="text-[rgb(var(--text-muted))] text-xs">&mdash;</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {isCompleted && <span className="pill pill-green">Complete</span>}
+                                            {isCurrent && <span className="pill pill-amber">In Progress</span>}
+                                            {isLocked && <span className="text-[rgb(var(--text-muted))] text-[11px]">Locked</span>}
+                                        </td>
+                                        <td>
+                                            {!isLocked && (
+                                                <button
+                                                    onClick={() => handleStartModule(mod.id)}
+                                                    className="text-[12px] font-semibold text-[#FF6B6B] underline cursor-pointer hover:opacity-80"
+                                                >
+                                                    {isCompleted ? 'Review' : 'Start'}
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+
+            {/* Recent Activity / Milestones */}
+            <div className="bg-[rgb(var(--bg-surface-raised))] border border-[rgb(var(--border-default))] rounded-lg p-5">
+                <div className="card-title">Recent Milestones</div>
+                {activity.length === 0 ? (
+                    <p className="text-[12px] text-[rgb(var(--text-muted))]">No activity yet</p>
+                ) : (
+                    activity.map((item) => {
+                        const score = item.metadata?.score as number | undefined;
+                        return (
+                            <div key={item.id} className="flex gap-2.5 py-2.5 border-b border-[rgb(var(--border-default))] last:border-b-0">
+                                <div
+                                    className="w-2 h-2 rounded-full mt-1 flex-shrink-0"
+                                    style={{ background: score !== undefined ? scoreColor(score) : '#60A5FA' }}
+                                />
+                                <div className="flex-1">
+                                    <div className="text-[12px] text-[rgb(var(--text-secondary))]">
+                                        {item.metadata?.description as string || item.activity_type}
+                                        {score !== undefined && (
+                                            <span className={`ml-2 ${scorePillClass(score)}`}>{score}%</span>
                                         )}
                                     </div>
-
-                                    <span className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-3 block ${isCurrent ? 'text-accent' : 'text-text-muted'}`}>
-                                        Level {index + 1}: {module.difficulty}
-                                    </span>
-
-                                    <h4 className="font-bold text-2xl mb-4 leading-tight text-text-primary">{module.title}</h4>
-
-                                    <div className="flex items-center justify-center gap-3 px-5 py-2.5 bg-bg-canvas/50 rounded-full border border-border-default mb-6">
-                                        <Star className={`w-4 h-4 ${isCompleted ? 'text-status-warning fill-status-warning' : 'text-text-muted'}`} />
-                                        <span className={`text-xs font-bold tracking-tight ${isCurrent ? 'text-accent' : 'text-text-primary'}`}>{module.xpReward} XP REWARD</span>
+                                    <div className="text-[10px] text-[rgb(var(--text-muted))] font-mono">
+                                        {relativeTime(item.created_at)}
                                     </div>
-
-                                    <p className="text-text-secondary text-xs font-light leading-relaxed mb-8 px-4">
-                                        {module.description}
-                                    </p>
-
-                                    {!isLocked && (
-                                        <KineticButton
-                                            variant={isCurrent ? "primary" : "outline"}
-                                            onClick={() => handleStartModule(module.id)}
-                                            className="w-full py-4 text-sm font-bold"
-                                        >
-                                            {isCompleted ? 'Review Content' : 'Enter Scenario'}
-                                        </KineticButton>
-                                    )}
-                                </KineticCard>
-                            </motion.div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Activity Timeline */}
-            {activity.length > 0 && (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="w-full max-w-4xl mt-20 relative z-10"
-                >
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-text-muted mb-4 text-center">
-                        Recent Activity
-                    </p>
-                    <div className="space-y-2">
-                        {activity.map(item => {
-                            const score = item.metadata?.score as number | undefined;
-                            return (
-                                <div key={item.id} className="flex items-start gap-3 p-3 bg-bg-surface border border-border/40">
-                                    <Clock className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-text-secondary truncate">{item.metadata?.description as string || item.activity_type}</p>
-                                        <p className="text-[10px] text-text-muted mt-0.5">{relativeTime(item.created_at)}</p>
-                                    </div>
-                                    {score !== undefined && (
-                                        <span
-                                            className="text-xs font-black px-2 py-0.5 flex-shrink-0"
-                                            style={{
-                                                color: score >= 70 ? '#22c55e' : '#f59e0b',
-                                                background: score >= 70 ? '#22c55e18' : '#f59e0b18',
-                                            }}
-                                        >
-                                            {score}
-                                        </span>
-                                    )}
                                 </div>
-                            );
-                        })}
-                    </div>
-                </motion.div>
-            )}
+                            </div>
+                        );
+                    })
+                )}
+            </div>
         </div>
     );
 }
