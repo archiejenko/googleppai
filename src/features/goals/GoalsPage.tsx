@@ -49,7 +49,7 @@ function ConfettiBurst({ active }: { active: boolean }) {
     </div>
   );
 }
-import { Plus, X, ChevronRight, Trash2 } from 'lucide-react';
+import { Plus, X, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts';
 import ProgressRing from '../../components/shared/ProgressRing';
@@ -390,8 +390,6 @@ export default function GoalsPage() {
 
   const categories = ['All', 'Quota', 'Activity', 'Skill', 'Streak'];
   const filtered = categoryFilter === 'All' ? goals : goals.filter(g => g.category === categoryFilter);
-  const primaryGoal = goals[0] || null;
-  const primaryPct = primaryGoal ? Math.min(Math.round((primaryGoal.current / primaryGoal.target) * 100), 100) : 0;
 
   // Derive active vs completed goals
   const activeGoals = filtered.filter(g => g.current < g.target);

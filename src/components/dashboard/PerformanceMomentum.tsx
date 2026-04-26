@@ -1,5 +1,4 @@
 import { TrendingUp, TrendingDown, Zap, BarChart3, Target } from 'lucide-react';
-import KineticCard from '../kinetic/KineticCard';
 import { motion } from 'framer-motion';
 
 interface MomentumData {

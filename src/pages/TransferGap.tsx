@@ -18,8 +18,6 @@ import { useQueryClient } from '@tanstack/react-query';
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const ACCENT = '#FF6B6B';
-const GREEN = '#4ADE80';
-const AMBER = '#FBBF24';
 const BLUE = '#60A5FA';
 
 const DIMENSION_KEYS = [
@@ -51,17 +49,6 @@ function gapBarColor(gap: number): string {
 }
 
 /** Score colour: >= 80 green, 60-79 amber, < 60 coral */
-function scoreColor(score: number): string {
-  if (score >= 80) return '#4ADE80';
-  if (score >= 60) return '#FBBF24';
-  return '#FF6B6B';
-}
-
-function scorePillClass(score: number): string {
-  if (score >= 80) return 'pill pill-green';
-  if (score >= 60) return 'pill pill-amber';
-  return 'pill pill-coral';
-}
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 

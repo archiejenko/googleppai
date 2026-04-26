@@ -7,12 +7,8 @@ import { toast } from 'sonner'
 
 /* ── Helpers ────────────────────────────────────────────────────── */
 
-/** Score colour: green >= 80, amber 60-79, coral < 60 */
-function scoreColor(v: number): string {
-    if (v >= 80) return '#4ADE80'
-    if (v >= 60) return '#FBBF24'
-    return '#FF6B6B'
-}
+
+
 
 function TrendBadge({ trend }: { trend: 'improving' | 'declining' | 'flat' | null }) {
     if (!trend) return null
@@ -192,7 +188,7 @@ export default function ManagerDashboard() {
                                         {/* Timeline line */}
                                         <div className="absolute left-[3px] top-2 bottom-2 w-0.5 bg-[rgb(var(--border-default))]" />
 
-                                        {activeRepFlags.map((flag, idx) => {
+                                        {activeRepFlags.map((flag) => {
                                             const dotColor = flag.flag_type === 'coaching_digest'
                                                 ? '#4ADE80'
                                                 : flag.flag_type === 'streak_broken'

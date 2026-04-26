@@ -14,7 +14,6 @@ function RankChange({ change }: { change: number }) {
 }
 
 const MEDAL_COLORS = ['#F59E0B', '#94A3B8', '#D97706'];
-const MEDAL_LABELS = ['🥇', '🥈', '🥉'];
 
 function AnimatedNumber({ target, delay = 0 }: { target: number; delay?: number }) {
   const [val, setVal] = useState(0);

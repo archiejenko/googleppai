@@ -10,13 +10,8 @@ import { toast } from 'sonner'
 type Source = 'simulation' | 'real_call' | 'manual'
 type ViewMode = 'personal' | 'team'
 
-function ScoreChip({ score }: { score: number | null }) {
-    if (score == null) return null
-    const pillClass = score >= 80 ? 'pill pill-green' : score >= 60 ? 'pill pill-amber' : 'pill pill-coral'
-    return (
-        <span className={pillClass}>{score}%</span>
-    )
-}
+
+
 
 const CATEGORY_COLORS: Record<string, string> = {
     price: 'bg-[rgba(251,191,36,0.12)] text-[#FBBF24]',

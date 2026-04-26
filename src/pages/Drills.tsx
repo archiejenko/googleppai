@@ -35,7 +35,7 @@ function getDifficultyDots(difficulty: number) {
     return { filled, color };
 }
 
-function DrillCard({ drill, index, navigate, recommended = false }: {
+function DrillCard({ drill, index: _, navigate, recommended = false }: {
     drill: Drill;
     index: number;
     navigate: ReturnType<typeof useNavigate>;

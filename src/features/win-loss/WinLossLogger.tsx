@@ -15,7 +15,7 @@ const OUTCOME_CONFIG: Record<Outcome, { label: string; icon: typeof TrendingUp; 
 }
 
 function OutcomeBadge({ outcome }: { outcome: Outcome }) {
-    const { label, icon: Icon, color, pillClass } = OUTCOME_CONFIG[outcome]
+    const { label, icon: Icon, pillClass } = OUTCOME_CONFIG[outcome]
     return (
         <span className={`${pillClass} inline-flex items-center gap-1 text-[10px] uppercase tracking-widest`}>
             <Icon className="w-3 h-3" />

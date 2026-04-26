@@ -202,7 +202,6 @@ export default function BillingPage() {
         );
     }
 
-    const monthlyTotal = PRICING.monthlyTotal(org.tier, org.seatsLicensed);
 
     return (
         <div className="p-6 space-y-5 max-w-5xl">

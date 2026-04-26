@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { MessageSquareQuote, Trash2 } from 'lucide-react';
-import KineticCard from '../kinetic/KineticCard';
 import { supabase } from '../../utils/supabase';
 
 interface CoachNotesProps {
@@ -28,7 +27,7 @@ const TYPE_COLOURS: Record<CoachMemory['memory_type'], string> = {
     weakness: 'bg-[rgb(var(--accent-primary)/0.2)] text-[rgb(var(--accent-primary))]',
 };
 
-export default function CoachNotes({ delay = 0 }: CoachNotesProps) {
+export default function CoachNotes({ delay: _ }: CoachNotesProps) {
     const [memories, setMemories] = useState<CoachMemory[]>([]);
     const [loading, setLoading] = useState(true);
 

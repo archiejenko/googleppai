@@ -11,7 +11,7 @@ interface MetricTileProps {
     delay?: number;
 }
 
-export default function MetricTile({ label, value, icon: Icon, trend, trendUnit = '%', trendLabel, isPositive = true }: MetricTileProps) {
+export default function MetricTile({ label, value, icon: _, trend, trendUnit = '%', trendLabel, isPositive = true }: MetricTileProps) {
     const showTrend = trend !== undefined && trend !== null;
     const positive = isPositive && (trend ?? 0) >= 0;
 

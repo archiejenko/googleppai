@@ -5,12 +5,13 @@ import {
     LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts';
 import {
-    MonitorPlay, Video, Users, Clock, TrendingUp, TrendingDown,
+    MonitorPlay, Video, TrendingUp, TrendingDown,
     Eye, Activity, Wifi, WifiOff, CheckCircle2, AlertCircle,
-    ExternalLink, Settings, ChevronRight, Zap,
+    ExternalLink, Settings, Zap,
 } from 'lucide-react';
 import TierGate from '../../components/shared/TierGate';
-import ScoreBadge from '../../components/shared/ScoreBadge';
+
+
 import { supabase } from '../../utils/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useMeetingAnalytics } from '../../hooks/useMeetingAnalytics';
@@ -89,18 +90,6 @@ function StatusDot({ status }: { status: MeetingStatus }) {
             <span className={`w-1.5 h-1.5 ${cfg.color}`} />
             {cfg.label}
         </span>
-    );
-}
-
-function ScoreBar({ label, value, color = 'bg-accent' }: { label: string; value: number; color?: string }) {
-    return (
-        <div className="flex items-center gap-2 text-xs">
-            <span className="w-20 text-text-muted shrink-0">{label}</span>
-            <div className="flex-1 h-1 bg-bg-raised">
-                <div className={`h-full ${color} transition-all`} style={{ width: `${value}%` }} />
-            </div>
-            <span className="w-6 text-right text-text-secondary">{value}</span>
-        </div>
     );
 }
 
@@ -232,7 +221,7 @@ export default function MeetingsPage() {
         if (scored.length === 0) return 0;
         return Math.round(scored.reduce((sum, m) => sum + (m.overall_score ?? 0), 0) / scored.length);
     })();
-    const openActionItems = analytics?.actionItemsOpen ?? 0;
+    const openActionItems = (analytics as unknown as Record<string, unknown>)?.actionItemsOpen as number ?? 0;
 
     // Helper: score pill class
     const getScorePillClass = (score: number) => {
