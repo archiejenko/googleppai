@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
 import { useAuth } from '../context/AuthContext';
-import { Users, Building2, AlertCircle, ArrowUpCircle, MinusCircle, Flame, Mail, Shield, Star } from 'lucide-react';
+import { Users, Building2, AlertCircle, ArrowUpCircle, MinusCircle, Flame, Mail, Star } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { motion } from 'framer-motion';
 import SkillHeatmap from '../components/team/SkillHeatmap';
@@ -45,13 +45,13 @@ function getInitials(name: string) {
 
 function RoleBadge({ role }: { role: Member['role'] }) {
     const map = {
-        admin: { label: 'Admin', className: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
-        team_lead: { label: 'Team Lead', className: 'bg-accent/20 text-accent border-accent/30' },
-        user: { label: 'Rep', className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+        admin: { label: 'Admin', className: 'bg-[rgba(167,139,250,0.12)] text-[#A78BFA]' },
+        team_lead: { label: 'Team Lead', className: 'bg-[rgba(255,107,107,0.12)] text-[#FF6B6B]' },
+        user: { label: 'Rep', className: 'bg-[rgba(74,222,128,0.12)] text-[#4ADE80]' },
     };
     const { label, className } = map[role] ?? map.user;
     return (
-        <span className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border ${className}`}>
+        <span className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.05em] rounded ${className}`}>
             {label}
         </span>
     );
@@ -60,14 +60,14 @@ function RoleBadge({ role }: { role: Member['role'] }) {
 function MasteryBadge({ level }: { level: string | null }) {
     if (!level) return null;
     const map: Record<string, string> = {
-        Elite: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-        Pro: 'bg-accent/20 text-accent border-accent/30',
-        Intermediate: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-        Rookie: 'bg-slate-700 text-slate-400 border-slate-600',
+        Elite: 'bg-[rgba(167,139,250,0.12)] text-[#A78BFA]',
+        Pro: 'bg-[rgba(255,107,107,0.12)] text-[#FF6B6B]',
+        Intermediate: 'bg-[rgba(251,191,36,0.12)] text-[#FBBF24]',
+        Rookie: 'bg-[rgba(74,85,103,0.15)] text-[#4a5567]',
     };
     const cls = map[level] ?? map.Rookie;
     return (
-        <span className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border ${cls}`}>
+        <span className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.05em] rounded ${cls}`}>
             {level}
         </span>
     );
@@ -181,8 +181,8 @@ export default function Team() {
 
     if (loading) {
         return (
-            <div className="layout-shell flex items-center justify-center bg-bg-canvas">
-                <div className="animate-spin w-12 h-12 border-4 border-accent border-t-transparent"></div>
+            <div className="layout-shell flex items-center justify-center bg-[#0d1117]">
+                <div className="animate-spin w-12 h-12 rounded-full border-4 border-[#1e2a38] border-t-[#FF6B6B]"></div>
             </div>
         );
     }
@@ -192,73 +192,80 @@ export default function Team() {
     const reps = members.filter(m => m.role === 'user');
 
     return (
-        <div className="layout-shell p-6 md:p-12 bg-bg-canvas min-h-screen text-text-primary">
-            <div className="max-w-7xl mx-auto">
+        <div className="layout-shell bg-[#0d1117] min-h-screen text-[#c9d1d9]">
+            <div className="max-w-7xl mx-auto px-7 pt-6 pb-7">
 
-                {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6 animate-in-up">
-                    <div>
-                        <h1 className="font-display font-bold text-4xl mb-2">Team</h1>
-                        <p className="text-slate-400">{stats.totalMembers} member{stats.totalMembers !== 1 ? 's' : ''} · {stats.companyName}</p>
+                {/* Page Header */}
+                <div className="mb-5">
+                    <div className="page-kicker font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4a5567] mb-0.5">Core</div>
+                    <h1 className="page-title font-['Oswald'] text-2xl font-semibold uppercase tracking-tight text-[#c9d1d9] mb-0.5">Team</h1>
+                    <p className="page-desc text-xs text-[#7d8a98]">Team roster, status, and performance overview</p>
+                </div>
+
+                {/* Stat Cards */}
+                <div className="grid grid-cols-4 gap-3 mb-5">
+                    <div className="bg-[#151c25] border border-[#1e2a38] rounded-lg p-4">
+                        <div className="stat-label font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-1.5">Total Reps</div>
+                        <div className="stat-value font-['Oswald'] text-[28px] font-semibold leading-none text-[#c9d1d9]">{stats.totalMembers}</div>
                     </div>
-
-                    <div className="flex gap-2 bg-bg-surface p-1 border border-border-default">
-                        {(['members', 'analytics', 'playbooks'] as const).map(t => (
-                            <button
-                                key={t}
-                                onClick={() => setActiveTab(t)}
-                                className={`px-5 py-2 text-sm font-bold transition-all capitalize ${activeTab === t ? 'bg-accent text-white' : 'text-text-muted hover:text-text-secondary'}`}
-                            >
-                                {t}
-                            </button>
-                        ))}
+                    <div className="bg-[#151c25] border border-[#1e2a38] rounded-lg p-4">
+                        <div className="stat-label font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-1.5">Leadership</div>
+                        <div className="stat-value font-['Oswald'] text-[28px] font-semibold leading-none text-[#c9d1d9]">{leads.length}</div>
+                    </div>
+                    <div className="bg-[#151c25] border border-[#1e2a38] rounded-lg p-4">
+                        <div className="stat-label font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-1.5">Organisation</div>
+                        <div className="stat-value font-['Oswald'] text-[18px] font-semibold leading-none text-[#c9d1d9]">{stats.companyName}</div>
+                    </div>
+                    <div className="bg-[#151c25] border border-[#1e2a38] rounded-lg p-4">
+                        <div className="stat-label font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-1.5">Reps</div>
+                        <div className="stat-value font-['Oswald'] text-[28px] font-semibold leading-none text-[#c9d1d9]">{reps.length}</div>
                     </div>
                 </div>
 
+                {/* Tab Switcher */}
+                <div className="flex gap-2 mb-5">
+                    {(['members', 'analytics', 'playbooks'] as const).map(t => (
+                        <button
+                            key={t}
+                            onClick={() => setActiveTab(t)}
+                            className={`px-4 py-1.5 text-[11px] font-semibold rounded-full border transition-colors capitalize font-['DM_Sans'] ${
+                                activeTab === t
+                                    ? 'bg-[#FF6B6B] text-white border-[#FF6B6B]'
+                                    : 'bg-[#0a0e14] border-[#1e2a38] text-[#7d8a98] hover:border-[#FF6B6B] hover:text-[#c9d1d9]'
+                            }`}
+                        >
+                            {t}
+                        </button>
+                    ))}
+                </div>
+
                 {error && (
-                    <div className="mb-8 bg-red-500/10 border border-red-500/20 text-red-500 p-4 flex items-center gap-3">
-                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                    <div className="mb-4 bg-[rgba(248,113,113,0.12)] border border-[rgba(248,113,113,0.3)] text-[#F87171] rounded-lg p-4 flex items-center gap-3 text-xs">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
                         {error}
                     </div>
                 )}
 
                 {/* ── Members Tab ── */}
                 {activeTab === 'members' && (
-                    <div className="animate-in-up space-y-10">
-                        {/* Leadership */}
-                        {leads.length > 0 && (
-                            <div>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Shield className="w-4 h-4 text-accent" />
-                                    <h2 className="text-xs font-black uppercase tracking-[0.2em] text-text-muted">Leadership</h2>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                    {leads.map((m, i) => (
-                                        <MemberCard key={m.id} member={m} delay={i * 0.05} />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                    <div className="space-y-4">
+                        {/* Team Roster heading */}
+                        <div className="font-['Oswald'] text-sm font-semibold uppercase tracking-[0.05em] text-[#c9d1d9]">Team Roster</div>
 
-                        {/* Reps */}
-                        {reps.length > 0 && (
-                            <div>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Users className="w-4 h-4 text-text-muted" />
-                                    <h2 className="text-xs font-black uppercase tracking-[0.2em] text-text-muted">Sales Representatives</h2>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                    {reps.map((m, i) => (
-                                        <MemberCard key={m.id} member={m} delay={i * 0.04} />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        {/* Roster Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {leads.map((m, i) => (
+                                <MemberCard key={m.id} member={m} delay={i * 0.05} />
+                            ))}
+                            {reps.map((m, i) => (
+                                <MemberCard key={m.id} member={m} delay={i * 0.04} />
+                            ))}
+                        </div>
 
                         {members.length === 0 && !loading && (
-                            <div className="text-center py-20 text-text-muted">
-                                <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                                <p>No team members found.</p>
+                            <div className="text-center py-12 text-[#4a5567]">
+                                <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                                <p className="text-sm">No data yet</p>
                             </div>
                         )}
                     </div>
@@ -267,13 +274,17 @@ export default function Team() {
                 {/* ── Analytics Tab ── */}
                 {activeTab === 'analytics' && (
                     <>
-                        <div className="flex justify-end mb-6">
-                            <div className="flex bg-bg-surface p-1 border border-border-default">
+                        <div className="flex justify-end mb-4">
+                            <div className="flex gap-2">
                                 {(['daily', 'weekly', 'monthly'] as const).map(f => (
                                     <button
                                         key={f}
                                         onClick={() => setFilter(f)}
-                                        className={`px-4 py-2 text-sm font-bold transition-all capitalize ${filter === f ? 'bg-accent text-white' : 'text-text-muted hover:text-text-secondary'}`}
+                                        className={`px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-colors capitalize font-['DM_Sans'] ${
+                                            filter === f
+                                                ? 'bg-[#FF6B6B] text-white border-[#FF6B6B]'
+                                                : 'bg-[#0a0e14] border-[#1e2a38] text-[#7d8a98] hover:border-[#FF6B6B] hover:text-[#c9d1d9]'
+                                        }`}
                                     >
                                         {f}
                                     </button>
@@ -281,38 +292,38 @@ export default function Team() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12 animate-in-up">
-                            <div className="col-span-1 space-y-8">
-                                <div className="card-os p-8 bg-bg-surface border-border-default flex items-center gap-6">
-                                    <div className="w-16 h-16 bg-accent/20 flex items-center justify-center border border-accent/20">
-                                        <Building2 className="w-8 h-8 text-accent" />
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                            <div className="col-span-1 space-y-4">
+                                <div className="bg-[#151c25] border border-[#1e2a38] rounded-lg p-5 flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-[rgba(255,107,107,0.12)] flex items-center justify-center rounded-md">
+                                        <Building2 className="w-6 h-6 text-[#FF6B6B]" />
                                     </div>
                                     <div>
-                                        <div className="text-xs font-black text-text-muted uppercase tracking-widest mb-1">Organisation</div>
-                                        <div className="text-2xl font-display font-bold">{stats.companyName}</div>
+                                        <div className="font-['Oswald'] text-[10px] font-semibold text-[#4a5567] uppercase tracking-[0.1em] mb-0.5">Organisation</div>
+                                        <div className="font-['Oswald'] text-lg font-semibold text-[#c9d1d9]">{stats.companyName}</div>
                                     </div>
                                 </div>
 
-                                <div className="card-os p-8 bg-slate-900 border-slate-800 flex items-center gap-6">
-                                    <div className="w-16 h-16 bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20">
-                                        <Users className="w-8 h-8 text-emerald-400" />
+                                <div className="bg-[#151c25] border border-[#1e2a38] rounded-lg p-5 flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-[rgba(74,222,128,0.12)] flex items-center justify-center rounded-md">
+                                        <Users className="w-6 h-6 text-[#4ADE80]" />
                                     </div>
                                     <div>
-                                        <div className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Active Reps</div>
-                                        <div className="text-2xl font-display font-bold">{stats.totalMembers}</div>
+                                        <div className="font-['Oswald'] text-[10px] font-semibold text-[#4a5567] uppercase tracking-[0.1em] mb-0.5">Active Reps</div>
+                                        <div className="font-['Oswald'] text-lg font-semibold text-[#c9d1d9]">{stats.totalMembers}</div>
                                     </div>
                                 </div>
 
-                                <div className="card-os p-6 bg-slate-900 border-slate-800 h-[350px]">
-                                    <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">Call Distribution</h3>
-                                    <ResponsiveContainer width="100%" height="100%">
+                                <div className="bg-[#151c25] border border-[#1e2a38] rounded-lg p-5 h-[350px]">
+                                    <h3 className="card-title font-['Oswald'] text-sm font-semibold uppercase tracking-[0.05em] text-[#c9d1d9] mb-4">Call Distribution</h3>
+                                    <ResponsiveContainer width="100%" height="85%">
                                         <PieChart>
                                             <Pie data={chartData} cx="50%" cy="45%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="calls" nameKey="member">
                                                 {chartData.map((_, index) => (
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', color: '#f8fafc' }} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#151c25', border: '1px solid #1e2a38', borderRadius: '8px', color: '#c9d1d9', fontSize: '11px' }} />
                                             <Legend />
                                         </PieChart>
                                     </ResponsiveContainer>
@@ -320,50 +331,48 @@ export default function Team() {
                             </div>
 
                             <div className="lg:col-span-2">
-                                <div className="card-os bg-slate-900 border-slate-800 overflow-hidden shadow-2xl h-full flex flex-col">
-                                    <div className="p-6 border-b border-white/5 flex justify-between items-center">
-                                        <h3 className="text-xl font-bold">Team Leaderboard</h3>
-                                        <div className="px-3 py-1 bg-accent/10">
-                                            <span className="text-[10px] font-black text-accent uppercase tracking-tighter">Live Ranking</span>
-                                        </div>
+                                <div className="bg-[#151c25] border border-[#1e2a38] rounded-lg overflow-hidden h-full flex flex-col">
+                                    <div className="p-5 border-b border-[#1e2a38] flex justify-between items-center">
+                                        <h3 className="card-title font-['Oswald'] text-sm font-semibold uppercase tracking-[0.05em] text-[#c9d1d9] mb-0">Team Leaderboard</h3>
+                                        <span className="text-[10px] font-semibold text-[#FF6B6B] uppercase tracking-[0.05em] px-2 py-0.5 bg-[rgba(255,107,107,0.12)] rounded">Live Ranking</span>
                                     </div>
                                     <div className="overflow-x-auto flex-1">
-                                        <table className="w-full text-left">
-                                            <thead className="bg-black/20 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                                        <table className="table-os w-full text-left">
+                                            <thead>
                                                 <tr>
-                                                    <th className="p-6">Rank</th>
-                                                    <th className="p-6">User</th>
-                                                    <th className="p-6 text-center">XP Points</th>
-                                                    <th className="p-6">Level</th>
-                                                    <th className="p-6 text-right">Trend</th>
+                                                    <th className="text-left font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a5567] p-3 border-b border-[#1e2a38]">Rank</th>
+                                                    <th className="text-left font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a5567] p-3 border-b border-[#1e2a38]">User</th>
+                                                    <th className="text-center font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a5567] p-3 border-b border-[#1e2a38]">XP Points</th>
+                                                    <th className="text-left font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a5567] p-3 border-b border-[#1e2a38]">Level</th>
+                                                    <th className="text-right font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a5567] p-3 border-b border-[#1e2a38]">Trend</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-white/5">
+                                            <tbody>
                                                 {leaderboard.map((u, index) => (
                                                     <motion.tr key={u.name} whileHover={{ backgroundColor: 'rgba(255,255,255,0.02)' }} className="group transition-colors">
-                                                        <td className="p-6">
-                                                            <span className={`flex items-center justify-center w-8 h-8 font-bold text-xs
-                                                                ${index === 0 ? 'bg-yellow-500 text-black' : index === 1 ? 'bg-slate-300 text-black' : index === 2 ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                                        <td className="p-3 border-b border-[#1e2a38] text-xs text-[#7d8a98]">
+                                                            <span className={`flex items-center justify-center w-7 h-7 rounded-md font-bold text-[10px]
+                                                                ${index === 0 ? 'bg-[rgba(251,191,36,0.12)] text-[#FBBF24]' : index === 1 ? 'bg-[rgba(192,192,192,0.12)] text-[#c9d1d9]' : index === 2 ? 'bg-[rgba(205,127,50,0.12)] text-[#FBBF24]' : 'bg-[rgba(74,85,103,0.15)] text-[#4a5567]'}`}>
                                                                 {u.rank}
                                                             </span>
                                                         </td>
-                                                        <td className="p-6">
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="font-semibold text-slate-200">{u.name}</span>
-                                                                {index === 0 && <Flame className="w-4 h-4 text-orange-500 animate-pulse" />}
+                                                        <td className="p-3 border-b border-[#1e2a38] text-xs">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-medium text-[#c9d1d9]">{u.name}</span>
+                                                                {index === 0 && <Flame className="w-3.5 h-3.5 text-[#FF6B6B] animate-pulse" />}
                                                             </div>
                                                         </td>
-                                                        <td className="p-6 text-center text-accent font-mono font-bold">{u.xp.toLocaleString()}</td>
-                                                        <td className="p-6">
-                                                            <span className={`px-2 py-1 text-[10px] font-black uppercase
-                                                                ${u.level === 'Elite' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/20' : u.level === 'Pro' ? 'bg-accent/20 text-accent border border-accent/20' : 'bg-bg-canvas text-text-muted'}`}>
+                                                        <td className="p-3 border-b border-[#1e2a38] text-center text-[#FF6B6B] font-['JetBrains_Mono'] text-xs font-semibold">{u.xp.toLocaleString()}</td>
+                                                        <td className="p-3 border-b border-[#1e2a38]">
+                                                            <span className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.05em] rounded
+                                                                ${u.level === 'Elite' ? 'bg-[rgba(167,139,250,0.12)] text-[#A78BFA]' : u.level === 'Pro' ? 'bg-[rgba(255,107,107,0.12)] text-[#FF6B6B]' : 'bg-[rgba(74,85,103,0.15)] text-[#4a5567]'}`}>
                                                                 {u.level}
                                                             </span>
                                                         </td>
-                                                        <td className="p-6 text-right">
+                                                        <td className="p-3 border-b border-[#1e2a38] text-right">
                                                             <div className="flex flex-col items-end">
-                                                                {u.trend === 'up' ? <ArrowUpCircle className="text-emerald-500 w-5 h-5" /> : <MinusCircle className="text-slate-600 w-5 h-5" />}
-                                                                <span className="text-[10px] font-bold text-text-muted mt-1">{u.momentumScore > 0 ? `+${u.momentumScore}` : u.momentumScore} Velocity</span>
+                                                                {u.trend === 'up' ? <ArrowUpCircle className="text-[#4ADE80] w-4 h-4" /> : <MinusCircle className="text-[#4a5567] w-4 h-4" />}
+                                                                <span className="text-[9px] font-medium text-[#4a5567] mt-0.5">{u.momentumScore > 0 ? `+${u.momentumScore}` : u.momentumScore} Velocity</span>
                                                             </div>
                                                         </td>
                                                     </motion.tr>
@@ -375,7 +384,7 @@ export default function Team() {
                             </div>
                         </div>
 
-                        <div className="mt-8 animate-in-up">
+                        <div className="mt-4">
                             <SkillHeatmap teamData={heatmapData} methodology={heatmapMethodology} />
                         </div>
                     </>
@@ -383,7 +392,7 @@ export default function Team() {
 
                 {/* ── Playbooks Tab ── */}
                 {activeTab === 'playbooks' && (
-                    <div className="animate-in-up">
+                    <div>
                         <PlaybookManager />
                     </div>
                 )}
@@ -394,44 +403,62 @@ export default function Team() {
 
 function MemberCard({ member, delay }: { member: Member; delay: number }) {
     const initials = getInitials(member.name || member.email || '?');
-    const accentColors = ['bg-accent/20 text-accent', 'bg-emerald-500/20 text-emerald-400', 'bg-purple-500/20 text-purple-400', 'bg-amber-500/20 text-amber-400', 'bg-sky-500/20 text-sky-400'];
-    const colorClass = accentColors[(member.name?.charCodeAt(0) ?? 0) % accentColors.length];
+    const avatarColors = [
+        { bg: 'bg-[rgba(74,222,128,0.12)]', text: 'text-[#4ADE80]' },
+        { bg: 'bg-[rgba(96,165,250,0.12)]', text: 'text-[#60A5FA]' },
+        { bg: 'bg-[rgba(167,139,250,0.12)]', text: 'text-[#A78BFA]' },
+        { bg: 'bg-[rgba(251,191,36,0.12)]', text: 'text-[#FBBF24]' },
+        { bg: 'bg-[rgba(255,107,107,0.12)]', text: 'text-[#FF6B6B]' },
+    ];
+    const colorIdx = (member.name?.charCodeAt(0) ?? 0) % avatarColors.length;
+    const avatarColor = avatarColors[colorIdx];
+
+    const xp = member.total_xp || 0;
+    const levelLabel = member.mastery_level || 'Rookie';
 
     return (
         <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay, duration: 0.3 }}
-            className="card-os bg-bg-surface border-border-default p-5 flex flex-col gap-4 hover:border-accent/30 transition-colors"
+            className="bg-[#151c25] border border-[#1e2a38] rounded-lg p-5 hover:border-[#253345] transition-colors"
         >
-            {/* Avatar + name */}
-            <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 flex items-center justify-center font-black text-sm flex-shrink-0 border ${colorClass} border-current/20`}>
+            {/* Top row: avatar + name + role badge */}
+            <div className="flex items-center gap-2.5 mb-3.5">
+                <div className={`w-9 h-9 rounded-md flex items-center justify-center font-['Oswald'] text-[11px] font-bold flex-shrink-0 ${avatarColor.bg} ${avatarColor.text}`}>
                     {initials}
                 </div>
-                <div className="min-w-0">
-                    <p className="text-sm font-bold text-text-primary truncate">{member.name || 'Unnamed'}</p>
-                    <p className="text-xs text-text-muted truncate flex items-center gap-1">
-                        <Mail className="w-3 h-3 flex-shrink-0" />{member.email}
-                    </p>
+                <div className="min-w-0 flex-1">
+                    <p className="font-['Oswald'] text-sm font-semibold text-[#c9d1d9] truncate">{member.name || 'Unnamed'}</p>
+                    <p className="text-xs text-[#7d8a98] truncate">{member.sales_role || 'BDR'}</p>
+                </div>
+                <RoleBadge role={member.role} />
+            </div>
+
+            {/* Stats row: XP, Level, Email indicator */}
+            <div className="grid grid-cols-3 gap-3 mb-3.5">
+                <div className="text-center">
+                    <div className="font-['Oswald'] text-[18px] font-semibold leading-none text-[#FF6B6B]">{xp.toLocaleString()}</div>
+                    <div className="text-[10px] text-[#4a5567] mt-0.5">XP</div>
+                </div>
+                <div className="text-center">
+                    <div className="font-['Oswald'] text-[18px] font-semibold leading-none text-[#c9d1d9]">
+                        <MasteryBadge level={levelLabel} />
+                    </div>
+                    <div className="text-[10px] text-[#4a5567] mt-0.5">Level</div>
+                </div>
+                <div className="text-center">
+                    <div className="font-['Oswald'] text-[18px] font-semibold leading-none text-[#c9d1d9]">
+                        <Star className="w-4 h-4 mx-auto text-[#FBBF24]" />
+                    </div>
+                    <div className="text-[10px] text-[#4a5567] mt-0.5">Active</div>
                 </div>
             </div>
 
-            {/* Badges */}
-            <div className="flex flex-wrap gap-1.5">
-                <RoleBadge role={member.role} />
-                {member.sales_role && (
-                    <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border border-border bg-bg-raised text-text-muted">
-                        {member.sales_role}
-                    </span>
-                )}
-                <MasteryBadge level={member.mastery_level} />
-            </div>
-
-            {/* XP */}
-            <div className="flex items-center gap-2 pt-1 border-t border-border/40">
-                <Star className="w-3.5 h-3.5 text-accent flex-shrink-0" />
-                <span className="text-xs font-mono font-bold text-accent">{(member.total_xp || 0).toLocaleString()} XP</span>
+            {/* Bottom: email */}
+            <div className="flex items-center gap-1.5 pt-2.5 border-t border-[#1e2a38] text-[10px] text-[#4a5567]">
+                <Mail className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{member.email}</span>
             </div>
         </motion.div>
     );

@@ -295,8 +295,8 @@ export default function Training() {
     // ── Loading state ──────────────────────────────────────────────────────
     if (loading && industries.length === 0) {
         return (
-            <div className="min-h-screen flex justify-center items-center bg-bg-canvas">
-                <div className="animate-spin h-10 w-10 border-2 border-border-DEFAULT border-t-accent" />
+            <div className="min-h-screen flex justify-center items-center bg-[#0d1117]">
+                <div className="animate-spin h-10 w-10 rounded-full border-2 border-[#1e2a38] border-t-[#FF6B6B]" />
             </div>
         );
     }
@@ -308,30 +308,28 @@ export default function Training() {
     ];
 
     return (
-        <div
-            className="min-h-screen bg-bg-canvas text-text-primary"
-            style={{ background: 'linear-gradient(180deg, #0f0f10 0%, #0d1117 100%)' }}
-        >
+        <div className="min-h-screen bg-[#0d1117] text-[#c9d1d9]">
             {/* ── Page Header ──────────────────────────────────────────────── */}
-            <div className="border-b border-[#2a2a2e]">
-                <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
-                    <div>
-                        <p className="text-[9px] font-black uppercase tracking-[0.4em] text-text-muted mb-1">
-                            OAST — Pre-Call Briefing
-                        </p>
-                        <h1 className="text-2xl font-black uppercase tracking-tight text-text-primary">
-                            Mission Briefing
-                        </h1>
-                    </div>
-                    <div className="hidden md:flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.3em] text-text-muted">
-                        <div className="w-1.5 h-1.5 bg-accent animate-pulse" />
-                        Simulation Ready
+            <div className="mb-5">
+                <div className="max-w-5xl mx-auto px-6 pt-6">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <div className="page-kicker font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4a5567] mb-0.5">Core</div>
+                            <h1 className="page-title font-['Oswald'] text-2xl font-semibold uppercase tracking-tight text-[#c9d1d9] mb-0.5">
+                                Practice
+                            </h1>
+                            <p className="page-desc text-xs text-[#7d8a98]">Pre-call briefing and session configuration</p>
+                        </div>
+                        <div className="hidden md:flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse" />
+                            <span className="text-[11px] font-medium text-[#7d8a98]">Simulation Ready</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit}>
-                <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+                <div className="max-w-5xl mx-auto px-6 pb-8 space-y-4">
 
                     {/* ── Row 1: Deal Context + Objective ──────────────────── */}
                     <div className="grid md:grid-cols-2 gap-4">
@@ -343,14 +341,14 @@ export default function Training() {
                     <MEDDICReadiness value={meddicReadiness} onChange={setMeddicReadiness} />
 
                     {/* ── Row 3: Session Config ─────────────────────────────── */}
-                    <div className="bg-bg-surface border border-[#2a2a2e] p-5 space-y-5">
-                        <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-text-muted">
+                    <div className="bg-[#151c25] border border-[#1e2a38] rounded-lg p-5 space-y-5">
+                        <h2 className="card-title font-['Oswald'] text-sm font-semibold uppercase tracking-[0.05em] text-[#c9d1d9] mb-4">
                             Session Configuration
                         </h2>
 
                         {/* Scenario */}
                         <div>
-                            <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-text-muted mb-2">
+                            <label className="block font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-2">
                                 Scenario
                             </label>
                             <div className="flex flex-wrap gap-2">
@@ -359,10 +357,10 @@ export default function Training() {
                                         key={s.value}
                                         type="button"
                                         onClick={() => setFormData(prev => ({ ...prev, scenario: s.value }))}
-                                        className={`px-4 py-2 text-xs font-black border transition-colors ${
+                                        className={`px-4 py-2 text-[11px] font-semibold rounded-lg border transition-colors ${
                                             formData.scenario === s.value
-                                                ? 'bg-accent text-white border-accent'
-                                                : 'bg-bg-canvas border-[#2a2a2e] text-text-muted hover:border-accent/40 hover:text-text-primary'
+                                                ? 'bg-[#FF6B6B] text-white border-[#FF6B6B]'
+                                                : 'bg-[#0a0e14] border-[#1e2a38] text-[#7d8a98] hover:border-[#FF6B6B]/40 hover:text-[#c9d1d9]'
                                         }`}
                                     >
                                         {s.label}
@@ -373,7 +371,7 @@ export default function Training() {
 
                         {/* Difficulty */}
                         <div>
-                            <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-text-muted mb-2">
+                            <label className="block font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-2">
                                 Difficulty
                             </label>
                             <div className="flex gap-2">
@@ -382,10 +380,10 @@ export default function Training() {
                                         key={d.value}
                                         type="button"
                                         onClick={() => setFormData(prev => ({ ...prev, difficulty: d.value }))}
-                                        className={`flex-1 py-3 text-xs font-black border transition-colors ${
+                                        className={`flex-1 py-3 text-xs font-semibold rounded-lg border transition-colors ${
                                             formData.difficulty === d.value
-                                                ? `border-current ${d.color} bg-bg-canvas`
-                                                : `bg-bg-canvas border-[#2a2a2e] text-text-muted ${d.hoverBorder}`
+                                                ? `border-current ${d.color} bg-[#0a0e14]`
+                                                : `bg-[#0a0e14] border-[#1e2a38] text-[#4a5567] ${d.hoverBorder}`
                                         }`}
                                     >
                                         <span className="block">{d.label}</span>
@@ -399,15 +397,15 @@ export default function Training() {
                         <div className="grid md:grid-cols-2 gap-4">
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">
+                                    <label className="font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567]">
                                         Buyer Persona
                                     </label>
                                     <button
                                         type="button"
                                         disabled={!isEliteUnlocked}
                                         onClick={() => setFormData(prev => ({ ...prev, isMultiPersona: !prev.isMultiPersona }))}
-                                        className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-wider transition-colors ${
-                                            isEliteUnlocked ? 'text-accent' : 'text-text-muted/40 cursor-not-allowed'
+                                        className={`flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wider transition-colors ${
+                                            isEliteUnlocked ? 'text-[#FF6B6B]' : 'text-[#4a5567]/40 cursor-not-allowed'
                                         }`}
                                     >
                                         {!isEliteUnlocked && <Lock className="w-2.5 h-2.5" />}
@@ -424,21 +422,21 @@ export default function Training() {
                                                 type="button"
                                                 disabled={formData.isMultiPersona}
                                                 onClick={() => setFormData(prev => ({ ...prev, personaCategory: cat.id }))}
-                                                className={`p-3 border text-left transition-colors ${
+                                                className={`p-3 rounded-md border text-left transition-colors ${
                                                     active
-                                                        ? 'border-accent bg-accent/5 text-accent'
-                                                        : 'border-[#2a2a2e] text-text-muted hover:border-accent/30 disabled:opacity-30 disabled:cursor-not-allowed'
+                                                        ? 'border-[#FF6B6B] bg-[rgba(255,107,107,0.12)] text-[#FF6B6B]'
+                                                        : 'border-[#1e2a38] text-[#4a5567] hover:border-[#FF6B6B]/30 disabled:opacity-30 disabled:cursor-not-allowed'
                                                 }`}
                                             >
                                                 <Icon className="w-3.5 h-3.5 mb-1.5" />
-                                                <span className="block text-[10px] font-black">{cat.label}</span>
+                                                <span className="block text-[10px] font-semibold">{cat.label}</span>
                                                 <span className="block text-[9px] opacity-60 mt-0.5">{cat.desc}</span>
                                             </button>
                                         );
                                     })}
                                 </div>
                                 {formData.isMultiPersona && (
-                                    <div className="mt-2 flex items-center gap-2 text-[9px] text-accent">
+                                    <div className="mt-2 flex items-center gap-2 text-[9px] text-[#FF6B6B]">
                                         <Star className="w-3 h-3" />
                                         Multi-Persona — all categories active
                                     </div>
@@ -447,7 +445,7 @@ export default function Training() {
 
                             <div className="space-y-3">
                                 <div>
-                                    <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-text-muted mb-2">
+                                    <label className="block font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-2">
                                         Methodology
                                     </label>
                                     <div className="flex gap-2">
@@ -456,10 +454,10 @@ export default function Training() {
                                                 key={m}
                                                 type="button"
                                                 onClick={() => setFormData(prev => ({ ...prev, methodology: m }))}
-                                                className={`flex-1 py-3 text-xs font-black border transition-colors ${
+                                                className={`flex-1 py-3 text-xs font-semibold rounded-lg border transition-colors ${
                                                     formData.methodology === m
-                                                        ? 'border-accent text-accent bg-accent/5'
-                                                        : 'border-[#2a2a2e] text-text-muted hover:border-accent/30'
+                                                        ? 'border-[#FF6B6B] text-[#FF6B6B] bg-[rgba(255,107,107,0.12)]'
+                                                        : 'border-[#1e2a38] text-[#4a5567] hover:border-[#FF6B6B]/30'
                                                 }`}
                                             >
                                                 {m}
@@ -470,7 +468,7 @@ export default function Training() {
 
                                 <div className="grid grid-cols-2 gap-2">
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-text-muted mb-1">
+                                        <label className="block font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-1">
                                             Time Limit
                                         </label>
                                         <select
@@ -486,7 +484,7 @@ export default function Training() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-text-muted mb-1">
+                                        <label className="block font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-1">
                                             Language
                                         </label>
                                         <select
@@ -505,7 +503,7 @@ export default function Training() {
 
                                 {industries.length > 0 && (
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-text-muted mb-1">
+                                        <label className="block font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-1">
                                             Industry
                                         </label>
                                         <select
@@ -525,9 +523,9 @@ export default function Training() {
                     </div>
 
                     {/* ── Row 4b: Account Selector ────────────────────────── */}
-                    <div className="bg-bg-surface border border-[#2a2a2e] p-5 space-y-4">
+                    <div className="bg-[#151c25] border border-[#1e2a38] rounded-lg p-5 space-y-4">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-text-muted">
+                            <h2 className="card-title font-['Oswald'] text-sm font-semibold uppercase tracking-[0.05em] text-[#c9d1d9]">
                                 Specific Account
                             </h2>
                             <button
@@ -540,10 +538,10 @@ export default function Training() {
                                         setAccountState(null);
                                     }
                                 }}
-                                className={`px-3 py-1 text-[9px] font-black uppercase tracking-wider border transition-colors ${
+                                className={`px-3 py-1 text-[9px] font-semibold uppercase tracking-wider rounded-md border transition-colors ${
                                     accountMode
-                                        ? 'border-accent text-accent bg-accent/5'
-                                        : 'border-[#2a2a2e] text-text-muted hover:border-accent/40'
+                                        ? 'border-[#FF6B6B] text-[#FF6B6B] bg-[rgba(255,107,107,0.12)]'
+                                        : 'border-[#1e2a38] text-[#4a5567] hover:border-[#FF6B6B]/40'
                                 }`}
                             >
                                 {accountMode ? 'On' : 'Off'}
@@ -551,7 +549,7 @@ export default function Training() {
                         </div>
 
                         {!accountMode && (
-                            <p className="text-[10px] text-text-muted">
+                            <p className="text-[10px] text-[#4a5567]">
                                 Toggle on to practice against a specific simulated company and persona.
                             </p>
                         )}
@@ -560,7 +558,7 @@ export default function Training() {
                             <div className="space-y-3">
                                 {/* Company Picker */}
                                 <div>
-                                    <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-text-muted mb-1">
+                                    <label className="block font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-1">
                                         Company
                                     </label>
                                     <select
@@ -583,7 +581,7 @@ export default function Training() {
                                 {/* Persona Picker */}
                                 {selectedCompanyId && (
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-[0.2em] text-text-muted mb-1">
+                                        <label className="block font-['Oswald'] text-[10px] font-semibold uppercase tracking-[0.1em] text-[#4a5567] mb-1">
                                             Persona
                                         </label>
                                         <select
@@ -599,21 +597,21 @@ export default function Training() {
 
                                 {/* Account State Display */}
                                 {selectedPersonaId && accountState && (
-                                    <div className="flex items-center gap-3 p-3 bg-bg-canvas border border-[#2a2a2e]">
-                                        <Building2 className="h-4 w-4 text-accent shrink-0" />
-                                        <p className="text-[10px] text-text-secondary">
-                                            You've called <span className="text-text-primary font-bold">{personas.find(p => p.id === selectedPersonaId)?.name}</span>{' '}
-                                            <span className="font-mono text-accent">{accountState.call_count}</span> times.
-                                            Current stage: <span className="font-bold text-text-primary">{accountState.current_stage}</span>.
-                                            Sentiment: <span className="font-mono text-accent">{accountState.sentiment_score}/100</span>
+                                    <div className="flex items-center gap-3 p-3 bg-[#0a0e14] border border-[#1e2a38] rounded-lg">
+                                        <Building2 className="h-4 w-4 text-[#FF6B6B] shrink-0" />
+                                        <p className="text-[10px] text-[#7d8a98]">
+                                            You've called <span className="text-[#c9d1d9] font-bold">{personas.find(p => p.id === selectedPersonaId)?.name}</span>{' '}
+                                            <span className="font-['JetBrains_Mono'] text-[#FF6B6B]">{accountState.call_count}</span> times.
+                                            Current stage: <span className="font-bold text-[#c9d1d9]">{accountState.current_stage}</span>.
+                                            Sentiment: <span className="font-['JetBrains_Mono'] text-[#FF6B6B]">{accountState.sentiment_score}/100</span>
                                         </p>
                                     </div>
                                 )}
 
                                 {selectedPersonaId && !accountState && (
-                                    <div className="flex items-center gap-3 p-3 bg-bg-canvas border border-[#2a2a2e]">
-                                        <Building2 className="h-4 w-4 text-text-muted shrink-0" />
-                                        <p className="text-[10px] text-text-muted">
+                                    <div className="flex items-center gap-3 p-3 bg-[#0a0e14] border border-[#1e2a38] rounded-lg">
+                                        <Building2 className="h-4 w-4 text-[#4a5567] shrink-0" />
+                                        <p className="text-[10px] text-[#4a5567]">
                                             First call with this persona. Account state will be created when you start.
                                         </p>
                                     </div>
@@ -623,7 +621,7 @@ export default function Training() {
                     </div>
 
                     {/* ── Row 5: Prospect Voice ────────────────────────────── */}
-                    <div className="bg-bg-surface border border-[#2a2a2e] p-5">
+                    <div className="bg-[#151c25] border border-[#1e2a38] rounded-lg p-5">
                         <VoiceSelector
                             label="Prospect Voice"
                             value={formData.voice_id}
@@ -632,16 +630,16 @@ export default function Training() {
                     </div>
 
                     {/* ── Row 6: Confidence + CTA ───────────────────────────── */}
-                    <div className="border-t border-[#2a2a2e] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="border-t border-[#1e2a38] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <ConfidenceRating value={confidenceRating} onChange={setConfidenceRating} />
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full sm:w-auto flex items-center justify-center gap-3 px-10 py-4 bg-accent text-white font-black uppercase tracking-[0.15em] border-2 border-accent hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                            className="w-full sm:w-auto flex items-center justify-center gap-3 px-10 py-4 bg-[#FF6B6B] text-white font-semibold uppercase tracking-[0.05em] rounded-lg border-2 border-[#FF6B6B] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-['DM_Sans']"
                         >
                             <Play className="h-4 w-4 fill-current shrink-0" />
-                            {loading ? 'Starting…' : 'Enter Simulation'}
+                            {loading ? 'Starting...' : 'Enter Simulation'}
                         </button>
                     </div>
 
