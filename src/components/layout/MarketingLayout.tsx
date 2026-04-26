@@ -10,19 +10,11 @@ export default function MarketingLayout() {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileCapabilitiesOpen, setMobileCapabilitiesOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
 
   // Scroll to top on route change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
-
-  // Scroll listener for nav border
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 8);
-    window.addEventListener('scroll', handler, { passive: true });
-    return () => window.removeEventListener('scroll', handler);
-  }, []);
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
