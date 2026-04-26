@@ -1,135 +1,275 @@
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from '../ui/navigation-menu';
-import { capabilitySections } from '../../data/capabilitiesData';
+import { useState, useRef, useCallback } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+
+const NAV_LINKS = [
+  { name: 'Home', path: '/' },
+  { name: 'Capabilities', path: '/capabilities' },
+  { name: 'Industries', path: '/industries' },
+  { name: 'User Journey', path: '/user-journey' },
+  { name: 'Pricing', path: '/pricing' },
+  { name: 'Insights', path: '/insights' },
+  { name: 'About', path: '/about-us' },
+];
+
+const COLUMNS = [
+  {
+    title: 'Training & Practice',
+    color: '#FF6B6B',
+    dimBg: 'rgba(255,107,107,0.12)',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+      </svg>
+    ),
+    links: ['Pre-Call Simulation', 'Skill Drills', 'Voice Personas', 'Session Replay'],
+  },
+  {
+    title: 'Coaching & Development',
+    color: '#4ADE80',
+    dimBg: 'rgba(74,222,128,0.12)',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+      </svg>
+    ),
+    links: ['Morgan AI Coach', 'Alex AI Coach', 'Journey & Levelling', 'Goals & Milestones'],
+  },
+  {
+    title: 'Analytics & Intelligence',
+    color: '#60A5FA',
+    dimBg: 'rgba(96,165,250,0.12)',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ),
+    links: ['Transfer Gap Analysis', 'Training Analytics', 'Team Insights', 'Leaderboards'],
+  },
+  {
+    title: 'Revenue Intelligence',
+    color: '#A78BFA',
+    dimBg: 'rgba(167,139,250,0.12)',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      </svg>
+    ),
+    links: ['Win/Loss Engine', 'Meeting Intelligence', 'Pipeline Analytics', 'Revenue Forecasting'],
+    tag: 'Upgrade',
+  },
+  {
+    title: 'Team & Admin',
+    color: '#FBBF24',
+    dimBg: 'rgba(251,191,36,0.12)',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+    links: ['Team Management', 'Schedule & Calendar', 'Notifications', 'Audit Log'],
+  },
+];
 
 export default function OastNavMenu() {
-  const navigate = useNavigate();
+  const location = useLocation();
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleCapabilityItemClick = (sectionId: string) => {
-    navigate('/capabilities#' + sectionId);
-    setTimeout(() => {
-      const el = document.getElementById(sectionId);
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }, 150);
-  };
+  const showDropdown = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setDropdownVisible(true), 100);
+  }, []);
+
+  const hideDropdown = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setDropdownVisible(false), 150);
+  }, []);
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
-    <NavigationMenu>
-      <NavigationMenuList className="gap-1">
-
-        {/* Home — direct link */}
-        <NavigationMenuItem>
-          <Link
-            to="/"
-            className="inline-flex h-10 items-center px-3 py-2 text-sm transition-colors tracking-wide hover:text-white"
-            style={{ color: 'var(--mkt-text-secondary)', fontFamily: 'DM Sans, sans-serif' }}
+    <nav style={{ display: 'flex', alignItems: 'center', gap: '4px', position: 'relative' }}>
+      {NAV_LINKS.map((link) =>
+        link.name === 'Capabilities' ? (
+          <div
+            key={link.name}
+            onMouseEnter={showDropdown}
+            onMouseLeave={hideDropdown}
+            style={{ position: 'relative' }}
           >
-            Home
-          </Link>
-        </NavigationMenuItem>
+            <Link
+              to={link.path}
+              style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '13px',
+                fontWeight: 500,
+                color: isActive(link.path) ? '#FF6B6B' : '#7d8a98',
+                padding: '8px 12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                transition: 'color 0.15s',
+                textDecoration: 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive(link.path)) e.currentTarget.style.color = '#c9d1d9';
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive(link.path)) e.currentTarget.style.color = '#7d8a98';
+              }}
+            >
+              {link.name}
+            </Link>
 
-        {/* Capabilities — dropdown with section anchors */}
-        <NavigationMenuItem>
-          <NavigationMenuTrigger>Capabilities</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid grid-cols-1 w-[320px]">
-              {capabilitySections.map((section) => (
-                <li key={section.id}>
-                  <button
-                    onClick={() => handleCapabilityItemClick(section.id)}
-                    className="block w-full text-left select-none p-4 leading-none no-underline outline-none transition-colors hover:bg-[rgba(255,107,107,0.06)] focus:bg-[rgba(255,107,107,0.06)]"
-                    style={{ borderRadius: 0 }}
-                  >
+            {/* Mega dropdown */}
+            <div
+              onMouseEnter={showDropdown}
+              onMouseLeave={hideDropdown}
+              style={{
+                position: 'fixed',
+                top: '64px',
+                left: '50%',
+                transform: dropdownVisible
+                  ? 'translateX(-50%) translateY(0)'
+                  : 'translateX(-50%) translateY(-4px)',
+                opacity: dropdownVisible ? 1 : 0,
+                pointerEvents: dropdownVisible ? 'auto' : 'none',
+                transition: 'opacity 0.15s, transform 0.15s',
+                maxWidth: '1100px',
+                width: 'calc(100vw - 48px)',
+                background: '#151c25',
+                border: '1px solid #1e2a38',
+                borderRadius: '12px',
+                padding: '28px',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
+                zIndex: 200,
+              }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '24px' }}>
+                {COLUMNS.map((col) => (
+                  <div key={col.title}>
                     <div
-                      className="text-sm font-semibold text-white mb-1 uppercase tracking-[0.06em]"
-                      style={{ fontFamily: 'Oswald, sans-serif' }}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '10px',
+                        background: col.dimBg,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
                     >
-                      {section.dropdown.label}
+                      {col.icon}
                     </div>
                     <div
-                      className="text-xs leading-relaxed"
-                      style={{ color: 'var(--mkt-text-muted)', fontFamily: 'DM Sans, sans-serif' }}
+                      style={{
+                        fontFamily: "'Oswald', sans-serif",
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: '#c9d1d9',
+                        margin: '12px 0 8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0',
+                      }}
                     >
-                      {section.dropdown.description}
+                      {col.title}
+                      {col.tag && (
+                        <span
+                          style={{
+                            fontSize: '9px',
+                            padding: '2px 6px',
+                            borderRadius: '3px',
+                            background: 'rgba(167,139,250,0.12)',
+                            color: '#A78BFA',
+                            fontFamily: "'DM Sans', sans-serif",
+                            fontWeight: 600,
+                            textTransform: 'uppercase',
+                            marginLeft: '6px',
+                          }}
+                        >
+                          Upgrade
+                        </span>
+                      )}
                     </div>
-                  </button>
-                </li>
-              ))}
-              <li>
+                    {col.links.map((linkText) => (
+                      <Link
+                        key={linkText}
+                        to="/capabilities"
+                        style={{
+                          fontFamily: "'DM Sans', sans-serif",
+                          fontSize: '12px',
+                          color: '#7d8a98',
+                          display: 'block',
+                          padding: '4px 0',
+                          textDecoration: 'none',
+                          transition: 'color 0.15s',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = '#c9d1d9'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = '#7d8a98'; }}
+                      >
+                        {linkText}
+                      </Link>
+                    ))}
+                  </div>
+                ))}
+              </div>
+
+              <div
+                style={{
+                  textAlign: 'right',
+                  paddingTop: '16px',
+                  borderTop: '1px solid #1e2a38',
+                  marginTop: '16px',
+                }}
+              >
                 <Link
                   to="/capabilities"
-                  className="block px-4 py-3 text-sm uppercase tracking-[0.08em] transition-colors hover:opacity-80"
-                  style={{ color: 'var(--mkt-accent)', fontFamily: 'DM Sans, sans-serif', borderRadius: 0 }}
+                  style={{
+                    color: '#FF6B6B',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                  }}
                 >
                   View All Capabilities →
                 </Link>
-              </li>
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-
-        {/* Industries — direct link */}
-        <NavigationMenuItem>
+              </div>
+            </div>
+          </div>
+        ) : (
           <Link
-            to="/industries"
-            className="inline-flex h-10 items-center px-3 py-2 text-sm transition-colors tracking-wide hover:text-white"
-            style={{ color: 'var(--mkt-text-secondary)', fontFamily: 'DM Sans, sans-serif' }}
+            key={link.name}
+            to={link.path}
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: '13px',
+              fontWeight: 500,
+              color: isActive(link.path) ? '#FF6B6B' : '#7d8a98',
+              padding: '8px 12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              transition: 'color 0.15s',
+              textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive(link.path)) e.currentTarget.style.color = '#c9d1d9';
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive(link.path)) e.currentTarget.style.color = '#7d8a98';
+            }}
           >
-            Industries
+            {link.name}
           </Link>
-        </NavigationMenuItem>
-
-        {/* User Journey — direct link */}
-        <NavigationMenuItem>
-          <Link
-            to="/user-journey"
-            className="inline-flex h-10 items-center px-3 py-2 text-sm transition-colors tracking-wide hover:text-white"
-            style={{ color: 'var(--mkt-text-secondary)', fontFamily: 'DM Sans, sans-serif' }}
-          >
-            User Journey
-          </Link>
-        </NavigationMenuItem>
-
-        {/* Pricing — direct link */}
-        <NavigationMenuItem>
-          <Link
-            to="/pricing"
-            className="inline-flex h-10 items-center px-3 py-2 text-sm transition-colors tracking-wide hover:text-white"
-            style={{ color: 'var(--mkt-text-secondary)', fontFamily: 'DM Sans, sans-serif' }}
-          >
-            Pricing
-          </Link>
-        </NavigationMenuItem>
-
-        {/* Insights — direct link */}
-        <NavigationMenuItem>
-          <Link
-            to="/insights"
-            className="inline-flex h-10 items-center px-3 py-2 text-sm transition-colors tracking-wide hover:text-white"
-            style={{ color: 'var(--mkt-text-secondary)', fontFamily: 'DM Sans, sans-serif' }}
-          >
-            Insights
-          </Link>
-        </NavigationMenuItem>
-
-        {/* About — direct link */}
-        <NavigationMenuItem>
-          <Link
-            to="/about-us"
-            className="inline-flex h-10 items-center px-3 py-2 text-sm transition-colors tracking-wide hover:text-white"
-            style={{ color: 'var(--mkt-text-secondary)', fontFamily: 'DM Sans, sans-serif' }}
-          >
-            About
-          </Link>
-        </NavigationMenuItem>
-
-      </NavigationMenuList>
-    </NavigationMenu>
+        )
+      )}
+    </nav>
   );
 }
